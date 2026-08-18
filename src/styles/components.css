@@ -51,6 +51,58 @@
   animation: spin 800ms linear infinite;
 }
 
+.segmented-control {
+  width: fit-content;
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: #1a1b18;
+  border: 1px solid rgb(248 247 242 / 24%);
+  border-radius: 0.7rem;
+  box-shadow: inset 0 1px rgb(255 255 255 / 7%), 0 1px 2px rgb(0 0 0 / 18%);
+}
+
+.segmented-control > a,
+.segmented-control > button {
+  min-height: var(--touch-target);
+  display: grid;
+  padding: 0 var(--space-4);
+  color: #c6c6bf;
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1;
+  place-items: center;
+  text-align: center;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.segmented-control > a:hover,
+.segmented-control > button:hover:not(:disabled) {
+  color: #f8f7f2;
+}
+
+.segmented-control > a:active,
+.segmented-control > button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.segmented-control > a.is-active,
+.segmented-control > button[aria-pressed='true'] {
+  color: #171815;
+  background: #f8f7f2;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 28%), inset 0 1px rgb(255 255 255 / 60%);
+}
+
+.segmented-control > button:disabled {
+  cursor: default;
+}
+
 @keyframes spin {
   to { transform: rotate(1turn); }
 }

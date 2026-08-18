@@ -26,35 +26,6 @@
 .focus-timer-card--short_break { background: color-mix(in srgb, var(--blue) 42%, var(--surface)); }
 .focus-timer-card--long_break { background: color-mix(in srgb, var(--sand) 62%, var(--surface)); }
 
-.focus-phase-tabs {
-  width: fit-content;
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background: color-mix(in srgb, var(--surface) 76%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  border-radius: var(--radius-pill);
-}
-
-.focus-phase-tabs button {
-  min-height: var(--touch-target);
-  padding: 0 var(--space-4);
-  color: var(--ink-soft);
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: 680;
-}
-
-.focus-phase-tabs button[aria-pressed='true'] {
-  color: var(--inverse);
-  background: var(--inverse-surface);
-}
-
-.focus-phase-tabs button:disabled { cursor: default; }
-
 .focus-timer-card__clock {
   display: grid;
   align-content: center;

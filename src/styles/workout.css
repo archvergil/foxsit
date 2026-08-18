@@ -3,33 +3,6 @@
   gap: var(--space-6);
 }
 
-.workout-view-switch {
-  width: fit-content;
-  display: flex;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-}
-
-.workout-view-switch a {
-  min-height: var(--touch-target);
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-2) var(--space-5);
-  color: var(--ink-faint);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  font-weight: 700;
-}
-
-.workout-view-switch a.is-active {
-  color: var(--ink);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
 .workout-active-banner {
   min-height: 5.25rem;
   display: flex;

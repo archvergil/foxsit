@@ -101,6 +101,7 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Phase 9 — Release
 
+- [x] Standardize segmented navigation controls across Calendar, Habits, Focus and Workout with the production visual system.
 - [ ] Full visual and accessibility audit.
 - [ ] Performance, lazy-loading and reduced-connection checks.
 - [ ] PWA install/update/offline verification.
@@ -113,6 +114,12 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 Continue Phase 6 with ownership-safe Workout → Habit completion and read-only Calendar adapters, then expose the scheduled/active workout on Today. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
 
 ## Latest verification
+
+Completed the segmented-control visual slice on 2026-08-18:
+
+- replaced the duplicated Calendar, Habits, Focus and Workout switch styling with the shared dark-rail/light-active segmented control;
+- preserved native route links, button states, visible focus treatment, reduced-motion handling and 44 px touch targets;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (113/113) and `npm run build` passed.
 
 Completed the production Workout completion/history slice on 2026-08-18:
 

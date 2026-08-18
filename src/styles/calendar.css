@@ -7,10 +7,6 @@
 .calendar-editor > header button { width: var(--touch-target); height: var(--touch-target); display: grid; padding: 0; color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border); border-radius: 50%; cursor: pointer; place-items: center; }
 .calendar-toolbar__navigation svg,
 .calendar-editor > header button svg { width: 1.1rem; }
-.calendar-view-switch { width: fit-content; display: flex; gap: var(--space-1); padding: var(--space-1); background: var(--surface-muted); border-radius: var(--radius-pill); }
-.calendar-view-switch a { min-height: var(--touch-target); display: grid; align-items: center; padding: 0 var(--space-5); color: var(--ink-soft); border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 700; text-decoration: none; transition: color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast); }
-.calendar-view-switch a:hover { color: var(--ink); }
-.calendar-view-switch .calendar-view-switch__active { color: var(--ink); background: var(--surface); box-shadow: var(--shadow-soft); }
 .calendar-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(19rem, 23rem); align-items: start; gap: var(--space-5); }
 .calendar-month,
 .calendar-agenda,

@@ -98,7 +98,7 @@ export default function FocusPage() {
 
       <div className="focus-layout">
         <section className={`focus-timer-card focus-timer-card--${timer.phase}`} aria-label="Pomodoro timer">
-          <div className="focus-phase-tabs" aria-label="Timer phase">
+          <div className="segmented-control focus-phase-tabs" aria-label="Timer phase">
             {(Object.keys(phaseCopy) as FocusPhase[]).map((phase) => (
               <button
                 type="button"
