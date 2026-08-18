@@ -1,26 +1,32 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FolderPlus, Pencil, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/Button'
+import { BannerPicker } from '@/components/visual/BannerPicker'
+import { collectionBannerAssets } from '@/lib/bannerAssets'
 import {
   useCreateTaskProject,
   useDeleteTaskProject,
   useUpdateTaskProject,
 } from './queries'
-import { taskColorTokenSchema } from './schemas'
+import { taskBannerAssetSchema, taskColorTokenSchema } from './schemas'
+import { flattenTaskProjects, taskProjectWithDescendants } from './taskProjectTree'
 import type { TaskProject } from './types'
 
 const projectFormSchema = z.object({
   name: z.string().trim().min(1, 'Project name is required.').max(120),
   colorToken: taskColorTokenSchema,
+  parentProjectId: z.string().uuid().or(z.literal('')),
+  bannerAsset: z.union([taskBannerAssetSchema, z.literal('')]),
+  bannerMonochrome: z.boolean(),
 })
 type ProjectForm = z.infer<typeof projectFormSchema>
 
-export function TaskProjectManager({ currentProject }: { currentProject?: TaskProject | undefined }) {
+export function TaskProjectManager({ currentProject, projects }: { currentProject?: TaskProject | undefined; projects: TaskProject[] }) {
   const navigate = useNavigate()
   const [mode, setMode] = useState<'closed' | 'create' | 'edit'>('closed')
   const createProject = useCreateTaskProject()
@@ -28,13 +34,15 @@ export function TaskProjectManager({ currentProject }: { currentProject?: TaskPr
   const deleteProject = useDeleteTaskProject()
   const form = useForm<ProjectForm>({
     resolver: zodResolver(projectFormSchema),
-    defaultValues: { name: '', colorToken: 'mint' },
+    defaultValues: { name: '', colorToken: 'mint', parentProjectId: '', bannerAsset: '', bannerMonochrome: false },
   })
+  const bannerAsset = useWatch({ control: form.control, name: 'bannerAsset' }) ?? ''
+  const bannerMonochrome = useWatch({ control: form.control, name: 'bannerMonochrome' }) ?? false
 
   const open = (nextMode: 'create' | 'edit') => {
     form.reset(nextMode === 'edit' && currentProject
-      ? { name: currentProject.name, colorToken: currentProject.colorToken }
-      : { name: '', colorToken: 'mint' })
+      ? { name: currentProject.name, colorToken: currentProject.colorToken, parentProjectId: currentProject.parentProjectId ?? '', bannerAsset: currentProject.bannerAsset ?? '', bannerMonochrome: currentProject.bannerMonochrome ?? false }
+      : { name: '', colorToken: 'mint', parentProjectId: currentProject?.id ?? '', bannerAsset: '', bannerMonochrome: false })
     setMode(nextMode)
   }
 
@@ -45,10 +53,11 @@ export function TaskProjectManager({ currentProject }: { currentProject?: TaskPr
 
   const submit = form.handleSubmit(async (values) => {
     try {
+      const input = { ...values, parentProjectId: values.parentProjectId || null, bannerAsset: values.bannerAsset || null }
       if (mode === 'edit' && currentProject) {
-        await updateProject.mutateAsync({ projectId: currentProject.id, input: values })
+        await updateProject.mutateAsync({ projectId: currentProject.id, input })
       } else {
-        const project = await createProject.mutateAsync(values)
+        const project = await createProject.mutateAsync(input)
         await navigate(`/tasks/project/${project.id}`)
       }
       close()
@@ -70,6 +79,7 @@ export function TaskProjectManager({ currentProject }: { currentProject?: TaskPr
   if (mode !== 'closed') {
     const pending = createProject.isPending || updateProject.isPending
     const error = createProject.error ?? updateProject.error
+    const excludedParentIds = currentProject ? new Set(taskProjectWithDescendants(projects, currentProject.id)) : new Set<string>()
     return (
       <form className="project-editor" aria-label={mode === 'edit' ? 'Edit project' : 'Create project'} onSubmit={(event) => void submit(event)}>
         <header>
@@ -81,6 +91,13 @@ export function TaskProjectManager({ currentProject }: { currentProject?: TaskPr
           <input autoFocus {...form.register('name')} aria-invalid={Boolean(form.formState.errors.name)} />
         </label>
         <label>
+          <span>Inside</span>
+          <select {...form.register('parentProjectId')}>
+            <option value="">Top level</option>
+            {flattenTaskProjects(projects).filter(({ project }) => !excludedParentIds.has(project.id)).map(({ project, depth }) => <option value={project.id} key={project.id}>{`${'— '.repeat(depth)}${project.name}`}</option>)}
+          </select>
+        </label>
+        <label>
           <span>Color</span>
           <select {...form.register('colorToken')}>
             <option value="mint">Mint</option>
@@ -90,6 +107,7 @@ export function TaskProjectManager({ currentProject }: { currentProject?: TaskPr
             <option value="slate">Slate</option>
           </select>
         </label>
+        <BannerPicker assets={collectionBannerAssets} value={bannerAsset || null} monochrome={bannerMonochrome} onChange={(value) => form.setValue('bannerAsset', value ?? '', { shouldDirty: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
         {form.formState.errors.name ? <small role="alert">{form.formState.errors.name.message}</small> : null}
         {error ? <small role="alert">{error.message}</small> : null}
         <Button type="submit" isLoading={pending}>Save project</Button>

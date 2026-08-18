@@ -2,6 +2,7 @@ import { CalendarClock, CheckSquare2, Leaf, MapPin, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
+import { habitAccentStyle } from '@/features/habits/habitVisuals'
 import type { Task } from '@/features/tasks/types'
 import { localDateKey } from '@/lib/dates'
 import { formatCalendarDateLabel, formatCalendarEventTime } from './calendarMonth'
@@ -61,7 +62,7 @@ export function CalendarDayAgenda({
             </Link>
           ))}
           {habits.map((habit) => (
-            <Link className={`calendar-agenda-item calendar-agenda-item--habit calendar-agenda-item--${habit.colorToken}`} to="/habits" key={habit.id} aria-label={`Open habit ${habit.title}`}>
+            <Link className={`calendar-agenda-item calendar-agenda-item--habit calendar-agenda-item--${habit.colorToken}`} style={habitAccentStyle(habit)} to="/habits" key={habit.id} aria-label={`Open habit ${habit.title}`}>
               <span className={`calendar-agenda-item__color calendar-agenda-item__color--${habit.colorToken}`} />
               <span><strong>{habit.title}</strong><small>Habit · {formatCalendarHabitProgress(habit)}</small></span>
               <Leaf aria-hidden />

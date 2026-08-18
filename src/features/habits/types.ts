@@ -3,6 +3,30 @@ export type HabitIcon = 'circle-check-big' | 'glass-water' | 'book-open' | 'dumb
 export type HabitScheduleType = 'daily' | 'weekdays'
 export type HabitLogStatus = 'in_progress' | 'completed' | 'skipped'
 
+export interface HabitProject {
+  id: string
+  userId: string
+  name: string
+  icon: string | null
+  colorToken: HabitColorToken
+  customColor: string | null
+  bannerAsset: string | null
+  bannerMonochrome: boolean
+  position: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface HabitProjectInput {
+  name: string
+  icon: string | null
+  colorToken: HabitColorToken
+  customColor: string | null
+  bannerAsset: string | null
+  bannerMonochrome: boolean
+  position: number
+}
+
 export interface Habit {
   id: string
   userId: string
@@ -10,6 +34,8 @@ export interface Habit {
   description: string | null
   icon: HabitIcon
   colorToken: HabitColorToken
+  customColor?: string | null | undefined
+  projectId?: string | null | undefined
   scheduleType: HabitScheduleType
   weekdays: number[] | null
   targetCount: number
@@ -26,6 +52,8 @@ export interface HabitInput {
   description: string | null
   icon: HabitIcon
   colorToken: HabitColorToken
+  customColor?: string | null | undefined
+  projectId?: string | null | undefined
   scheduleType: HabitScheduleType
   weekdays: number[] | null
   targetCount: number

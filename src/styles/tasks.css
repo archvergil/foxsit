@@ -47,7 +47,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-3) + var(--project-depth, 0) * 0.9rem);
   color: var(--ink-soft);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
@@ -133,6 +133,11 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
 }
+.task-project-hero { margin: var(--space-3); }
+.task-project-hero > .visual-banner__content { min-height: 6.75rem; display: grid; align-content: end; gap: 0.15rem; padding: var(--space-4); }
+.task-project-hero strong { font-size: var(--text-xl); letter-spacing: -0.03em; }
+.task-project-hero small { color: var(--ink-soft); }
+.task-project-hero--mint { background: color-mix(in srgb, var(--mint) 42%, var(--surface)); }.task-project-hero--coral { background: color-mix(in srgb, var(--coral) 42%, var(--surface)); }.task-project-hero--blue { background: color-mix(in srgb, var(--blue) 42%, var(--surface)); }.task-project-hero--sand { background: color-mix(in srgb, var(--sand) 42%, var(--surface)); }
 
 .task-quick-add {
   display: grid;

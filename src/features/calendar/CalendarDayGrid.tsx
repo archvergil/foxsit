@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { Task } from '@/features/tasks/types'
+import { habitAccentStyle } from '@/features/habits/habitVisuals'
 import { formatTimestampForInput, localDateKey } from '@/lib/dates'
 import { eventOccursOnDate, formatCalendarDateLabel, formatCalendarEventTime, taskOccursOnDate } from './calendarMonth'
 import { formatCalendarHour, layoutCalendarDayTimedEvents } from './calendarWeek'
@@ -71,7 +72,7 @@ export function CalendarDayGrid({
             ><CheckSquare2 aria-hidden />{task.title}</Link>
           ))}
           {habits.map((habit) => (
-            <Link className={`calendar-week-all-day calendar-week-all-day--habit calendar-week-all-day--${habit.colorToken}`} to="/habits" key={habit.id} aria-label={`Open habit ${habit.title}`}><Leaf aria-hidden />{habit.title}</Link>
+            <Link className={`calendar-week-all-day calendar-week-all-day--habit calendar-week-all-day--${habit.colorToken}`} style={habitAccentStyle(habit)} to="/habits" key={habit.id} aria-label={`Open habit ${habit.title}`}><Leaf aria-hidden />{habit.title}</Link>
           ))}
         </div>
       </div>

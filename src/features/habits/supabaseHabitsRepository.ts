@@ -7,12 +7,14 @@ import {
   habitInputSchema,
   habitLogInputSchema,
   habitLogStatusSchema,
+  habitProjectInputSchema,
   habitScheduleTypeSchema,
 } from './schemas'
 import type { HabitLogRange, HabitsRepository } from './repository'
-import type { Habit, HabitInput, HabitLog } from './types'
+import type { Habit, HabitInput, HabitLog, HabitProject } from './types'
 
 type HabitRow = Database['public']['Tables']['habits']['Row']
+type HabitProjectRow = Database['public']['Tables']['habit_projects']['Row']
 type HabitLogRow = Database['public']['Tables']['habit_logs']['Row']
 
 export class HabitsRepositoryError extends Error {
@@ -34,6 +36,8 @@ const mapHabit = (row: HabitRow): Habit => ({
   description: row.description,
   icon: habitIconSchema.parse(row.icon),
   colorToken: habitColorTokenSchema.parse(row.color_token),
+  customColor: row.custom_color,
+  projectId: row.project_id,
   scheduleType: habitScheduleTypeSchema.parse(row.schedule_type),
   weekdays: row.weekdays,
   targetCount: row.target_count,
@@ -41,6 +45,20 @@ const mapHabit = (row: HabitRow): Habit => ({
   position: row.position,
   isActive: row.is_active,
   archivedAt: row.archived_at,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+})
+
+const mapProject = (row: HabitProjectRow): HabitProject => ({
+  id: row.id,
+  userId: row.user_id,
+  name: row.name,
+  icon: row.icon,
+  colorToken: habitColorTokenSchema.parse(row.color_token),
+  customColor: row.custom_color,
+  bannerAsset: row.banner_asset,
+  bannerMonochrome: row.banner_monochrome,
+  position: row.position,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 })
@@ -68,6 +86,8 @@ const habitRowFromInput = (input: HabitInput) => {
     description: value.description,
     icon: value.icon,
     color_token: value.colorToken,
+    custom_color: value.customColor ?? null,
+    project_id: value.projectId ?? null,
     schedule_type: value.scheduleType,
     weekdays: value.weekdays,
     target_count: value.targetCount,
@@ -83,6 +103,43 @@ const sortHabits = (habits: Habit[]) => [...habits].sort((left, right) =>
 export const createSupabaseHabitsRepository = (
   client: SupabaseClient<Database>,
 ): HabitsRepository => ({
+  listProjects: async (userId) => {
+    const { data, error } = await client.from('habit_projects').select('*')
+      .eq('user_id', userId).order('position').order('created_at')
+    return assertData(data, error, 'load habit projects').map(mapProject)
+  },
+  createProject: async (userId, input) => {
+    const value = habitProjectInputSchema.parse(input)
+    const { data, error } = await client.from('habit_projects').insert({
+      user_id: userId,
+      name: value.name,
+      icon: value.icon,
+      color_token: value.colorToken,
+      custom_color: value.customColor,
+      banner_asset: value.bannerAsset,
+      banner_monochrome: value.bannerMonochrome,
+      position: value.position,
+    }).select('*').single()
+    return mapProject(assertData(data, error, 'create the habit project'))
+  },
+  updateProject: async (userId, projectId, input) => {
+    const value = habitProjectInputSchema.parse(input)
+    const { data, error } = await client.from('habit_projects').update({
+      name: value.name,
+      icon: value.icon,
+      color_token: value.colorToken,
+      custom_color: value.customColor,
+      banner_asset: value.bannerAsset,
+      banner_monochrome: value.bannerMonochrome,
+      position: value.position,
+    }).eq('id', projectId).eq('user_id', userId).select('*').single()
+    return mapProject(assertData(data, error, 'update the habit project'))
+  },
+  deleteProject: async (userId, projectId) => {
+    const { data, error } = await client.from('habit_projects').delete()
+      .eq('id', projectId).eq('user_id', userId).select('id').maybeSingle()
+    assertData(data, error, 'delete the habit project')
+  },
   listHabits: async (userId, includeInactive = false) => {
     let query = client.from('habits').select('*').eq('user_id', userId)
     if (!includeInactive) query = query.eq('is_active', true)

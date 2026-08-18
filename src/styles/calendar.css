@@ -68,7 +68,11 @@
 .calendar-item-chip--sand { background: var(--sand); }
 .calendar-item-chip--slate { background: var(--surface-muted); }
 .calendar-item-chip--task { background: transparent; border: 1px dashed var(--border-strong); }
-.calendar-item-chip--habit { border: 1px solid color-mix(in srgb, currentColor 12%, transparent); text-decoration: none; }
+.calendar-item-chip--habit { --habit-accent: var(--blue); background: var(--habit-accent); border: 1px solid color-mix(in srgb, currentColor 12%, transparent); text-decoration: none; }
+.calendar-item-chip--habit.calendar-item-chip--mint { --habit-accent: var(--mint); }
+.calendar-item-chip--habit.calendar-item-chip--coral { --habit-accent: var(--coral); }
+.calendar-item-chip--habit.calendar-item-chip--sand { --habit-accent: var(--sand); }
+.calendar-item-chip--habit.calendar-item-chip--slate { --habit-accent: var(--surface-muted); }
 .calendar-item-chip svg { width: 0.75rem; flex: 0 0 auto; }
 .calendar-item-chip__time { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.6rem; }
 .calendar-item-chip__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -92,6 +96,11 @@
 .calendar-agenda-item__color--slate { background: var(--ink-faint); }
 .calendar-agenda-item--task .calendar-agenda-item__color { background: var(--surface-muted); }
 .calendar-agenda-item--habit { text-decoration: none; }
+.calendar-agenda-item--habit .calendar-agenda-item__color { background: var(--habit-accent, var(--blue)); }
+.calendar-agenda-item--habit.calendar-agenda-item--mint { --habit-accent: var(--mint); }
+.calendar-agenda-item--habit.calendar-agenda-item--coral { --habit-accent: var(--coral); }
+.calendar-agenda-item--habit.calendar-agenda-item--sand { --habit-accent: var(--sand); }
+.calendar-agenda-item--habit.calendar-agenda-item--slate { --habit-accent: var(--ink-faint); }
 .calendar-agenda-item > span:nth-child(2) { min-width: 0; display: grid; }
 .calendar-agenda-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-agenda-item small { margin-top: 0.2rem; overflow: hidden; color: var(--ink-faint); font-size: var(--text-xs); text-overflow: ellipsis; white-space: nowrap; }
@@ -140,7 +149,11 @@
 .calendar-week-all-day--sand { background: var(--sand); }
 .calendar-week-all-day--slate { background: var(--surface-muted); }
 .calendar-week-all-day--task { background: transparent; border: 1px dashed var(--border-strong); }
-.calendar-week-all-day--habit { border: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+.calendar-week-all-day--habit { --habit-accent: var(--blue); background: var(--habit-accent); border: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
+.calendar-week-all-day--habit.calendar-week-all-day--mint { --habit-accent: var(--mint); }
+.calendar-week-all-day--habit.calendar-week-all-day--coral { --habit-accent: var(--coral); }
+.calendar-week-all-day--habit.calendar-week-all-day--sand { --habit-accent: var(--sand); }
+.calendar-week-all-day--habit.calendar-week-all-day--slate { --habit-accent: var(--surface-muted); }
 .calendar-week-all-day svg { width: 0.7rem; flex: 0 0 auto; }
 .calendar-week-grid__body-scroll { max-height: min(65vh, 52rem); overflow-y: auto; scrollbar-gutter: stable; }
 .calendar-week-grid__body { position: relative; background: var(--surface); }
@@ -194,11 +207,11 @@
 @media (pointer: coarse) {
   .calendar-day__items { display: none; }
   .calendar-day__mobile-markers { min-height: 0.65rem; display: flex; justify-content: center; gap: 0.16rem; overflow: hidden; }
-  .calendar-day__mobile-markers i { width: 0.32rem; height: 0.32rem; flex: 0 0 auto; background: var(--blue); border-radius: 50%; }
-  .calendar-day__mobile-markers .calendar-marker--mint { background: var(--mint); }
-  .calendar-day__mobile-markers .calendar-marker--coral { background: var(--coral); }
-  .calendar-day__mobile-markers .calendar-marker--sand { background: var(--sand); }
-  .calendar-day__mobile-markers .calendar-marker--slate,
+  .calendar-day__mobile-markers i { width: 0.32rem; height: 0.32rem; flex: 0 0 auto; background: var(--habit-accent, var(--blue)); border-radius: 50%; }
+  .calendar-day__mobile-markers .calendar-marker--mint { background: var(--habit-accent, var(--mint)); }
+  .calendar-day__mobile-markers .calendar-marker--coral { background: var(--habit-accent, var(--coral)); }
+  .calendar-day__mobile-markers .calendar-marker--sand { background: var(--habit-accent, var(--sand)); }
+  .calendar-day__mobile-markers .calendar-marker--slate { background: var(--habit-accent, var(--ink-faint)); }
   .calendar-day__mobile-markers .calendar-marker--task { background: var(--ink-faint); }
 }
 

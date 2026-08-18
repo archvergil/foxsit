@@ -168,12 +168,14 @@ export type Database = {
         Row: {
           archived_at: string | null
           color_token: string
+          custom_color: string | null
           created_at: string
           description: string | null
           icon: string
           id: string
           is_active: boolean
           position: number
+          project_id: string | null
           schedule_type: string
           target_count: number
           title: string
@@ -185,12 +187,14 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           color_token?: string
+          custom_color?: string | null
           created_at?: string
           description?: string | null
           icon?: string
           id?: string
           is_active?: boolean
           position?: number
+          project_id?: string | null
           schedule_type?: string
           target_count?: number
           title: string
@@ -202,12 +206,14 @@ export type Database = {
         Update: {
           archived_at?: string | null
           color_token?: string
+          custom_color?: string | null
           created_at?: string
           description?: string | null
           icon?: string
           id?: string
           is_active?: boolean
           position?: number
+          project_id?: string | null
           schedule_type?: string
           target_count?: number
           title?: string
@@ -215,6 +221,56 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weekdays?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habits_project_owner_fk"
+            columns: ["project_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "habit_projects"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      habit_projects: {
+        Row: {
+          banner_asset: string | null
+          banner_monochrome: boolean
+          color_token: string
+          created_at: string
+          custom_color: string | null
+          icon: string | null
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banner_asset?: string | null
+          banner_monochrome?: boolean
+          color_token?: string
+          created_at?: string
+          custom_color?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banner_asset?: string | null
+          banner_monochrome?: boolean
+          color_token?: string
+          created_at?: string
+          custom_color?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -295,38 +351,58 @@ export type Database = {
       task_projects: {
         Row: {
           archived_at: string | null
+          banner_asset: string | null
+          banner_monochrome: boolean
           color_token: string
+          custom_color: string | null
           created_at: string
           icon: string | null
           id: string
           name: string
+          parent_project_id: string | null
           position: number
           updated_at: string
           user_id: string
         }
         Insert: {
           archived_at?: string | null
+          banner_asset?: string | null
+          banner_monochrome?: boolean
           color_token?: string
+          custom_color?: string | null
           created_at?: string
           icon?: string | null
           id?: string
           name: string
+          parent_project_id?: string | null
           position?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           archived_at?: string | null
+          banner_asset?: string | null
+          banner_monochrome?: boolean
           color_token?: string
+          custom_color?: string | null
           created_at?: string
           icon?: string | null
           id?: string
           name?: string
+          parent_project_id?: string | null
           position?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "task_projects_parent_owner_fk"
+            columns: ["parent_project_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "task_projects"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -449,6 +525,8 @@ export type Database = {
       workout_routines: {
         Row: {
           archived_at: string | null
+          banner_asset: string | null
+          banner_monochrome: boolean
           color_token: string
           created_at: string
           description: string | null
@@ -460,6 +538,8 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          banner_asset?: string | null
+          banner_monochrome?: boolean
           color_token?: string
           created_at?: string
           description?: string | null
@@ -471,6 +551,8 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          banner_asset?: string | null
+          banner_monochrome?: boolean
           color_token?: string
           created_at?: string
           description?: string | null
@@ -694,6 +776,8 @@ export type Database = {
         Returns: {
           archived_at: string | null
           color_token: string
+          custom_color: string | null
+          project_id: string | null
           created_at: string
           description: string | null
           icon: string

@@ -123,4 +123,39 @@ describe('Tasks database migrations on local PGlite', () => {
 
     expect(remaining.rows[0]).toEqual({ user_id: USER_A, project_id: null })
   })
+
+  it('supports nested project branches without cross-owner parents or cycles', async () => {
+    const root = (await database!.query<{ id: string }>(
+      `insert into public.task_projects (user_id, name, banner_asset)
+       values ($1, 'Work', 'habits_1.gif') returning id`,
+      [USER_A],
+    )).rows[0]!.id
+    const child = (await database!.query<{ id: string }>(
+      `insert into public.task_projects (user_id, name, parent_project_id, banner_monochrome)
+       values ($1, 'Launch', $2, true) returning id`,
+      [USER_A, root],
+    )).rows[0]!.id
+
+    await expect(database!.query(
+      'update public.task_projects set parent_project_id = $1 where id = $2',
+      [child, root],
+    )).rejects.toThrow(/cannot contain itself/i)
+
+    const foreignRoot = (await database!.query<{ id: string }>(
+      `insert into public.task_projects (user_id, name) values ($1, 'Foreign') returning id`,
+      [USER_B],
+    )).rows[0]!.id
+    await expect(database!.query(
+      `insert into public.task_projects (user_id, name, parent_project_id)
+       values ($1, 'Invalid child', $2)`,
+      [USER_A, foreignRoot],
+    )).rejects.toThrow(/foreign key/i)
+
+    await database!.query('delete from public.task_projects where id = $1', [root])
+    const detached = await database!.query<{ user_id: string; parent_project_id: string | null }>(
+      'select user_id, parent_project_id from public.task_projects where id = $1',
+      [child],
+    )
+    expect(detached.rows[0]).toEqual({ user_id: USER_A, parent_project_id: null })
+  })
 })

@@ -5,7 +5,7 @@ import { useProfile } from '@/features/settings/profileQueries'
 import { resolveTimeZone } from '@/lib/dates'
 import { useHabitsRepository } from './habitsRepositoryContext'
 import { habitQueryKeys, type HabitLogRange } from './repository'
-import type { Habit, HabitInput, HabitLogInput } from './types'
+import type { Habit, HabitInput, HabitLogInput, HabitProjectInput } from './types'
 
 const useHabitIdentity = () => {
   const { session } = useAuth()
@@ -29,6 +29,50 @@ export const useHabits = (includeInactive = false) => {
   return useQuery({
     queryKey: habitQueryKeys.list(userId, includeInactive),
     queryFn: () => repository.listHabits(userId, includeInactive),
+  })
+}
+
+export const useHabitProjects = () => {
+  const repository = useHabitsRepository()
+  const { userId } = useHabitIdentity()
+  return useQuery({ queryKey: habitQueryKeys.projects(userId), queryFn: () => repository.listProjects(userId) })
+}
+
+export const useCreateHabitProject = () => {
+  const repository = useHabitsRepository()
+  const queryClient = useQueryClient()
+  const { userId } = useHabitIdentity()
+  return useMutation({
+    mutationKey: ['habits', 'projects', 'create', userId],
+    mutationFn: (input: HabitProjectInput) => repository.createProject(userId, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) }),
+  })
+}
+
+export const useUpdateHabitProject = () => {
+  const repository = useHabitsRepository()
+  const queryClient = useQueryClient()
+  const { userId } = useHabitIdentity()
+  return useMutation({
+    mutationKey: ['habits', 'projects', 'update', userId],
+    mutationFn: ({ projectId, input }: { projectId: string; input: HabitProjectInput }) => repository.updateProject(userId, projectId, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) }),
+  })
+}
+
+export const useDeleteHabitProject = () => {
+  const repository = useHabitsRepository()
+  const queryClient = useQueryClient()
+  const { userId } = useHabitIdentity()
+  return useMutation({
+    mutationKey: ['habits', 'projects', 'delete', userId],
+    mutationFn: (projectId: string) => repository.deleteProject(userId, projectId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) }),
+        queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) }),
+      ])
+    },
   })
 }
 

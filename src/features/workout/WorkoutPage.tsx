@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
+import { VisualBanner } from '@/components/visual/VisualBanner'
 import { ActiveWorkoutSession } from './ActiveWorkoutSession'
 import { useActiveWorkoutSession, useDeleteWorkoutExercise, useDeleteWorkoutRoutine, useStartWorkoutSession, useWorkoutRoutines } from './queries'
 import type { WorkoutRoutine } from './types'
@@ -12,11 +13,13 @@ import { WorkoutHistory } from './WorkoutHistory'
 import { WorkoutRoutineEditor } from './WorkoutRoutineEditor'
 
 const RoutineCard = ({ routine }: { routine: WorkoutRoutine }) => (
-  <Link className={`workout-routine-card workout-routine-card--${routine.colorToken}`} to={`/workout/routine/${routine.id}`}>
-    <span className="workout-routine-card__icon"><Dumbbell aria-hidden /></span>
-    <span><span className="eyebrow">{routine.exercises.length} exercises</span><strong>{routine.name}</strong><small>{routine.description ?? 'Ready for exercise planning.'}</small></span>
-    <ChevronRight aria-hidden />
-  </Link>
+  <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className={`workout-routine-card workout-routine-card--${routine.colorToken}`}>
+    <Link className="workout-routine-card__link" to={`/workout/routine/${routine.id}`}>
+      <span className="workout-routine-card__icon"><Dumbbell aria-hidden /></span>
+      <span><span className="eyebrow">{routine.exercises.length} exercises</span><strong>{routine.name}</strong><small>{routine.description ?? 'Ready for exercise planning.'}</small></span>
+      <ChevronRight aria-hidden />
+    </Link>
+  </VisualBanner>
 )
 
 function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; onEdit: () => void }) {
@@ -54,11 +57,11 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
           <Button variant="quiet" isLoading={deleteRoutine.isPending} onClick={() => void removeRoutine()}><Trash2 aria-hidden />Delete</Button>
         </span>
       </div>
-      <section className={`workout-detail__hero workout-detail__hero--${routine.colorToken}`}>
+      <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className={`workout-detail__hero workout-detail__hero--${routine.colorToken}`}>
         <span className="eyebrow">Workout routine</span><h2>{routine.name}</h2>
         <p>{routine.description ?? 'Add exercises below to turn this routine into a repeatable plan.'}</p>
         <dl><div><dt>Exercises</dt><dd>{routine.exercises.length}</dd></div><div><dt>Planned sets</dt><dd>{routine.exercises.reduce((total, exercise) => total + exercise.targetSets, 0)}</dd></div></dl>
-      </section>
+      </VisualBanner>
       <section className="workout-exercise-list" aria-label="Routine exercises">
         <header><div><span className="eyebrow">Exercise order</span><h2>Training blocks</h2></div></header>
         {routine.exercises.length === 0 ? <div className="workout-empty"><Dumbbell aria-hidden /><strong>No exercises yet.</strong><p>Add the first movement below. It is saved directly to Supabase.</p></div> : (

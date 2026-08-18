@@ -27,16 +27,10 @@
 
 .workout-routine-card {
   min-height: 12rem;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: end;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  overflow: hidden;
   border: 1px solid color-mix(in srgb, currentColor 8%, transparent);
-  border-radius: var(--radius-xl);
   transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal);
 }
+.workout-routine-card__link { min-height: 12rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; gap: var(--space-4); padding: var(--space-5); color: inherit; }
 
 .workout-routine-card:hover { box-shadow: var(--shadow-card); transform: translateY(-3px); }
 .workout-routine-card--mint { color: var(--mint-ink); background: var(--mint); }
@@ -55,10 +49,10 @@
 }
 
 .workout-routine-card__icon svg { width: 1.25rem; }
-.workout-routine-card > span:nth-child(2) { min-width: 0; display: grid; }
+.workout-routine-card__link > span:nth-child(2) { min-width: 0; display: grid; }
 .workout-routine-card strong { margin-top: var(--space-2); font-size: var(--text-xl); letter-spacing: -0.035em; }
 .workout-routine-card small { margin-top: var(--space-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.7; }
-.workout-routine-card > svg { width: 1.1rem; align-self: center; }
+.workout-routine-card__link > svg { width: 1.1rem; align-self: center; }
 
 .workout-state,
 .workout-empty {
@@ -89,11 +83,8 @@
 
 .workout-detail__hero {
   min-height: 20rem;
-  display: grid;
-  align-content: end;
-  padding: clamp(1.5rem, 5vw, 3.5rem);
-  border-radius: var(--radius-xl);
 }
+.workout-detail__hero > .visual-banner__content { min-height: 20rem; display: grid; align-content: end; padding: clamp(1.5rem, 5vw, 3.5rem); }
 
 .workout-detail__hero--mint { color: var(--mint-ink); background: var(--mint); }
 .workout-detail__hero--coral { color: var(--coral-ink); background: var(--coral); }

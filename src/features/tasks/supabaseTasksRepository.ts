@@ -62,6 +62,9 @@ const mapProject = (row: ProjectRow): TaskProject => ({
   name: row.name,
   colorToken: taskColorTokenSchema.parse(row.color_token),
   icon: row.icon,
+  parentProjectId: row.parent_project_id,
+  bannerAsset: row.banner_asset,
+  bannerMonochrome: row.banner_monochrome,
   position: row.position,
   archivedAt: row.archived_at,
   createdAt: row.created_at,
@@ -103,6 +106,9 @@ const toProjectUpdate = (input: UpdateTaskProjectInput): ProjectUpdate => {
   if (parsed.name !== undefined) update.name = parsed.name
   if (parsed.colorToken !== undefined) update.color_token = parsed.colorToken
   if (parsed.icon !== undefined) update.icon = parsed.icon
+  if (parsed.parentProjectId !== undefined) update.parent_project_id = parsed.parentProjectId
+  if (parsed.bannerAsset !== undefined) update.banner_asset = parsed.bannerAsset
+  if (parsed.bannerMonochrome !== undefined) update.banner_monochrome = parsed.bannerMonochrome
   if (parsed.position !== undefined) update.position = parsed.position
   if (parsed.archivedAt !== undefined) update.archived_at = parsed.archivedAt
   return update
@@ -154,6 +160,9 @@ export const createSupabaseTasksRepository = (
         name: parsed.name,
         color_token: parsed.colorToken,
         icon: parsed.icon ?? null,
+        parent_project_id: parsed.parentProjectId ?? null,
+        banner_asset: parsed.bannerAsset ?? null,
+        banner_monochrome: parsed.bannerMonochrome ?? false,
         position: parsed.position ?? Date.now(),
       })
       .select('*')
@@ -202,6 +211,7 @@ export const createSupabaseTasksRepository = (
     if (filters.status !== undefined) query = query.eq('status', filters.status)
     if (filters.projectId === null) query = query.is('project_id', null)
     else if (filters.projectId !== undefined) query = query.eq('project_id', filters.projectId)
+    if (filters.projectIds?.length) query = query.in('project_id', filters.projectIds)
     if (filters.scheduledDate !== undefined) {
       query = query.eq('scheduled_date', filters.scheduledDate)
     }

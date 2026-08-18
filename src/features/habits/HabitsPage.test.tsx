@@ -10,7 +10,7 @@ import { ProfileRepositoryProvider } from '@/features/settings/ProfileRepository
 import type { ProfileRepository, UserProfile } from '@/features/settings/profileRepository'
 import { HabitsRepositoryProvider } from './HabitsRepositoryProvider'
 import type { HabitLogRange, HabitsRepository } from './repository'
-import type { Habit, HabitInput, HabitLog, HabitLogInput } from './types'
+import type { Habit, HabitInput, HabitLog, HabitLogInput, HabitProject, HabitProjectInput } from './types'
 import HabitsPage from './HabitsPage'
 
 const USER_ID = '83000000-0000-4000-8000-000000000001'
@@ -18,6 +18,34 @@ const USER_ID = '83000000-0000-4000-8000-000000000001'
 class MemoryHabitsRepository implements HabitsRepository {
   habits: Habit[] = []
   logs: HabitLog[] = []
+  projects: HabitProject[] = []
+
+  listProjects(): Promise<HabitProject[]> {
+    return Promise.resolve([...this.projects].sort((left, right) => left.position - right.position))
+  }
+
+  createProject(userId: string, input: HabitProjectInput): Promise<HabitProject> {
+    const project: HabitProject = {
+      id: crypto.randomUUID(), userId, ...input,
+      createdAt: '2026-08-17T12:00:00.000Z', updatedAt: '2026-08-17T12:00:00.000Z',
+    }
+    this.projects.push(project)
+    return Promise.resolve(project)
+  }
+
+  updateProject(_userId: string, projectId: string, input: HabitProjectInput): Promise<HabitProject> {
+    const current = this.projects.find((project) => project.id === projectId)
+    if (!current) return Promise.reject(new Error('Habit project not found.'))
+    const updated = { ...current, ...input, updatedAt: '2026-08-17T13:00:00.000Z' }
+    this.projects = this.projects.map((project) => project.id === projectId ? updated : project)
+    return Promise.resolve(updated)
+  }
+
+  deleteProject(_userId: string, projectId: string): Promise<void> {
+    this.projects = this.projects.filter((project) => project.id !== projectId)
+    this.habits = this.habits.map((habit) => habit.projectId === projectId ? { ...habit, projectId: null } : habit)
+    return Promise.resolve()
+  }
 
   listHabits(_userId: string, includeInactive = false): Promise<Habit[]> {
     return Promise.resolve(this.habits.filter((habit) => includeInactive || habit.isActive))
@@ -113,6 +141,33 @@ afterEach(() => {
 })
 
 describe('Habits Today flow', () => {
+  it('creates a visual project and assigns a new habit to it', async () => {
+    vi.setSystemTime(new Date('2026-08-18T15:00:00.000Z'))
+    const repository = new MemoryHabitsRepository()
+    const user = userEvent.setup()
+    renderPage(repository)
+
+    await user.click(await screen.findByRole('button', { name: 'New project' }))
+    await user.type(within(screen.getByLabelText('Create habit project')).getByRole('textbox', { name: 'Name' }), 'Fitness')
+    await user.click(screen.getByRole('button', { name: 'Fitness' }))
+    await user.click(screen.getByRole('button', { name: 'Collection 2' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Black & white' }))
+    await user.click(within(screen.getByLabelText('Create habit project')).getByRole('button', { name: 'Create project' }))
+
+    await waitFor(() => expect(repository.projects[0]).toMatchObject({
+      name: 'Fitness', icon: 'dumbbell', bannerAsset: 'habits_2.gif', bannerMonochrome: true,
+    }))
+    expect(await screen.findByText('Fitness')).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'New habit' }))
+    await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Morning workout')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Project' }), repository.projects[0]!.id)
+    await user.click(within(screen.getByLabelText('Create habit')).getByRole('button', { name: 'Create habit' }))
+
+    await waitFor(() => expect(repository.habits[0]?.projectId).toBe(repository.projects[0]?.id))
+    expect(await screen.findByText('Morning workout')).toBeVisible()
+  }, 15_000)
+
   it('reorders active habits with accessible controls and durable positions', async () => {
     vi.setSystemTime(new Date('2026-08-18T15:00:00.000Z'))
     const repository = new MemoryHabitsRepository()

@@ -1,15 +1,12 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowDown, ArrowUp, BookOpen, Brain, Check, CircleCheckBig, Dumbbell, Footprints, GlassWater, GripVertical, Minus, Pencil, Plus, RotateCcw, SkipForward, type LucideIcon } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, GripVertical, Minus, Pencil, Plus, RotateCcw, SkipForward } from 'lucide-react'
 import { useState, type CSSProperties } from 'react'
 
 import { nextHabitLog, type HabitProgressAction } from './habitRules'
+import { HabitGlyph } from './HabitGlyph'
+import { habitAccentStyle } from './habitVisuals'
 import type { Habit, HabitLog } from './types'
-
-const icons: Record<string, LucideIcon> = {
-  'circle-check-big': CircleCheckBig, 'glass-water': GlassWater, 'book-open': BookOpen,
-  dumbbell: Dumbbell, footprints: Footprints, brain: Brain,
-}
 
 export function HabitTodayCard({ habit, log, date, pending, index, habitCount, isReordering, onProgress, onEdit, onMove }: {
   habit: Habit
@@ -27,8 +24,11 @@ export function HabitTodayCard({ habit, log, date, pending, index, habitCount, i
     id: habit.id,
     disabled: isReordering,
   })
-  const style: CSSProperties = { transform: CSS.Transform.toString(transform), transition }
-  const Icon = icons[habit.icon] ?? CircleCheckBig
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    ...habitAccentStyle(habit),
+  }
   const count = log?.status === 'skipped' ? 0 : log?.count ?? 0
   const completed = log?.status === 'completed'
   const skipped = log?.status === 'skipped'
@@ -52,10 +52,19 @@ export function HabitTodayCard({ habit, log, date, pending, index, habitCount, i
 
   return (
     <article ref={setNodeRef} style={style} className={`habit-today-card habit-today-card--${habit.colorToken}${completed ? ' habit-today-card--completed' : ''}${skipped ? ' habit-today-card--skipped' : ''}${isDragging ? ' habit-today-card--dragging' : ''}`}>
-      <span className="habit-today-card__icon"><Icon aria-hidden /></span>
+      <button
+        className="habit-today-card__completion"
+        type="button"
+        disabled={pending || skipped}
+        aria-label={completed ? `${habit.title} completed. Mark as incomplete` : `Mark ${habit.title} done`}
+        onClick={() => void apply(completed ? 'decrement' : 'increment')}
+      >
+        {completed ? <Check aria-hidden /> : <span />}
+      </button>
+      <span className="habit-today-card__icon"><HabitGlyph icon={habit.icon} /></span>
       <div className="habit-today-card__body">
         <header>
-          <span><strong>{habit.title}</strong>{habit.description ? <small>{habit.description}</small> : null}</span>
+          <span><strong>{habit.title}</strong><small>{habit.description ?? `${habit.targetCount} ${habit.unit ?? (habit.targetCount === 1 ? 'time' : 'times')} today`}</small></span>
           <span className="habit-today-card__header-actions">
             <button ref={setActivatorNodeRef} type="button" aria-label={`Drag to reorder ${habit.title}`} disabled={isReordering} {...attributes} {...listeners}><GripVertical aria-hidden /></button>
             <button type="button" aria-label={`Move ${habit.title} up`} disabled={index === 0 || isReordering} onClick={() => onMove(habit, 'up')}><ArrowUp aria-hidden /></button>

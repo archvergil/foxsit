@@ -82,6 +82,10 @@ const habitLog: HabitLog = {
   createdAt: '2026-08-17T12:00:00.000Z', updatedAt: '2026-08-17T12:00:00.000Z',
 }
 const habitsRepository: HabitsRepository = {
+  listProjects: () => Promise.resolve([]),
+  createProject: () => Promise.reject(new Error('Not used.')),
+  updateProject: () => Promise.reject(new Error('Not used.')),
+  deleteProject: () => Promise.reject(new Error('Not used.')),
   listHabits: () => Promise.resolve([scheduledHabit]),
   createHabit: () => Promise.reject(new Error('Not used.')),
   updateHabit: () => Promise.reject(new Error('Not used.')),

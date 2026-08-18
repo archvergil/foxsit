@@ -54,6 +54,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 ## Phase 3 — Tasks and Focus
 
 - [x] Projects, Inbox, Today, Upcoming and Completed queries with project create, rename and delete management.
+- [~] Add ownership-safe nested task projects and customizable faded GIF banners; migration and UI are implemented, production migration is pending.
 - [x] Task CRUD, checklist, optimistic completion/reordering with rollback and durable manual ordering.
 - [x] Persisted timestamp-based Pomodoro store and mini player.
 - [x] Durable focus session history and task integration.
@@ -73,12 +74,15 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Habit CRUD, daily/weekday schedules, count targets, skipped reasons, Today logs, archived management and durable accessible ordering.
 - [x] Tested daily history, current/longest streaks, weekly/monthly progress, 12-week heatmap and factual insights.
 - [x] Read-only Calendar adapter and ownership-safe Workout link contract.
+- [~] Rework the Habit workspace into compact routine rows and a responsive visual editor with icon, palette and custom-color selection; production migration is ready but awaits a reachable Postgres connection.
+- [~] Add first-class Habit projects with project assignment, visual icons and customizable faded GIF banners; migration and UI are implemented, production migration is pending.
 
 ## Phase 6 — Workout
 
 - [!] Import and validate the legacy exercise catalog when supplied.
 - [!] Confirm rights and credentials before migrating any legacy GIF.
 - [x] Routine builder and normalized persistence in production Supabase.
+- [~] Add per-routine faded GIF banners with original-color/monochrome selection; migration and UI are implemented, production migration is pending.
 - [x] Supabase-backed active workout with durable sets, timestamp-based rest timer and reload recovery.
 - [x] Transactional finish, completed history, volume, estimated 1RM and PRs.
 - [ ] Workout ↔ habit and calendar adapters.
@@ -112,9 +116,25 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Continue Phase 6 with ownership-safe Workout → Habit completion and read-only Calendar adapters, then expose the scheduled/active workout on Today. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
+Apply migrations `202608180009` and `202608180010` to production, then verify Habit projects, nested Task projects and Workout banners through the deployed Cloudflare build. After that, continue Phase 6 with ownership-safe Workout → Habit completion and read-only Calendar adapters. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended.
 
 ## Latest verification
+
+Implemented the visual collection architecture on 2026-08-18:
+
+- moved the supplied GIF library into the Vite public asset tree and strictly separated `workout_*` from `habits_*` choices;
+- added reusable faded banner rendering plus original-color/monochrome selection;
+- added per-routine Workout banners, first-class Habit projects and nested Task projects with ownership-safe Supabase contracts and RLS;
+- added migration `202608180010_visual_collections.sql`; production application remains pending until the linked Postgres endpoint is reachable.
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (124/124), `npm run test:db` (25/25) and `npm run build` passed.
+
+Completed the Habit workspace visual rework on 2026-08-18:
+
+- replaced oversized habit cards with compact, responsive routine rows and a low-radius workspace header, toolbar and progress summary;
+- replaced text-only icon/color selects with visual icon tiles, palette swatches, live preview and validated custom hexadecimal color input;
+- added migration `202608180009_habit_custom_colors.sql` and Calendar rendering support for custom habit colors;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (116/116) and `npm run build` passed;
+- Supabase CLI login/link succeeded through the portable Node wrapper, but this network timed out at `aws-0-us-west-2.pooler.supabase.com` and direct PostgreSQL requires unavailable IPv6, so the remote migration was deliberately not marked as applied.
 
 Completed the interaction and global radius correction on 2026-08-18:
 

@@ -105,4 +105,37 @@ describe('Habits database migration', () => {
       await resetLocalRole(database!)
     }
   })
+
+  it('isolates visual habit projects and detaches habits when a project is deleted', async () => {
+    const ownProject = (await database!.query<{ id: string }>(
+      `insert into public.habit_projects (user_id, name, icon, banner_asset, banner_monochrome)
+       values ($1, 'Fitness', 'dumbbell', 'habits_4.gif', true) returning id`,
+      [USER_A],
+    )).rows[0]!.id
+    const foreignProject = (await database!.query<{ id: string }>(
+      `insert into public.habit_projects (user_id, name) values ($1, 'Private') returning id`,
+      [USER_B],
+    )).rows[0]!.id
+
+    await expect(database!.query(
+      'update public.habits set project_id = $1 where id = $2',
+      [foreignProject, habitA],
+    )).rejects.toThrow(/foreign key/i)
+    await database!.query('update public.habits set project_id = $1 where id = $2', [ownProject, habitA])
+
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      const visible = await database!.query<{ name: string }>('select name from public.habit_projects')
+      expect(visible.rows).toEqual([{ name: 'Fitness' }])
+    } finally {
+      await resetLocalRole(database!)
+    }
+
+    await database!.query('delete from public.habit_projects where id = $1', [ownProject])
+    const detached = await database!.query<{ user_id: string; project_id: string | null }>(
+      'select user_id, project_id from public.habits where id = $1',
+      [habitA],
+    )
+    expect(detached.rows[0]).toEqual({ user_id: USER_A, project_id: null })
+  })
 })

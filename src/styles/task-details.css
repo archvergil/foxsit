@@ -51,6 +51,8 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
+.project-editor .banner-picker { min-width: 0; }
+.project-editor .banner-picker__options { grid-auto-columns: 4.75rem; }
 
 .project-editor header {
   display: flex;

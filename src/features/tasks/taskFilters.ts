@@ -6,6 +6,7 @@ const isAtOrBefore = (value: string | null, limit: string) =>
 export const taskMatchesFilters = (task: Task, filters: TaskFilters) => {
   if (filters.status !== undefined && task.status !== filters.status) return false
   if (filters.projectId !== undefined && task.projectId !== filters.projectId) return false
+  if (filters.projectIds && !filters.projectIds.includes(task.projectId ?? '')) return false
   if (filters.scheduledDate !== undefined && task.scheduledDate !== filters.scheduledDate) {
     return false
   }

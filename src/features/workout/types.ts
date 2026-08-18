@@ -22,6 +22,8 @@ export interface WorkoutRoutine {
   name: string
   description: string | null
   colorToken: WorkoutColorToken
+  bannerAsset?: string | null | undefined
+  bannerMonochrome?: boolean | undefined
   position: number
   archivedAt: string | null
   createdAt: string
@@ -33,6 +35,8 @@ export interface WorkoutRoutineInput {
   name: string
   description: string | null
   colorToken: WorkoutColorToken
+  bannerAsset?: string | null | undefined
+  bannerMonochrome?: boolean | undefined
 }
 
 export interface WorkoutRoutineExerciseInput {

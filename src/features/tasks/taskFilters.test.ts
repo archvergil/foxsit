@@ -32,4 +32,13 @@ describe('taskMatchesFilters', () => {
     expect(taskMatchesFilters(task, { scheduledAfter: '2026-08-17' })).toBe(true)
     expect(taskMatchesFilters({ ...task, scheduledDate: null }, { scheduledAfter: '2026-08-17' })).toBe(false)
   })
+
+  it('matches any project in a selected nested project branch', () => {
+    const nestedTask = { ...task, projectId: '71af0e2c-665e-4774-b6bb-4e97f839c5cb' }
+    expect(taskMatchesFilters(nestedTask, { projectIds: [
+      '61af0e2c-665e-4774-b6bb-4e97f839c5cb',
+      '71af0e2c-665e-4774-b6bb-4e97f839c5cb',
+    ] })).toBe(true)
+    expect(taskMatchesFilters(nestedTask, { projectIds: ['61af0e2c-665e-4774-b6bb-4e97f839c5cb'] })).toBe(false)
+  })
 })

@@ -8,6 +8,7 @@ export interface CalendarHabitItem {
   date: string
   title: string
   colorToken: Habit['colorToken']
+  customColor: string | null
   count: number
   targetCount: number
   unit: string | null
@@ -35,6 +36,7 @@ export const projectHabitCalendarItems = (
           date,
           title: habit.title,
           colorToken: habit.colorToken,
+          customColor: habit.customColor ?? null,
           count: log?.status === 'skipped' ? 0 : log?.count ?? 0,
           targetCount: habit.targetCount,
           unit: habit.unit,

@@ -1,10 +1,15 @@
 import { z } from 'zod'
 
 import { isValidLocalDate } from '@/lib/dates'
+import { collectionBannerAssetIds } from '@/lib/bannerAssets'
 
 export { isValidLocalDate }
 
 export const taskColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
+export const taskBannerAssetSchema = z.string().refine(
+  (value) => collectionBannerAssetIds.includes(value),
+  'Choose a valid project banner.',
+)
 export const taskPrioritySchema = z.enum(['none', 'low', 'medium', 'high'])
 export const taskStatusSchema = z.enum(['open', 'completed', 'archived'])
 export const localDateSchema = z.string().refine(isValidLocalDate, 'Enter a valid local date.')
@@ -15,6 +20,9 @@ export const createTaskProjectSchema = z.object({
   name: z.string().trim().min(1, 'Project name is required.').max(120),
   colorToken: taskColorTokenSchema.default('mint'),
   icon: z.string().trim().min(1).max(80).nullable().optional(),
+  parentProjectId: z.string().uuid().nullable().optional(),
+  bannerAsset: taskBannerAssetSchema.nullable().optional(),
+  bannerMonochrome: z.boolean().optional(),
   position: z.number().nonnegative().optional(),
 })
 

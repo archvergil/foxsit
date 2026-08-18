@@ -1,8 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
+import { BannerPicker } from '@/components/visual/BannerPicker'
+import { workoutBannerAssets } from '@/lib/bannerAssets'
 import { useCreateWorkoutRoutine, useUpdateWorkoutRoutine } from './queries'
 import {
   resolveWorkoutRoutineForm,
@@ -28,8 +30,12 @@ export function WorkoutRoutineEditor({
       name: routine?.name ?? '',
       description: routine?.description ?? '',
       colorToken: routine?.colorToken ?? 'coral',
+      bannerAsset: routine?.bannerAsset ?? '',
+      bannerMonochrome: routine?.bannerMonochrome ?? false,
     },
   })
+  const bannerAsset = useWatch({ control: form.control, name: 'bannerAsset' }) ?? ''
+  const bannerMonochrome = useWatch({ control: form.control, name: 'bannerMonochrome' }) ?? false
   const error = createRoutine.error ?? updateRoutine.error
 
   const submit = form.handleSubmit(async (values) => {
@@ -56,6 +62,9 @@ export function WorkoutRoutineEditor({
           <input autoFocus {...form.register('name')} aria-invalid={Boolean(form.formState.errors.name)} />
           {form.formState.errors.name ? <small role="alert">{form.formState.errors.name.message}</small> : null}
         </label>
+        <div className="workout-editor__wide">
+          <BannerPicker assets={workoutBannerAssets} value={bannerAsset || null} monochrome={bannerMonochrome} onChange={(value) => form.setValue('bannerAsset', value ?? '', { shouldDirty: true, shouldValidate: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
+        </div>
         <label>
           <span>Color</span>
           <select {...form.register('colorToken')}>

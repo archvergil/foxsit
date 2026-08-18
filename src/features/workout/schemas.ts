@@ -1,13 +1,20 @@
 import { z } from 'zod'
 
+import { workoutBannerAssetIds } from '@/lib/bannerAssets'
 import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 
 export const workoutColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
+export const workoutBannerAssetSchema = z.string().refine(
+  (value) => workoutBannerAssetIds.includes(value),
+  'Choose a valid workout banner.',
+)
 
 export const workoutRoutineInputSchema = z.object({
   name: z.string().trim().min(1, 'Routine name is required.').max(120),
   description: z.string().trim().max(5000).nullable(),
   colorToken: workoutColorTokenSchema,
+  bannerAsset: workoutBannerAssetSchema.nullable().optional(),
+  bannerMonochrome: z.boolean().optional(),
 })
 
 export const workoutRoutineExerciseInputSchema = z.object({
@@ -28,6 +35,8 @@ export const workoutRoutineFormSchema = z.object({
   name: z.string().trim().min(1, 'Routine name is required.').max(120),
   description: z.string().max(5000),
   colorToken: workoutColorTokenSchema,
+  bannerAsset: z.union([workoutBannerAssetSchema, z.literal('')]),
+  bannerMonochrome: z.boolean(),
 })
 
 export type WorkoutRoutineFormValues = z.infer<typeof workoutRoutineFormSchema>
@@ -37,6 +46,8 @@ export const resolveWorkoutRoutineForm = (values: WorkoutRoutineFormValues): Wor
     name: values.name,
     description: values.description.trim() || null,
     colorToken: values.colorToken,
+    bannerAsset: values.bannerAsset || null,
+    bannerMonochrome: values.bannerMonochrome,
   })
 
 export const workoutExerciseFormSchema = z.object({

@@ -15,6 +15,7 @@ import '@/styles/task-details.css'
 import '@/styles/focus.css'
 import '@/styles/calendar.css'
 import '@/styles/habits.css'
+import '@/styles/visual-banners.css'
 import '@/styles/workout.css'
 import '@/styles/responsive.css'
 

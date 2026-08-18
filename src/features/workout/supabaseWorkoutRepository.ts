@@ -51,6 +51,8 @@ const mapRoutine = (row: RoutineRow, exercises: WorkoutRoutineExercise[] = []): 
   name: row.name,
   description: row.description,
   colorToken: workoutColorTokenSchema.parse(row.color_token),
+  bannerAsset: row.banner_asset,
+  bannerMonochrome: row.banner_monochrome,
   position: row.position,
   archivedAt: row.archived_at,
   createdAt: row.created_at,
@@ -185,6 +187,8 @@ export const createSupabaseWorkoutRepository = (
       name: value.name,
       description: value.description,
       color_token: value.colorToken,
+      banner_asset: value.bannerAsset ?? null,
+      banner_monochrome: value.bannerMonochrome ?? false,
       position: Date.now(),
     }).select('*').single()
     return mapRoutine(assertData(data, error, 'create the workout routine'))
@@ -196,6 +200,8 @@ export const createSupabaseWorkoutRepository = (
       name: value.name,
       description: value.description,
       color_token: value.colorToken,
+      banner_asset: value.bannerAsset ?? null,
+      banner_monochrome: value.bannerMonochrome ?? false,
     }).eq('id', routineId).eq('user_id', userId).select('*').single()
     return mapRoutine(assertData(data, error, 'update the workout routine'))
   },

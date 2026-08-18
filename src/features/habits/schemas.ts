@@ -1,9 +1,15 @@
 import { z } from 'zod'
 
 import { isValidLocalDate } from '@/lib/dates'
-import type { HabitInput, HabitLogInput } from './types'
+import { collectionBannerAssetIds } from '@/lib/bannerAssets'
+import type { HabitInput, HabitLogInput, HabitProjectInput } from './types'
 
 export const habitColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
+export const habitCustomColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Enter a valid six-digit hex color.')
+export const habitBannerAssetSchema = z.string().refine(
+  (value) => collectionBannerAssetIds.includes(value),
+  'Choose a valid collection banner.',
+)
 export const habitScheduleTypeSchema = z.enum(['daily', 'weekdays'])
 export const habitLogStatusSchema = z.enum(['in_progress', 'completed', 'skipped'])
 export const habitIconSchema = z.enum([
@@ -21,6 +27,8 @@ export const habitInputSchema = z.object({
   description: z.string().trim().max(10_000).nullable(),
   icon: habitIconSchema,
   colorToken: habitColorTokenSchema,
+  customColor: habitCustomColorSchema.nullable().optional(),
+  projectId: z.string().uuid().nullable().optional(),
   scheduleType: habitScheduleTypeSchema,
   weekdays: z.array(weekdaySchema).min(1).max(7).nullable(),
   targetCount: z.number().int().min(1).max(10_000),
@@ -41,6 +49,8 @@ export const habitFormSchema = z.object({
   description: z.string().max(10_000),
   icon: habitIconSchema,
   colorToken: habitColorTokenSchema,
+  customColor: z.union([habitCustomColorSchema, z.literal('')]).optional(),
+  projectId: z.string().uuid().or(z.literal('')),
   scheduleType: habitScheduleTypeSchema,
   weekdays: z.array(z.coerce.number().pipe(weekdaySchema)).max(7),
   targetCount: z.coerce.number().int().min(1, 'Target must be at least 1.').max(10_000),
@@ -58,6 +68,8 @@ export const habitToInput = (habit: HabitInput, isActive = habit.isActive): Habi
   description: habit.description,
   icon: habit.icon,
   colorToken: habit.colorToken,
+  customColor: habit.customColor ?? null,
+  projectId: habit.projectId ?? null,
   scheduleType: habit.scheduleType,
   weekdays: habit.weekdays,
   targetCount: habit.targetCount,
@@ -71,6 +83,8 @@ export const resolveHabitForm = (values: HabitFormValues, position = 1000): Habi
   description: values.description.trim() || null,
   icon: values.icon,
   colorToken: values.colorToken,
+  customColor: values.customColor || null,
+  projectId: values.projectId || null,
   scheduleType: values.scheduleType,
   weekdays: values.scheduleType === 'daily' ? null : [...new Set(values.weekdays)].sort((left, right) => left - right),
   targetCount: values.targetCount,
@@ -78,6 +92,38 @@ export const resolveHabitForm = (values: HabitFormValues, position = 1000): Habi
   position,
   isActive: true,
 })
+
+export const habitProjectInputSchema = z.object({
+  name: z.string().trim().min(1, 'Project name is required.').max(120),
+  icon: z.string().trim().min(1).max(80).nullable(),
+  colorToken: habitColorTokenSchema,
+  customColor: habitCustomColorSchema.nullable(),
+  bannerAsset: habitBannerAssetSchema.nullable(),
+  bannerMonochrome: z.boolean(),
+  position: z.number().min(0),
+}) satisfies z.ZodType<HabitProjectInput>
+
+export const habitProjectFormSchema = z.object({
+  name: z.string().trim().min(1, 'Project name is required.').max(120),
+  icon: z.string().max(80),
+  colorToken: habitColorTokenSchema,
+  customColor: z.union([habitCustomColorSchema, z.literal('')]),
+  bannerAsset: z.union([habitBannerAssetSchema, z.literal('')]),
+  bannerMonochrome: z.boolean(),
+})
+
+export type HabitProjectFormValues = z.infer<typeof habitProjectFormSchema>
+
+export const resolveHabitProjectForm = (values: HabitProjectFormValues, position: number): HabitProjectInput =>
+  habitProjectInputSchema.parse({
+    name: values.name,
+    icon: values.icon.trim() || null,
+    colorToken: values.colorToken,
+    customColor: values.customColor || null,
+    bannerAsset: values.bannerAsset || null,
+    bannerMonochrome: values.bannerMonochrome,
+    position,
+  })
 
 export const habitLogInputSchema = z.object({
   habitId: z.string().uuid(),

@@ -8,6 +8,9 @@ export interface TaskProject {
   name: string
   colorToken: TaskColorToken
   icon: string | null
+  parentProjectId?: string | null | undefined
+  bannerAsset?: string | null | undefined
+  bannerMonochrome?: boolean | undefined
   position: number
   archivedAt: string | null
   createdAt: string
@@ -47,6 +50,9 @@ export interface CreateTaskProjectInput {
   name: string
   colorToken: TaskColorToken
   icon?: string | null
+  parentProjectId?: string | null
+  bannerAsset?: string | null
+  bannerMonochrome?: boolean
   position?: number
 }
 
@@ -54,6 +60,9 @@ export interface UpdateTaskProjectInput {
   name?: string
   colorToken?: TaskColorToken
   icon?: string | null
+  parentProjectId?: string | null
+  bannerAsset?: string | null
+  bannerMonochrome?: boolean
   position?: number
   archivedAt?: string | null
 }
@@ -83,6 +92,7 @@ export interface UpdateTaskInput {
 export interface TaskFilters {
   status?: TaskStatus
   projectId?: string | null
+  projectIds?: string[]
   scheduledDate?: string
   scheduledAfter?: string
   scheduledBefore?: string

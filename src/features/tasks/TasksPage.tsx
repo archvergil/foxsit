@@ -6,10 +6,11 @@ import {
   ListChecks,
   Sun,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { NavLink, useLocation, useParams } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
+import { VisualBanner } from '@/components/visual/VisualBanner'
 import { addLocalDays, localDateKey } from '@/lib/dates'
 import { tasksCopy } from './copy'
 import {
@@ -25,6 +26,7 @@ import { TaskDetailPanel } from './TaskDetailPanel'
 import { TaskProjectManager } from './TaskProjectManager'
 import { TaskQuickAdd } from './TaskQuickAdd'
 import { mergeVisibleTaskOrder } from './taskOrdering'
+import { flattenTaskProjects, taskProjectWithDescendants } from './taskProjectTree'
 import type { Task, TaskFilters } from './types'
 
 type TaskView = keyof typeof tasksCopy.views
@@ -44,13 +46,13 @@ const getView = (pathname: string): TaskView => {
   return 'inbox'
 }
 
-const getFilters = (view: TaskView, today: string, projectId?: string): TaskFilters => {
+const getFilters = (view: TaskView, today: string, projectId?: string, projectIds?: string[]): TaskFilters => {
   switch (view) {
     case 'today': return { status: 'open', scheduledDate: today }
     case 'upcoming': return { status: 'open', scheduledAfter: today }
     case 'completed': return { status: 'completed' }
     case 'project': return projectId
-      ? { status: 'open', projectId }
+      ? { status: 'open', projectIds: projectIds ?? [projectId] }
       : { status: 'open', projectId: null }
     case 'inbox': return { status: 'open', projectId: null }
   }
@@ -63,13 +65,16 @@ export default function TasksPage() {
   const { timeZone } = useTaskDateContext()
   const today = localDateKey(new Date(), timeZone)
   const projectsQuery = useTaskProjects()
-  const tasksQuery = useTaskList(getFilters(view, today, projectId))
+  const projects = projectsQuery.data ?? []
+  const projectIds = projectId ? taskProjectWithDescendants(projects, projectId) : undefined
+  const tasksQuery = useTaskList(getFilters(view, today, projectId, projectIds))
   const allOpenTasksQuery = useTaskList({ status: 'open' })
   const statusMutation = useSetTaskStatus()
   const updateMutation = useUpdateTask()
   const reorderMutation = useReorderTasks()
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const currentProject = projectsQuery.data?.find((project) => project.id === projectId)
+  const currentProject = projects.find((project) => project.id === projectId)
+  const projectTree = flattenTaskProjects(projects)
   const copy = tasksCopy.views[view]
   const title = currentProject?.name ?? copy.title
   const defaultDate = view === 'today'
@@ -123,37 +128,45 @@ export default function TasksPage() {
             {projectsQuery.error ? (
               <button type="button" onClick={() => void projectsQuery.refetch()}>Retry projects</button>
             ) : null}
-            {projectsQuery.data?.map((project) => (
+            {projectTree.map(({ project, depth }) => (
               <NavLink
                 className={({ isActive }) => `tasks-navigation__item${isActive ? ' tasks-navigation__item--active' : ''}`}
                 to={`/tasks/project/${project.id}`}
                 key={project.id}
+                style={{ '--project-depth': depth } as CSSProperties}
                 onClick={() => setSelectedTask(null)}
               >
                 <span className={`tasks-navigation__dot tasks-navigation__dot--${project.colorToken}`} />
                 <span>{project.name}</span>
               </NavLink>
             ))}
-            {projectsQuery.data?.length === 0 ? (
+            {projects.length === 0 ? (
               <span className="tasks-navigation__muted"><Folder aria-hidden />No projects yet</span>
             ) : null}
-            <TaskProjectManager key={currentProject?.id ?? 'project-create'} currentProject={currentProject} />
+            <TaskProjectManager key={currentProject?.id ?? 'project-create'} currentProject={currentProject} projects={projects} />
           </div>
         </aside>
 
         <section className={`tasks-workspace${selectedTask ? ' tasks-workspace--detail' : ''}`} aria-label={`${title} tasks`}>
           <div className="tasks-workspace__main">
+            {currentProject ? (
+              <VisualBanner assetId={currentProject.bannerAsset} monochrome={currentProject.bannerMonochrome} className={`task-project-hero task-project-hero--${currentProject.colorToken}`}>
+                <span className="eyebrow">{currentProject.parentProjectId ? 'Subproject' : 'Project'}</span>
+                <strong>{currentProject.name}</strong>
+                <small>{projectIds?.length && projectIds.length > 1 ? `${projectIds.length - 1} nested projects included` : 'Tasks in this project'}</small>
+              </VisualBanner>
+            ) : null}
             {view !== 'completed' ? (
               <TaskQuickAdd
                 key={`${view}-${projectId ?? 'none'}`}
                 defaultDate={defaultDate}
                 defaultProjectId={view === 'project' ? projectId ?? '' : ''}
-                projects={projectsQuery.data ?? []}
+                projects={projects}
               />
             ) : null}
             <TaskListPanel
               tasks={tasksQuery.data}
-              projects={projectsQuery.data ?? []}
+              projects={projects}
               today={today}
               timeZone={timeZone}
               isLoading={tasksQuery.isPending}
@@ -182,7 +195,7 @@ export default function TasksPage() {
             <TaskDetailPanel
               key={selectedTask.id}
               task={selectedTask}
-              projects={projectsQuery.data ?? []}
+              projects={projects}
               timeZone={timeZone}
               onClose={() => setSelectedTask(null)}
               onUpdated={setSelectedTask}

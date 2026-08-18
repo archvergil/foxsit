@@ -2,6 +2,7 @@ import { CheckSquare2, Leaf } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import type { Task } from '@/features/tasks/types'
+import { habitAccentStyle } from '@/features/habits/habitVisuals'
 import { localDateKey } from '@/lib/dates'
 import {
   calendarWeekdays,
@@ -89,7 +90,7 @@ export function CalendarMonthGrid({
                   </Link>
                 )) : null}
                 {habitSlots ? dayHabits.slice(0, habitSlots).map((habit) => (
-                  <Link className={`calendar-item-chip calendar-item-chip--habit calendar-item-chip--${habit.colorToken}`} to="/habits" key={habit.id} aria-label={`Open habit ${habit.title}`}>
+                  <Link className={`calendar-item-chip calendar-item-chip--habit calendar-item-chip--${habit.colorToken}`} style={habitAccentStyle(habit)} to="/habits" key={habit.id} aria-label={`Open habit ${habit.title}`}>
                     <Leaf aria-hidden /><span className="calendar-item-chip__title">{habit.title}</span>
                   </Link>
                 )) : null}
@@ -99,7 +100,7 @@ export function CalendarMonthGrid({
                 <span className="calendar-day__mobile-markers" aria-hidden>
                   {dayEvents.slice(0, 3).map((event) => <i className={`calendar-marker--${event.colorToken}`} key={event.id} />)}
                   {dayTasks.slice(0, 3).map((task) => <i className="calendar-marker--task" key={task.id} />)}
-                  {dayHabits.slice(0, 3).map((habit) => <i className={`calendar-marker--${habit.colorToken}`} key={habit.id} />)}
+                  {dayHabits.slice(0, 3).map((habit) => <i className={`calendar-marker--${habit.colorToken}`} style={habitAccentStyle(habit)} key={habit.id} />)}
                 </span>
               ) : null}
             </article>
