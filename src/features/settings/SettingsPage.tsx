@@ -1,4 +1,4 @@
-import { Database, Dumbbell, LogOut, Monitor, Moon, Sun, TimerReset } from 'lucide-react'
+import { Database, Dumbbell, Gift, LogOut, Monitor, Moon, Sun, TimerReset } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -35,6 +35,7 @@ export default function SettingsPage() {
         <nav className="settings-shortcuts" aria-label="More destinations">
           <Link to="/focus"><TimerReset aria-hidden /><span><strong>Focus</strong><small>Pomodoro and history</small></span></Link>
           <Link to="/workout"><Dumbbell aria-hidden /><span><strong>Workout</strong><small>Routines and sessions</small></span></Link>
+          <Link to="/rewards"><Gift aria-hidden /><span><strong>Rewards</strong><small>Coins, credits and history</small></span></Link>
           <Link to="/settings/data"><Database aria-hidden /><span><strong>Data</strong><small>Export and account controls</small></span></Link>
         </nav>
 

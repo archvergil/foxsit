@@ -4,6 +4,7 @@ export const focusPhaseSchema = z.enum(['focus', 'short_break', 'long_break'])
 
 export const createFocusSessionSchema = z.object({
   taskId: z.string().uuid().nullable().optional(),
+  focusRunId: z.string().uuid().nullable().optional(),
   startedAt: z.string().datetime({ offset: true }),
   endedAt: z.string().datetime({ offset: true }),
   plannedSeconds: z.number().int().min(1).max(86_400),

@@ -4,6 +4,7 @@ import type { Database } from '@/types/database.generated'
 import type { WorkoutRepository } from './repository'
 import {
   finishWorkoutSessionInputSchema,
+  workoutActivityTypeSchema,
   workoutColorTokenSchema,
   workoutRoutineExerciseInputSchema,
   workoutRoutineInputSchema,
@@ -51,6 +52,7 @@ const mapRoutine = (row: RoutineRow, exercises: WorkoutRoutineExercise[] = []): 
   name: row.name,
   description: row.description,
   colorToken: workoutColorTokenSchema.parse(row.color_token),
+  activityType: workoutActivityTypeSchema.parse(row.activity_type),
   bannerAsset: row.banner_asset,
   bannerMonochrome: row.banner_monochrome,
   position: row.position,
@@ -131,6 +133,7 @@ const mapSession = (row: SessionRow, exercises: WorkoutSessionExercise[]): Worko
   userId: row.user_id,
   routineId: row.routine_id,
   routineName: row.routine_name,
+  activityType: workoutActivityTypeSchema.parse(row.activity_type),
   status: row.status === 'completed' || row.status === 'cancelled' ? row.status : 'active',
   startedAt: row.started_at,
   endedAt: row.ended_at,
@@ -187,6 +190,7 @@ export const createSupabaseWorkoutRepository = (
       name: value.name,
       description: value.description,
       color_token: value.colorToken,
+      activity_type: value.activityType,
       banner_asset: value.bannerAsset ?? null,
       banner_monochrome: value.bannerMonochrome ?? false,
       position: Date.now(),
@@ -200,6 +204,7 @@ export const createSupabaseWorkoutRepository = (
       name: value.name,
       description: value.description,
       color_token: value.colorToken,
+      activity_type: value.activityType,
       banner_asset: value.bannerAsset ?? null,
       banner_monochrome: value.bannerMonochrome ?? false,
     }).eq('id', routineId).eq('user_id', userId).select('*').single()

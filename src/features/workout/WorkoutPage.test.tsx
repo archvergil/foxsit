@@ -72,7 +72,7 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     const routine = this.routines.find(({ id }) => id === routineId)
     if (!routine || routine.exercises.length === 0) return Promise.reject(new Error('Add at least one exercise.'))
     const activeSession: WorkoutSession = {
-      id: crypto.randomUUID(), userId, routineId, routineName: routine.name, status: 'active',
+      id: crypto.randomUUID(), userId, routineId, routineName: routine.name, activityType: routine.activityType, status: 'active',
       startedAt: '2026-08-18T12:00:00.000Z', endedAt: null, durationSeconds: null, notes: null,
       completedSets: 0, totalVolumeKg: 0, bestEstimatedOneRepMaxKg: null, personalRecords: 0,
       createdAt: '2026-08-18T12:00:00.000Z', updatedAt: '2026-08-18T12:00:00.000Z',

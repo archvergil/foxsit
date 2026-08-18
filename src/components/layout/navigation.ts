@@ -5,6 +5,7 @@ import {
   Dumbbell,
   Gauge,
   Leaf,
+  Gift,
   Settings2,
   TimerReset,
   type LucideIcon,
@@ -24,6 +25,7 @@ export const primaryNavigation: NavigationItem[] = [
   { label: 'Focus', to: '/focus', icon: TimerReset },
   { label: 'Habits', to: '/habits', icon: Leaf },
   { label: 'Workout', to: '/workout', icon: Dumbbell },
+  { label: 'Rewards', to: '/rewards', icon: Gift },
 ]
 
 export const utilityNavigation: NavigationItem[] = [

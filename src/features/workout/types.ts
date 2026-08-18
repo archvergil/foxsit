@@ -1,4 +1,5 @@
 export type WorkoutColorToken = 'mint' | 'coral' | 'blue' | 'sand' | 'slate'
+export type WorkoutActivityType = 'strength' | 'cardio'
 
 export interface WorkoutRoutineExercise {
   id: string
@@ -22,6 +23,7 @@ export interface WorkoutRoutine {
   name: string
   description: string | null
   colorToken: WorkoutColorToken
+  activityType: WorkoutActivityType
   bannerAsset?: string | null | undefined
   bannerMonochrome?: boolean | undefined
   position: number
@@ -35,6 +37,7 @@ export interface WorkoutRoutineInput {
   name: string
   description: string | null
   colorToken: WorkoutColorToken
+  activityType: WorkoutActivityType
   bannerAsset?: string | null | undefined
   bannerMonochrome?: boolean | undefined
 }
@@ -93,6 +96,7 @@ export interface WorkoutSession {
   userId: string
   routineId: string | null
   routineName: string
+  activityType: WorkoutActivityType
   status: WorkoutSessionStatus
   startedAt: string
   endedAt: string | null

@@ -4,6 +4,7 @@ import { workoutBannerAssetIds } from '@/lib/bannerAssets'
 import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 
 export const workoutColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
+export const workoutActivityTypeSchema = z.enum(['strength', 'cardio'])
 export const workoutBannerAssetSchema = z.string().refine(
   (value) => workoutBannerAssetIds.includes(value),
   'Choose a valid workout banner.',
@@ -13,6 +14,7 @@ export const workoutRoutineInputSchema = z.object({
   name: z.string().trim().min(1, 'Routine name is required.').max(120),
   description: z.string().trim().max(5000).nullable(),
   colorToken: workoutColorTokenSchema,
+  activityType: workoutActivityTypeSchema,
   bannerAsset: workoutBannerAssetSchema.nullable().optional(),
   bannerMonochrome: z.boolean().optional(),
 })
@@ -35,6 +37,7 @@ export const workoutRoutineFormSchema = z.object({
   name: z.string().trim().min(1, 'Routine name is required.').max(120),
   description: z.string().max(5000),
   colorToken: workoutColorTokenSchema,
+  activityType: workoutActivityTypeSchema,
   bannerAsset: z.union([workoutBannerAssetSchema, z.literal('')]),
   bannerMonochrome: z.boolean(),
 })
@@ -46,6 +49,7 @@ export const resolveWorkoutRoutineForm = (values: WorkoutRoutineFormValues): Wor
     name: values.name,
     description: values.description.trim() || null,
     colorToken: values.colorToken,
+    activityType: values.activityType,
     bannerAsset: values.bannerAsset || null,
     bannerMonochrome: values.bannerMonochrome,
   })

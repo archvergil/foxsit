@@ -7,6 +7,7 @@ import { FocusRepositoryProvider } from '@/features/focus/FocusRepositoryProvide
 import { HabitsRepositoryProvider } from '@/features/habits/HabitsRepositoryProvider'
 import { ThemeProvider } from '@/features/settings/ThemeProvider'
 import { ProfileRepositoryProvider } from '@/features/settings/ProfileRepositoryProvider'
+import { RewardsRepositoryProvider } from '@/features/rewards/RewardsRepositoryProvider'
 import { TasksRepositoryProvider } from '@/features/tasks/TasksRepositoryProvider'
 import { WorkoutRepositoryProvider } from '@/features/workout/WorkoutRepositoryProvider'
 import { queryClient } from './queryClient'
@@ -21,7 +22,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
               <TasksRepositoryProvider>
                 <FocusRepositoryProvider>
                   <HabitsRepositoryProvider>
-                    <WorkoutRepositoryProvider>{children}</WorkoutRepositoryProvider>
+                    <WorkoutRepositoryProvider>
+                      <RewardsRepositoryProvider>{children}</RewardsRepositoryProvider>
+                    </WorkoutRepositoryProvider>
                   </HabitsRepositoryProvider>
                 </FocusRepositoryProvider>
               </TasksRepositoryProvider>

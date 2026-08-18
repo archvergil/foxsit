@@ -30,6 +30,7 @@ export function WorkoutRoutineEditor({
       name: routine?.name ?? '',
       description: routine?.description ?? '',
       colorToken: routine?.colorToken ?? 'coral',
+      activityType: routine?.activityType ?? 'strength',
       bannerAsset: routine?.bannerAsset ?? '',
       bannerMonochrome: routine?.bannerMonochrome ?? false,
     },
@@ -71,6 +72,14 @@ export function WorkoutRoutineEditor({
             <option value="coral">Coral</option><option value="mint">Mint</option>
             <option value="blue">Blue</option><option value="sand">Sand</option><option value="slate">Slate</option>
           </select>
+        </label>
+        <label>
+          <span>Activity</span>
+          <select {...form.register('activityType')}>
+            <option value="strength">Strength</option>
+            <option value="cardio">Cardio</option>
+          </select>
+          <small>This classification is copied to each session for Rewards.</small>
         </label>
         <label className="workout-editor__wide">
           <span>Description</span>

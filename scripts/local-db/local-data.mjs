@@ -456,11 +456,9 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
     const value = focusSessionCreate.parse(input)
     const result = await database.query(
       `
-        insert into public.focus_sessions
-          (user_id, task_id, started_at, ended_at, planned_seconds, focused_seconds, session_type, completed)
-        values ($1, $2, $3, $4, $5, $6, $7, $8) returning *
+        select * from public.record_focus_session(null, $1, $2, $3, $4, $5, $6, $7)
       `,
-      [userId, value.taskId ?? null, value.startedAt, value.endedAt, value.plannedSeconds,
+      [value.taskId ?? null, value.startedAt, value.endedAt, value.plannedSeconds,
         value.focusedSeconds, value.sessionType, value.completed],
     )
     return mapFocusSession(one(result, 'save the focus session'))

@@ -1,0 +1,120 @@
+// @vitest-environment node
+
+import type { PGlite } from '@electric-sql/pglite'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
+import { authenticateLocalUser, createLocalTestDatabase, createLocalUser, resetLocalRole } from './localDatabase'
+
+const USER_A = 'a0000000-0000-4000-8000-000000000001'
+const USER_B = 'b0000000-0000-4000-8000-000000000002'
+
+describe('Rewards economy on local PGlite', () => {
+  let database: PGlite | undefined
+
+  beforeAll(async () => {
+    database = await createLocalTestDatabase()
+    await createLocalUser(database, { id: USER_A, email: 'rewards-a@local.test' })
+    await createLocalUser(database, { id: USER_B, email: 'rewards-b@local.test' })
+  }, 30_000)
+
+  afterAll(async () => database?.close())
+
+  it('stores the confirmed 40% higher coin costs without changing BRL credit values', async () => {
+    const result = await database!.query<{ rules: { catalog: Array<{ sku: string; credit_cents: number; coins: number }> } }>(
+      'select rules from public.reward_rule_sets where is_active',
+    )
+    const catalog = result.rows[0]!.rules.catalog
+    expect(catalog.find(({ sku }) => sku === 'silver-010')).toMatchObject({ credit_cents: 1000, coins: 21 })
+    expect(catalog.find(({ sku }) => sku === 'silver-015')).toMatchObject({ credit_cents: 1500, coins: 31 })
+    expect(catalog.find(({ sku }) => sku === 'gold-100')).toMatchObject({ credit_cents: 10000, coins: 210 })
+  })
+
+  it('converts atomically, counts one operation and treats a retry as idempotent', async () => {
+    await database!.query('insert into public.reward_wallets(user_id,silver_balance) values($1,100)', [USER_A])
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      const requestKey = 'c0000000-0000-4000-8000-000000000003'
+      await database!.query("select public.convert_reward_currency('silver_to_gold',2,$1)", [requestKey])
+      await database!.query("select public.convert_reward_currency('silver_to_gold',2,$1)", [requestKey])
+      const wallet = await database!.query<{ silver_balance: bigint; gold_balance: bigint }>(
+        'select silver_balance,gold_balance from public.reward_wallets where user_id=$1', [USER_A],
+      )
+      const counter = await database!.query<{ conversion_count: number; gold_credited: number }>(
+        'select conversion_count,gold_credited from public.reward_monthly_counters where user_id=$1', [USER_A],
+      )
+      expect(Number(wallet.rows[0]!.silver_balance)).toBe(60)
+      expect(Number(wallet.rows[0]!.gold_balance)).toBe(2)
+      expect(counter.rows[0]).toMatchObject({ conversion_count: 1, gold_credited: 2 })
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+
+  it('debits the authoritative SKU price and freezes the redemption snapshot', async () => {
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      await database!.query("select public.redeem_reward_credit('silver-010',$1)", ['d0000000-0000-4000-8000-000000000004'])
+      const redemption = await database!.query<{ credit_cents: number; coins_spent: bigint; status: string }>(
+        'select credit_cents,coins_spent,status from public.reward_redemptions where user_id=$1', [USER_A],
+      )
+      expect(redemption.rows[0]).toMatchObject({ credit_cents: 1000, status: 'requested' })
+      expect(Number(redemption.rows[0]!.coins_spent)).toBe(21)
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+
+  it('awards a complete 25/5 run exactly once and isolates wallet and ledger rows with RLS', async () => {
+    await authenticateLocalUser(database!, USER_A)
+    let runId: string
+    try {
+      runId = (await database!.query<{ start_focus_run: string }>(
+        "select public.start_focus_run('25_5',null) as start_focus_run",
+      )).rows[0]!.start_focus_run
+    } finally {
+      await resetLocalRole(database!)
+    }
+    await database!.query(`
+      insert into public.focus_sessions(user_id,focus_run_id,started_at,ended_at,planned_seconds,focused_seconds,session_type,completed)
+      values
+        ($1,$2,'2026-08-18T10:00:00Z','2026-08-18T10:25:00Z',1500,1500,'focus',true),
+        ($1,$2,'2026-08-18T10:25:00Z','2026-08-18T10:30:00Z',300,300,'short_break',true),
+        ($1,$2,'2026-08-18T10:30:00Z','2026-08-18T10:55:00Z',1500,1500,'focus',true),
+        ($1,$2,'2026-08-18T10:55:00Z','2026-08-18T11:00:00Z',300,300,'short_break',true),
+        ($1,$2,'2026-08-18T11:00:00Z','2026-08-18T11:25:00Z',1500,1500,'focus',true)
+    `, [USER_A, runId])
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      await database!.query('select public.complete_focus_run_and_award($1)', [runId])
+      await database!.query('select public.complete_focus_run_and_award($1)', [runId])
+      const ownWallet = await database!.query<{ silver_balance: bigint; gold_balance: bigint }>('select silver_balance,gold_balance from public.reward_wallets')
+      expect(Number(ownWallet.rows[0]!.silver_balance)).toBe(41)
+      expect(Number(ownWallet.rows[0]!.gold_balance)).toBe(3)
+      const visibleUsers = await database!.query<{ user_id: string }>('select distinct user_id from public.reward_transactions')
+      expect(visibleUsers.rows).toEqual([{ user_id: USER_A }])
+      await expect(database!.query('update public.reward_wallets set silver_balance=999 where user_id=$1', [USER_A])).rejects.toThrow(/permission denied/i)
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+
+  it('awards a durable workout classification exactly once', async () => {
+    const session = await database!.query<{ id: string }>(`
+      insert into public.workout_sessions(user_id,routine_name,activity_type,status,started_at,ended_at,duration_seconds)
+      values($1,'Morning run','cardio','completed',now()-interval '35 minutes',now(),2100)
+      returning id
+    `, [USER_A])
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      await database!.query('select public.award_workout_rewards($1)', [session.rows[0]!.id])
+      await database!.query('select public.award_workout_rewards($1)', [session.rows[0]!.id])
+      const transactions = await database!.query<{ count: number }>(
+        "select count(*)::integer as count from public.reward_transactions where reason='cardio_reward' and source_id=$1",
+        [session.rows[0]!.id],
+      )
+      expect(transactions.rows[0]!.count).toBe(1)
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+})

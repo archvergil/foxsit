@@ -5,7 +5,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/authContext'
 import { notifyPhaseComplete } from './notifications'
 import { usePomodoroStore } from './pomodoroStore'
-import { useCreateFocusSession } from './queries'
+import { useCompleteRewardFocusRun, useCreateFocusSession } from './queries'
 import { formatTimer, remainingTimerMs, sessionFromTimer } from './timer'
 import { useTimerClock } from './useTimerClock'
 
@@ -20,6 +20,7 @@ export function ActiveFocusPlayer() {
   const { pathname } = useLocation()
   const timer = usePomodoroStore()
   const createSession = useCreateFocusSession()
+  const completeRewardRun = useCompleteRewardFocusRun()
   const attemptedStartRef = useRef<number | null>(null)
   const owned = Boolean(session && timer.ownerUserId === session.user.id)
   const active = owned && timer.status !== 'idle'
@@ -40,12 +41,16 @@ export function ActiveFocusPlayer() {
     }
     try {
       await createSession.mutateAsync(input)
+      const completedRewardStack = timer.phase === 'focus' && Boolean(timer.rewardRunId)
+      if (completedRewardStack && timer.rewardRunId && timer.rewardCompletedStacks + 1 >= timer.rewardRequiredStacks) {
+        await completeRewardRun.mutateAsync(timer.rewardRunId)
+      }
       notifyPhaseComplete(timer.phase)
-      timer.finishPhase()
+      timer.finishPhase(completedRewardStack)
     } catch {
       // Keep the expired timer available for an explicit retry.
     }
-  }, [createSession, owned, timer])
+  }, [completeRewardRun, createSession, owned, timer])
 
   useEffect(() => {
     if (
@@ -70,7 +75,7 @@ export function ActiveFocusPlayer() {
           <strong aria-live="off">{formatTimer(remaining)}</strong>
         </span>
       </Link>
-      {createSession.error ? (
+      {createSession.error || completeRewardRun.error ? (
         <button
           className="focus-mini-player__control"
           type="button"

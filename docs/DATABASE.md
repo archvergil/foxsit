@@ -19,6 +19,9 @@ supabase/migrations/202608180005_workout_active_sessions.sql
 supabase/migrations/202608180006_workout_session_ownership.sql
 supabase/migrations/202608180007_workout_session_integrity.sql
 supabase/migrations/202608180008_workout_completion_history.sql
+supabase/migrations/202608180009_habit_custom_colors.sql
+supabase/migrations/202608180010_visual_collections.sql
+supabase/migrations/202608180011_rewards.sql
 ```
 
 It creates `public.profiles`, strict theme/week/timezone checks, automatic `updated_at`, own-row RLS and an `auth.users` trigger. Sign-up metadata supplies `display_name` and the browser's IANA timezone; defaults remain safe if metadata is absent.
@@ -56,6 +59,12 @@ The eighth migration adds `reorder_habits(uuid[])`. It locks the user's active s
 Workout routine planning is live through `workout_routines` and `workout_routine_exercises`. Active training uses `workout_sessions`, immutable exercise-plan snapshots in `workout_session_exercises` and planned/completed `workout_sets`. The `start_workout_session` RPC atomically creates the session, copies the owned routine and provisions its sets; a partial unique index permits only one active session per user. Composite foreign keys enforce both owner and session continuity, RLS provides four own-row policies per exposed table, direct deletes from session internals are revoked, and set mutations are rejected once a session is no longer active. Every set is durable in Supabase; Zustand stores only the timestamp-based rest countdown.
 
 `finish_workout_session` locks the owned active session, requires at least one completed set and commits completion, duration, notes and frozen metrics in one transaction. Set volume is `load × reps`; estimated 1RM uses Epley with a single rep equal to its actual load. One best set per normalized exercise is marked as a PR only when it strictly exceeds every previously completed session. Finished/cancelled sessions and their internal snapshots are immutable, direct creation of session internals is revoked, and history reads the frozen Supabase rows rather than recalculating mutable client state.
+
+## Rewards contracts
+
+Migration `202608180011` adds one active versioned rule document, private wallets, profile-timezone monthly counters, an immutable ledger and frozen credit requests. The BRL catalog keeps each credit's nominal value while charging 40% more coins than the original product table; fractional Silver prices round up. Authenticated clients can read only their own economy rows and cannot write balances, counters, transactions or redemptions directly.
+
+Durable `focus_runs` link timer phases through `focus_sessions.focus_run_id`. Rewarded phases pass through `record_focus_session`, which validates the owned active run, configured duration, elapsed timestamps and retry idempotency. Completion requires every focus stack and intervening break. Workout routines and sessions snapshot immutable `activity_type` (`strength` or `cardio`); the existing finish transaction invokes the exact-once award. Conversions, redemptions and all Gold caps are enforced by narrow server RPCs using the active rule version.
 
 ## Types
 

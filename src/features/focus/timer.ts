@@ -7,6 +7,7 @@ export interface TimerSnapshot {
   accumulatedPausedMs: number
   durationMs: number
   taskId: string | null
+  rewardRunId?: string | null
 }
 
 export interface PomodoroDurations {
@@ -69,6 +70,7 @@ export const sessionFromTimer = (
 
   return {
     taskId: timer.phase === 'focus' ? timer.taskId : null,
+    focusRunId: timer.rewardRunId ?? null,
     startedAt: new Date(timer.startedAt).toISOString(),
     endedAt: new Date(Math.max(timer.startedAt, now)).toISOString(),
     plannedSeconds: Math.round(timer.durationMs / 1000),

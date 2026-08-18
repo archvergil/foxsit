@@ -17,6 +17,7 @@ const FocusPage = lazy(() => import('@/features/focus/FocusPage'))
 const HabitsPage = lazy(() => import('@/features/habits/HabitsPage'))
 const WorkoutPage = lazy(() => import('@/features/workout/WorkoutPage'))
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'))
+const RewardsPage = lazy(() => import('@/features/rewards/RewardsPage'))
 
 function SuspenseLayout() {
   return <Suspense fallback={<AppLoading />}><Outlet /></Suspense>
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
           { path: '/tasks/completed', element: <TasksPage /> },
           { path: '/tasks/project/:projectId', element: <TasksPage /> },
           { path: '/focus', element: <FocusPage /> },
+          { path: '/rewards', element: <RewardsPage /> },
           { path: '/habits', element: <HabitsPage /> },
           { path: '/habits/insights', element: <HabitsPage /> },
           { path: '/workout', element: <WorkoutPage /> },

@@ -4,6 +4,7 @@ export interface FocusSession {
   id: string
   userId: string
   taskId: string | null
+  focusRunId?: string | null
   startedAt: string
   endedAt: string
   plannedSeconds: number
@@ -22,6 +23,7 @@ export interface FocusSessionFilters {
 
 export interface CreateFocusSessionInput {
   taskId?: string | null
+  focusRunId?: string | null
   startedAt: string
   endedAt: string
   plannedSeconds: number
@@ -29,3 +31,5 @@ export interface CreateFocusSessionInput {
   sessionType: FocusPhase
   completed: boolean
 }
+
+export type RewardFocusMode = '25_5' | '30_5' | '40_5'

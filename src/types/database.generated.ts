@@ -73,6 +73,7 @@ export type Database = {
           created_at: string
           ended_at: string
           focused_seconds: number
+          focus_run_id: string | null
           id: string
           planned_seconds: number
           session_type: string
@@ -85,6 +86,7 @@ export type Database = {
           created_at?: string
           ended_at: string
           focused_seconds: number
+          focus_run_id?: string | null
           id?: string
           planned_seconds: number
           session_type: string
@@ -97,6 +99,7 @@ export type Database = {
           created_at?: string
           ended_at?: string
           focused_seconds?: number
+          focus_run_id?: string | null
           id?: string
           planned_seconds?: number
           session_type?: string
@@ -524,6 +527,7 @@ export type Database = {
       }
       workout_routines: {
         Row: {
+          activity_type: string
           archived_at: string | null
           banner_asset: string | null
           banner_monochrome: boolean
@@ -537,6 +541,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          activity_type?: string
           archived_at?: string | null
           banner_asset?: string | null
           banner_monochrome?: boolean
@@ -550,6 +555,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          activity_type?: string
           archived_at?: string | null
           banner_asset?: string | null
           banner_monochrome?: boolean
@@ -635,6 +641,7 @@ export type Database = {
       }
       workout_sessions: {
         Row: {
+          activity_type: string
           best_estimated_1rm_kg: number | null
           completed_sets: number
           created_at: string
@@ -652,6 +659,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          activity_type?: string
           best_estimated_1rm_kg?: number | null
           completed_sets?: number
           created_at?: string
@@ -669,6 +677,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          activity_type?: string
           best_estimated_1rm_kg?: number | null
           completed_sets?: number
           created_at?: string
@@ -766,6 +775,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      abandon_focus_run: { Args: { p_run_id: string }; Returns: undefined }
+      complete_focus_run_and_award: { Args: { p_run_id: string }; Returns: Json }
+      convert_reward_currency: {
+        Args: { p_direction: string; p_request_key: string; p_units: number }
+        Returns: Json
+      }
+      get_reward_dashboard: { Args: { p_history_limit?: number }; Returns: Json }
+      redeem_reward_credit: {
+        Args: { p_catalog_sku: string; p_request_key: string }
+        Returns: Json
+      }
+      record_focus_session: {
+        Args: {
+          p_completed: boolean
+          p_ended_at: string
+          p_focus_run_id: string | null
+          p_focused_seconds: number
+          p_planned_seconds: number
+          p_session_type: string
+          p_started_at: string
+          p_task_id: string | null
+        }
+        Returns: Database['public']['Tables']['focus_sessions']['Row']
+      }
+      start_focus_run: { Args: { p_description?: string; p_mode: string }; Returns: string }
       finish_workout_session: {
         Args: { p_notes?: string; p_session_id: string }
         Returns: string

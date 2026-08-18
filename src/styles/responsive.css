@@ -40,6 +40,9 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  .today-metrics,
+  .today-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
   .today-module-card {
     min-height: 11rem;
   }
@@ -58,6 +61,11 @@
 }
 
 @media (max-width: 56rem) {
+  .reward-progress-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reward-progress-grid article:last-child { grid-column: 1 / -1; }
+  .reward-conversion__form { grid-template-columns: 1fr 8rem; }
+  .reward-conversion__result, .reward-conversion__form .button { grid-column: 1 / -1; }
+  .reward-store__grid { grid-template-columns: repeat(3, minmax(9rem, 1fr)); overflow-x: auto; padding-bottom: var(--space-2); }
   .auth-layout {
     grid-template-columns: 1fr;
     padding: 0;
@@ -188,6 +196,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .today-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .today-overview-grid { grid-template-columns: 1fr; }
+
   .today-module-card {
     min-height: 10.5rem;
     padding: var(--space-4);
@@ -249,6 +260,12 @@
 }
 
 @media (max-width: 25rem) {
+  .reward-balances, .reward-progress-grid { grid-template-columns: 1fr; }
+  .reward-progress-grid article:last-child { grid-column: auto; }
+  .reward-balance { min-height: 10rem; }
+  .reward-store__grid { grid-template-columns: repeat(2, minmax(8.5rem, 1fr)); }
+  .reward-conversion__form { grid-template-columns: 1fr; }
+  .reward-conversion__result, .reward-conversion__form .button { grid-column: auto; }
   .today-module-grid {
     grid-template-columns: 1fr;
   }

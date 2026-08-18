@@ -89,17 +89,19 @@ Exit: local database is reproducible and no exposed table is open across users.
 
 ## Phase 7 — Today integrations
 
-- [~] Replace foundation states with real aggregated queries (Today Tasks card complete).
-- [ ] Next event, agenda, tasks, habits, workout and current focus state.
-- [ ] Derived daily metrics with real loading/empty/error/success states.
+- [x] Replace foundation states with real aggregated queries.
+- [x] Next event, agenda, tasks, habits, workout and current focus state.
+- [x] Derived daily metrics with real loading/empty/error/success states.
 
 ## Phase 8 — Rewards
 
-- [ ] Add the versioned reward-rule configuration, wallet, monthly counters, immutable ledger and redemption migrations with RLS.
-- [ ] Extend durable Focus runs and Workout sessions with the facts needed to award eligible activity exactly once.
-- [ ] Add transactional reward, conversion and redemption RPCs with profile-timezone monthly limits and idempotency constraints.
-- [ ] Build the responsive Rewards area: balances, monthly progress, conversions, ledger and both credit stores.
-- [ ] Cover the economy with unit, database/RLS, component and authenticated E2E tests.
+- [x] Add the versioned reward-rule configuration, wallet, monthly counters, immutable ledger and redemption migrations with RLS.
+- [x] Extend durable Focus runs and Workout sessions with the facts needed to award eligible activity exactly once.
+- [x] Add transactional reward, conversion and redemption RPCs with profile-timezone monthly limits and idempotency constraints.
+- [x] Build the responsive Rewards area: balances, monthly progress, conversions, ledger and both credit stores.
+- [~] Cover the economy with unit, database/RLS, component and authenticated E2E tests; local coverage is complete and deployed Supabase E2E remains pending migration application.
+
+Product override confirmed on 2026-08-18: every BRL credit keeps its nominal value, while its Silver or Gold redemption cost is 40% higher than the original master table. Fractional Silver results round up so no SKU is charged below the requested increase; this pricing lives in the versioned server rule set and is mirrored by tested display constants only.
 
 Exit: all balances are durable and auditable; monthly caps, conversions and duplicate-reward prevention are proven under the local data boundary.
 
@@ -116,9 +118,24 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180009` and `202608180010` to production, then verify Habit projects, nested Task projects and Workout banners through the deployed Cloudflare build. After that, continue Phase 6 with ownership-safe Workout → Habit completion and read-only Calendar adapters. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended.
+Apply migration `202608180011` to production, regenerate linked Supabase types, then verify rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E. Migrations `202608180009` and `202608180010` are already applied.
 
 ## Latest verification
+
+Implemented the Rewards economy on 2026-08-18:
+
+- added versioned rules, private wallets, monthly counters, immutable ledger and frozen credit requests in migration `202608180011`;
+- applied the confirmed pricing override: BRL credit values remain unchanged while every Silver/Gold cost is 40% higher, with fractional Silver results rounded up;
+- added exact-once Focus-run and Workout awards, predominant-mode caps, five shared monthly conversions, authoritative catalog redemptions and RLS-protected RPCs;
+- added the responsive `/rewards` workspace with balances, monthly progress, confirmations, both stores, request statuses and incremental ledger history;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (131/131), `npm run test:db` (30/30) and `npm run build` passed; production migration and authenticated deployed E2E remain pending.
+
+Completed the Today integration slice on 2026-08-18:
+
+- replaced the foundation copy with real aggregated Calendar, Tasks, Habits, Focus and Workout queries;
+- added next-event, agenda, active Pomodoro/workout status and profile-timezone daily metrics with explicit loading, empty and retry states;
+- kept the dashboard read-only and derived, without duplicating module data;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (125/125), `npm run test:db` (25/25) and `npm run build` passed.
 
 Implemented the visual collection architecture on 2026-08-18:
 

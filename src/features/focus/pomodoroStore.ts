@@ -8,7 +8,7 @@ import {
   remainingTimerMs,
   type PomodoroDurations,
 } from './timer'
-import type { FocusPhase } from './types'
+import type { FocusPhase, RewardFocusMode } from './types'
 
 export type PomodoroStatus = 'idle' | 'running' | 'paused'
 
@@ -17,6 +17,9 @@ interface StartPomodoroInput {
   phase?: FocusPhase
   taskId?: string | null
   now?: number
+  rewardRunId?: string | null
+  rewardMode?: RewardFocusMode | null
+  rewardRequiredStacks?: number
 }
 
 export interface PomodoroStore extends PomodoroDurations {
@@ -29,12 +32,16 @@ export interface PomodoroStore extends PomodoroDurations {
   durationMs: number
   taskId: string | null
   cycleIndex: number
+  rewardRunId: string | null
+  rewardMode: RewardFocusMode | null
+  rewardRequiredStacks: number
+  rewardCompletedStacks: number
   configure: (durations: PomodoroDurations) => void
   selectPhase: (phase: FocusPhase) => void
   start: (input: StartPomodoroInput) => void
   pause: (now?: number) => void
   resume: (now?: number) => void
-  finishPhase: () => void
+  finishPhase: (completedRewardStack?: boolean) => void
   clear: () => void
 }
 
@@ -45,6 +52,10 @@ const activeReset = {
   pausedAt: null,
   accumulatedPausedMs: 0,
   taskId: null,
+  rewardRunId: null,
+  rewardMode: null,
+  rewardRequiredStacks: 0,
+  rewardCompletedStacks: 0,
 }
 
 const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroStore => ({
@@ -65,7 +76,7 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
     taskId: phase === 'focus' ? state.taskId : null,
   } : state),
 
-  start: ({ userId, phase, taskId = null, now = Date.now() }) => set((state) => {
+  start: ({ userId, phase, taskId = null, rewardRunId = null, rewardMode = null, rewardRequiredStacks = 0, now = Date.now() }) => set((state) => {
     const nextPhase = phase ?? state.phase
     return {
       ownerUserId: userId,
@@ -76,6 +87,10 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
       accumulatedPausedMs: 0,
       durationMs: durationForPhase(nextPhase, state),
       taskId: nextPhase === 'focus' ? taskId : null,
+      rewardRunId: rewardRunId ?? state.rewardRunId,
+      rewardMode: rewardMode ?? state.rewardMode,
+      rewardRequiredStacks: rewardRequiredStacks || state.rewardRequiredStacks,
+      rewardCompletedStacks: rewardRunId && rewardRunId !== state.rewardRunId ? 0 : state.rewardCompletedStacks,
     }
   }),
 
@@ -95,10 +110,21 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
       : state
   )),
 
-  finishPhase: () => set((state) => {
+  finishPhase: (completedRewardStack = false) => set((state) => {
     const next = nextPomodoroPhase(state.phase, state.cycleIndex)
+    const rewardCompletedStacks = state.rewardCompletedStacks + (completedRewardStack ? 1 : 0)
+    const rewardFinished = state.rewardRequiredStacks > 0 && rewardCompletedStacks >= state.rewardRequiredStacks
     return {
-      ...activeReset,
+      ownerUserId: null,
+      status: 'idle',
+      startedAt: null,
+      pausedAt: null,
+      accumulatedPausedMs: 0,
+      taskId: null,
+      rewardRunId: rewardFinished ? null : state.rewardRunId,
+      rewardMode: rewardFinished ? null : state.rewardMode,
+      rewardRequiredStacks: rewardFinished ? 0 : state.rewardRequiredStacks,
+      rewardCompletedStacks: rewardFinished ? 0 : rewardCompletedStacks,
       phase: next.phase,
       cycleIndex: next.cycleIndex,
       durationMs: durationForPhase(next.phase, state),
@@ -131,6 +157,10 @@ export const createPomodoroStore = (
       durationMs: state.durationMs,
       taskId: state.taskId,
       cycleIndex: state.cycleIndex,
+      rewardRunId: state.rewardRunId,
+      rewardMode: state.rewardMode,
+      rewardRequiredStacks: state.rewardRequiredStacks,
+      rewardCompletedStacks: state.rewardCompletedStacks,
       focusMs: state.focusMs,
       shortBreakMs: state.shortBreakMs,
       longBreakMs: state.longBreakMs,

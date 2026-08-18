@@ -14,21 +14,22 @@ describe('workout schemas', () => {
       name: '  Upper body  ',
       description: '   ',
       colorToken: 'coral',
+      activityType: 'strength',
       bannerAsset: '',
       bannerMonochrome: false,
     })).toEqual({
-      name: 'Upper body', description: null, colorToken: 'coral',
+      name: 'Upper body', description: null, colorToken: 'coral', activityType: 'strength',
       bannerAsset: null, bannerMonochrome: false,
     })
   })
 
   it('accepts only Workout GIFs in routine banners', () => {
     expect(resolveWorkoutRoutineForm({
-      name: 'Leg day', description: '', colorToken: 'coral',
+      name: 'Leg day', description: '', colorToken: 'coral', activityType: 'cardio',
       bannerAsset: 'workout_9.gif', bannerMonochrome: true,
     })).toMatchObject({ bannerAsset: 'workout_9.gif', bannerMonochrome: true })
     expect(() => resolveWorkoutRoutineForm({
-      name: 'Leg day', description: '', colorToken: 'coral',
+      name: 'Leg day', description: '', colorToken: 'coral', activityType: 'strength',
       bannerAsset: 'habits_1.gif', bannerMonochrome: false,
     })).toThrow()
   })

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/authContext'
 import { useFocusRepository } from './focusRepositoryContext'
 import { focusQueryKeys } from './repository'
-import type { CreateFocusSessionInput, FocusSessionFilters } from './types'
+import type { CreateFocusSessionInput, FocusSessionFilters, RewardFocusMode } from './types'
 
 const useFocusIdentity = () => {
   const { session } = useAuth()
@@ -28,5 +28,43 @@ export const useCreateFocusSession = () => {
     mutationKey: ['focus', 'create-session', userId],
     mutationFn: (input: CreateFocusSessionInput) => repository.createSession(userId, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: focusQueryKeys.sessions(userId) }),
+  })
+}
+
+export const useStartRewardFocusRun = () => {
+  const repository = useFocusRepository()
+  const userId = useFocusIdentity()
+  return useMutation({
+    mutationKey: ['focus', 'reward-run', 'start', userId],
+    mutationFn: ({ mode, description }: { mode: RewardFocusMode; description: string | null }) => {
+      if (!repository.startRewardRun) throw new Error('Rewarded Focus runs require Supabase.')
+      return repository.startRewardRun(userId, mode, description)
+    },
+  })
+}
+
+export const useCompleteRewardFocusRun = () => {
+  const repository = useFocusRepository()
+  const queryClient = useQueryClient()
+  const userId = useFocusIdentity()
+  return useMutation({
+    mutationKey: ['focus', 'reward-run', 'complete', userId],
+    mutationFn: (runId: string) => {
+      if (!repository.completeRewardRun) throw new Error('Rewarded Focus runs require Supabase.')
+      return repository.completeRewardRun(userId, runId)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['rewards'] }),
+  })
+}
+
+export const useAbandonRewardFocusRun = () => {
+  const repository = useFocusRepository()
+  const userId = useFocusIdentity()
+  return useMutation({
+    mutationKey: ['focus', 'reward-run', 'abandon', userId],
+    mutationFn: (runId: string) => {
+      if (!repository.abandonRewardRun) throw new Error('Rewarded Focus runs require Supabase.')
+      return repository.abandonRewardRun(userId, runId)
+    },
   })
 }
