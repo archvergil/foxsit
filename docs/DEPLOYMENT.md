@@ -15,14 +15,14 @@ Deploy command: npx wrangler deploy
 
 Do not set `npx wrangler deploy` as the build command: Workers Builds executes the build command first and the deploy command second. Node `24.18.1` is pinned by the committed `.nvmrc`.
 
-Set these variables under **Workers & Pages → foxsit → Settings → Variables and secrets → Production**:
+Set these as **Text** values under **Workers & Pages → foxsit → Settings → Build → Build variables and secrets** for the `main` production build:
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-Use the Project URL and the **Publishable key** from **Supabase → Project Settings → API**. These two values are intentionally embedded in the Vite browser bundle and remain safe only because every exposed table has RLS. Do not add `VITE_LOCAL_BACKEND_URL` in Production; it selects the development-only loopback API. Never set a Supabase secret/service-role key, database password, personal access token or SMTP password in Cloudflare Pages frontend variables.
+Use the Project URL and the **Publishable key** from **Supabase → Project Settings → API**. Vite needs these at build time and embeds them in the browser bundle; they are safe only because every exposed table has RLS. Runtime variables under **Settings → Variables and secrets** are not read by this static app and are unnecessary. Do not add `VITE_LOCAL_BACKEND_URL` in Production; it selects the development-only loopback API. Never set a Supabase secret/service-role key, database password, personal access token or SMTP password in Cloudflare build variables.
 
 The Worker URL is shown on the Overview page after the first successful deployment, typically `https://foxsit.<account-subdomain>.workers.dev`. Use that URL for Supabase Auth until a custom domain is attached. The build also emits `public/_redirects` as `dist/_redirects` for static redirect support.
 
