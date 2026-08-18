@@ -12,6 +12,8 @@ import type {
   WorkoutRoutineExercise,
   WorkoutRoutineExerciseInput,
   WorkoutRoutineInput,
+  SaveWorkoutSetInput,
+  WorkoutSession,
 } from './types'
 import WorkoutPage from './WorkoutPage'
 import { WorkoutRepositoryProvider } from './WorkoutRepositoryProvider'
@@ -20,6 +22,7 @@ const USER_ID = 'a13075d3-fc92-45a0-8fa5-bc790046fb8a'
 
 class MemoryWorkoutRepository implements WorkoutRepository {
   routines: WorkoutRoutine[] = []
+  activeSession: WorkoutSession | null = null
 
   listRoutines(): Promise<WorkoutRoutine[]> { return Promise.resolve(this.routines) }
   createRoutine(userId: string, input: WorkoutRoutineInput): Promise<WorkoutRoutine> {
@@ -59,6 +62,40 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     }))
     return Promise.resolve()
   }
+  getActiveSession(): Promise<WorkoutSession | null> { return Promise.resolve(this.activeSession) }
+  startSession(userId: string, routineId: string): Promise<WorkoutSession> {
+    if (this.activeSession) return Promise.resolve(this.activeSession)
+    const routine = this.routines.find(({ id }) => id === routineId)
+    if (!routine || routine.exercises.length === 0) return Promise.reject(new Error('Add at least one exercise.'))
+    this.activeSession = {
+      id: crypto.randomUUID(), userId, routineId, routineName: routine.name, status: 'active',
+      startedAt: '2026-08-18T12:00:00.000Z', endedAt: null, durationSeconds: null, notes: null,
+      createdAt: '2026-08-18T12:00:00.000Z', updatedAt: '2026-08-18T12:00:00.000Z',
+      exercises: routine.exercises.map((exercise) => ({
+        ...exercise, sessionId: 'session-id', sourceRoutineExerciseId: exercise.id,
+        sets: Array.from({ length: exercise.targetSets }, (_, index) => ({
+          id: crypto.randomUUID(), userId, sessionId: 'session-id', sessionExerciseId: exercise.id,
+          setNumber: index + 1, weightKg: null, reps: null, rir: null, completedAt: null,
+          createdAt: '2026-08-18T12:00:00.000Z', updatedAt: '2026-08-18T12:00:00.000Z',
+        })),
+      })),
+    }
+    return Promise.resolve(this.activeSession)
+  }
+  saveSet(_userId: string, input: SaveWorkoutSetInput): Promise<void> {
+    if (!this.activeSession) return Promise.reject(new Error('No active workout.'))
+    this.activeSession = {
+      ...this.activeSession,
+      exercises: this.activeSession.exercises.map((exercise) => ({
+        ...exercise,
+        sets: exercise.sets.map((set) => set.id === input.setId ? {
+          ...set, weightKg: input.weightKg, reps: input.reps, rir: input.rir, completedAt: '2026-08-18T12:10:00.000Z',
+        } : set),
+      })),
+    }
+    return Promise.resolve()
+  }
+  cancelSession(): Promise<void> { this.activeSession = null; return Promise.resolve() }
 }
 
 const authValue: AuthContextValue = {
@@ -80,6 +117,7 @@ const renderPage = (repository: WorkoutRepository) => {
             <Routes>
               <Route path="/workout/routines" element={<WorkoutPage />} />
               <Route path="/workout/routine/:routineId" element={<WorkoutPage />} />
+              <Route path="/workout/session/active" element={<WorkoutPage />} />
             </Routes>
           </MemoryRouter>
         </WorkoutRepositoryProvider>
@@ -110,5 +148,19 @@ describe('Workout routine flow', () => {
     await waitFor(() => expect(repository.routines[0]?.exercises).toHaveLength(1))
     expect(await screen.findByText('Bench press')).toBeVisible()
     expect(screen.getByText('Chest · 3 × 8–12')).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'Start workout' }))
+    const weightInput = await screen.findByRole('spinbutton', { name: 'Bench press set 1 weight in kilograms' })
+    expect(screen.getByRole('heading', { level: 2, name: 'Upper body' })).toBeVisible()
+
+    await user.type(weightInput, '40')
+    await user.type(screen.getByRole('spinbutton', { name: 'Bench press set 1 repetitions' }), '10')
+    await user.type(screen.getByRole('spinbutton', { name: 'Bench press set 1 reps in reserve' }), '2')
+    await user.click(screen.getAllByRole('button', { name: 'Complete' })[0]!)
+
+    await waitFor(() => expect(repository.activeSession?.exercises[0]?.sets[0]).toMatchObject({
+      weightKg: 40, reps: 10, rir: 2,
+    }))
+    expect(await screen.findByLabelText('Rest timer')).toBeVisible()
   })
 })

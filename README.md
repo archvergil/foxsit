@@ -6,7 +6,7 @@ The final product name is intentionally unresolved. `APP_NAME` is centralized in
 
 ## Current phase
 
-Phase 0 and the Phase 1 foundation are complete. The Phase 3 Tasks/Focus flow and Phase 4 Calendar are complete at the local boundary. Phase 5 Habits now has durable CRUD/archive, daily or weekday schedules, count targets, skip reasons, timezone-aware Today logs, daily history, streaks, weekly/monthly rates and a 12-week heatmap. Habit ordering/integrations and Workout remain the next feature work rather than displaying mock user data.
+The production foundation, Tasks/Focus, Calendar and Habits slices are live on Supabase. Workout now supports durable routine planning, atomic session start, set logging with load/reps/RIR, reload recovery and a timestamp-based rest timer. Transactional workout completion, history and progression are the next feature work; no mock user data is used to mask those pending contracts.
 
 See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) for progress and acceptance criteria.
 

@@ -39,10 +39,10 @@ Exit criteria: login and authenticated shell work at 390 px, 768 px and 1280+ px
 ## Phase 2 — Database and domain contracts
 
 - [x] Add the first reproducible migration for `profiles`.
-- [~] Add normalized migrations for Calendar, Tasks, Focus, Habits and Workout (Workout routines/exercises complete; sessions and sets pending).
+- [x] Add normalized migrations for Calendar, Tasks, Focus, Habits and Workout, including active sessions, exercise snapshots and sets.
 - [~] Add all RLS policies, FK/date indexes and cross-user verification scripts (Calendar, Tasks, Focus and Habits slices complete).
 - [x] Generate `database.generated.ts` from the production Supabase project after migrations are applied.
-- [~] Create feature repositories, query hooks and Zod schemas (Workout routine planning complete; active sessions pending).
+- [~] Create feature repositories, query hooks and Zod schemas (Workout planning and active-session logging complete; completion/history pending).
 - [ ] Implement the transactional `finish_workout_session` RPC.
 - [ ] Add deterministic seed/reference imports without user mock data.
 - [x] Add PGlite in-memory tests and a persistent local PostgreSQL-compatible server.
@@ -79,7 +79,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [!] Import and validate the legacy exercise catalog when supplied.
 - [!] Confirm rights and credentials before migrating any legacy GIF.
 - [x] Routine builder and normalized persistence in production Supabase.
-- [ ] Local-first active workout with sets, rest timer and recovery.
+- [x] Supabase-backed active workout with durable sets, timestamp-based rest timer and reload recovery.
 - [ ] Transactional finish, history, metrics, 1RM and PRs.
 - [ ] Workout ↔ habit and calendar adapters.
 
@@ -110,15 +110,15 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Continue Phase 6 with active workout sessions, set logging and timestamp-based recovery. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
+Continue Phase 6 with the transactional `finish_workout_session` RPC, completed history, volume/1RM metrics and PR detection. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
 
 ## Latest verification
 
-Completed the production Workout routine-planning slice on 2026-08-18:
+Completed the production Workout active-session slice on 2026-08-18:
 
 - `npm run lint`: passed with zero warnings;
 - `npm run typecheck`: passed under TypeScript 6 strict mode;
-- `npm run test -- --run`: 104/104 unit, component and existing regression tests passed;
+- `npm run test -- --run`: 109/109 unit, component and existing regression tests passed;
 - `npm run build`: passed, PWA/service worker generated and no chunk exceeded the warning threshold;
-- production Supabase: migration `202608180004` applied and recorded, both Workout tables have RLS enabled with four ownership policies each, and anonymous reads expose zero rows;
+- production Supabase: migrations `202608180005`–`202608180007` applied and recorded; all three active-session tables have RLS enabled with four ownership policies each, composite owner/session FKs and immutable session internals are enforced, and anonymous reads expose zero rows;
 - production Cloudflare Worker: deployment remains Git-driven from `main`.

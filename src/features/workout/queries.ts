@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/features/auth/authContext'
 import { workoutQueryKeys } from './repository'
-import type { WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import type { SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 import { useWorkoutRepository } from './workoutRepositoryContext'
 
 const useWorkoutIdentity = () => {
@@ -17,6 +17,15 @@ export const useWorkoutRoutines = () => {
   return useQuery({
     queryKey: workoutQueryKeys.routines(userId),
     queryFn: () => repository.listRoutines(userId),
+  })
+}
+
+export const useActiveWorkoutSession = () => {
+  const repository = useWorkoutRepository()
+  const userId = useWorkoutIdentity()
+  return useQuery({
+    queryKey: workoutQueryKeys.activeSession(userId),
+    queryFn: () => repository.getActiveSession(userId),
   })
 }
 
@@ -77,5 +86,39 @@ export const useDeleteWorkoutExercise = () => {
     mutationKey: ['workout', 'exercise', 'delete', userId],
     mutationFn: (exerciseId: string) => repository.deleteExercise(userId, exerciseId),
     onSuccess: invalidate,
+  })
+}
+
+export const useStartWorkoutSession = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'session', 'start', userId],
+    mutationFn: (routineId: string) => repository.startSession(userId, routineId),
+    onSuccess: (session) => queryClient.setQueryData(workoutQueryKeys.activeSession(userId), session),
+  })
+}
+
+export const useSaveWorkoutSet = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'set', 'save', userId],
+    mutationFn: (input: SaveWorkoutSetInput) => repository.saveSet(userId, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: workoutQueryKeys.activeSession(userId) }),
+  })
+}
+
+export const useCancelWorkoutSession = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'session', 'cancel', userId],
+    mutationFn: ({ sessionId, endedAt }: { sessionId: string; endedAt: string }) =>
+      repository.cancelSession(userId, sessionId, endedAt),
+    onSuccess: () => queryClient.setQueryData(workoutQueryKeys.activeSession(userId), null),
   })
 }

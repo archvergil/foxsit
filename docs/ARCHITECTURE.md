@@ -29,8 +29,8 @@ Workout → Habit contract: a completed workout may upsert one linked habit's lo
 
 ## State ownership
 
-- TanStack Query: profiles, Calendar events, projects/tasks, durable focus history and habits/logs today; routines and workout history as their slices land.
-- Zustand persist: the active Pomodoro timestamp state today; later the active workout draft and small local UI state that must survive reload.
+- TanStack Query: profiles, Calendar events, projects/tasks, durable focus history, habits/logs, workout routines and the active workout session stored in Supabase.
+- Zustand persist: active Pomodoro timestamps, the transient workout rest countdown and small local UI state that must survive reload. Workout sets and session progress never live only in Zustand.
 - React component state: transient field, dialog and navigation state.
 - `localStorage`: immediate theme preference until profile synchronization is introduced.
 
@@ -52,7 +52,7 @@ The browser router uses feature-level lazy imports. Public auth routes and the p
 
 ## Offline and PWA boundary
 
-The service worker precaches static app assets and may cache only the immutable exercise-catalog path. Private Supabase responses are deliberately excluded from service-worker runtime caching. Future active timers/workouts persist locally; server-required mutations must remain visibly pending or fail honestly.
+The service worker precaches static app assets and may cache only the immutable exercise-catalog path. Private Supabase responses are deliberately excluded from service-worker runtime caching. Only timer timestamps persist locally; active workout progress is recovered from Supabase, and server-required mutations remain visibly pending or fail honestly.
 
 ## Time model
 

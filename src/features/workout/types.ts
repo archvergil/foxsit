@@ -45,3 +45,60 @@ export interface WorkoutRoutineExerciseInput {
   restSeconds: number
   notes: string | null
 }
+
+export type WorkoutSessionStatus = 'active' | 'completed' | 'cancelled'
+
+export interface WorkoutSet {
+  id: string
+  userId: string
+  sessionId: string
+  sessionExerciseId: string
+  setNumber: number
+  weightKg: number | null
+  reps: number | null
+  rir: number | null
+  completedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WorkoutSessionExercise {
+  id: string
+  userId: string
+  sessionId: string
+  sourceRoutineExerciseId: string | null
+  exerciseName: string
+  muscleGroup: string | null
+  position: number
+  targetSets: number
+  targetRepsMin: number
+  targetRepsMax: number
+  restSeconds: number
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+  sets: WorkoutSet[]
+}
+
+export interface WorkoutSession {
+  id: string
+  userId: string
+  routineId: string | null
+  routineName: string
+  status: WorkoutSessionStatus
+  startedAt: string
+  endedAt: string | null
+  durationSeconds: number | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+  exercises: WorkoutSessionExercise[]
+}
+
+export interface SaveWorkoutSetInput {
+  sessionId: string
+  setId: string
+  weightKg: number | null
+  reps: number
+  rir: number | null
+}

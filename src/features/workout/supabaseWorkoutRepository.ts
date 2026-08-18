@@ -6,11 +6,15 @@ import {
   workoutColorTokenSchema,
   workoutRoutineExerciseInputSchema,
   workoutRoutineInputSchema,
+  saveWorkoutSetInputSchema,
 } from './schemas'
-import type { WorkoutRoutine, WorkoutRoutineExercise } from './types'
+import type { WorkoutRoutine, WorkoutRoutineExercise, WorkoutSession, WorkoutSessionExercise, WorkoutSet } from './types'
 
 type RoutineRow = Database['public']['Tables']['workout_routines']['Row']
 type ExerciseRow = Database['public']['Tables']['workout_routine_exercises']['Row']
+type SessionRow = Database['public']['Tables']['workout_sessions']['Row']
+type SessionExerciseRow = Database['public']['Tables']['workout_session_exercises']['Row']
+type SetRow = Database['public']['Tables']['workout_sets']['Row']
 
 export class WorkoutRepositoryError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -52,6 +56,79 @@ const mapRoutine = (row: RoutineRow, exercises: WorkoutRoutineExercise[] = []): 
   updatedAt: row.updated_at,
   exercises,
 })
+
+const mapSet = (row: SetRow): WorkoutSet => ({
+  id: row.id,
+  userId: row.user_id,
+  sessionId: row.session_id,
+  sessionExerciseId: row.session_exercise_id,
+  setNumber: row.set_number,
+  weightKg: row.weight_kg,
+  reps: row.reps,
+  rir: row.rir,
+  completedAt: row.completed_at,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+})
+
+const mapSessionExercise = (row: SessionExerciseRow, sets: WorkoutSet[]): WorkoutSessionExercise => ({
+  id: row.id,
+  userId: row.user_id,
+  sessionId: row.session_id,
+  sourceRoutineExerciseId: row.source_routine_exercise_id,
+  exerciseName: row.exercise_name,
+  muscleGroup: row.muscle_group,
+  position: row.position,
+  targetSets: row.target_sets,
+  targetRepsMin: row.target_reps_min,
+  targetRepsMax: row.target_reps_max,
+  restSeconds: row.rest_seconds,
+  notes: row.notes,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  sets,
+})
+
+const mapSession = (row: SessionRow, exercises: WorkoutSessionExercise[]): WorkoutSession => ({
+  id: row.id,
+  userId: row.user_id,
+  routineId: row.routine_id,
+  routineName: row.routine_name,
+  status: row.status === 'completed' || row.status === 'cancelled' ? row.status : 'active',
+  startedAt: row.started_at,
+  endedAt: row.ended_at,
+  durationSeconds: row.duration_seconds,
+  notes: row.notes,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  exercises,
+})
+
+const loadActiveSession = async (
+  client: SupabaseClient<Database>,
+  userId: string,
+): Promise<WorkoutSession | null> => {
+  const sessionResult = await client.from('workout_sessions').select('*')
+    .eq('user_id', userId).eq('status', 'active').maybeSingle()
+  if (sessionResult.error) throw new WorkoutRepositoryError('Could not load the active workout.', { cause: sessionResult.error })
+  if (!sessionResult.data) return null
+
+  const exerciseResult = await client.from('workout_session_exercises').select('*')
+    .eq('user_id', userId).eq('session_id', sessionResult.data.id)
+    .order('position').order('created_at')
+  const exerciseRows = assertData(exerciseResult.data, exerciseResult.error, 'load active workout exercises')
+  const setResult = await client.from('workout_sets').select('*')
+    .eq('user_id', userId).eq('session_id', sessionResult.data.id)
+    .order('set_number')
+  const sets = assertData(setResult.data, setResult.error, 'load active workout sets').map(mapSet)
+  const setsByExercise = new Map<string, WorkoutSet[]>()
+  for (const set of sets) {
+    const exerciseSets = setsByExercise.get(set.sessionExerciseId) ?? []
+    exerciseSets.push(set)
+    setsByExercise.set(set.sessionExerciseId, exerciseSets)
+  }
+  return mapSession(sessionResult.data, exerciseRows.map((row) => mapSessionExercise(row, setsByExercise.get(row.id) ?? [])))
+}
 
 export const createSupabaseWorkoutRepository = (
   client: SupabaseClient<Database>,
@@ -131,5 +208,40 @@ export const createSupabaseWorkoutRepository = (
     const { data, error } = await client.from('workout_routine_exercises').delete()
       .eq('id', exerciseId).eq('user_id', userId).select('id').maybeSingle()
     assertData(data, error, 'remove the exercise')
+  },
+
+  getActiveSession: (userId) => loadActiveSession(client, userId),
+
+  startSession: async (userId, routineId) => {
+    const { data, error } = await client.rpc('start_workout_session', { p_routine_id: routineId })
+    assertData(data, error, 'start the workout')
+    const session = await loadActiveSession(client, userId)
+    if (!session) throw new WorkoutRepositoryError('The workout started but could not be loaded.')
+    return session
+  },
+
+  saveSet: async (userId, input) => {
+    const value = saveWorkoutSetInputSchema.parse(input)
+    const { data, error } = await client.from('workout_sets').update({
+      weight_kg: value.weightKg,
+      reps: value.reps,
+      rir: value.rir,
+      completed_at: new Date().toISOString(),
+    }).eq('id', value.setId).eq('session_id', value.sessionId).eq('user_id', userId)
+      .select('id').maybeSingle()
+    assertData(data, error, 'save the workout set')
+  },
+
+  cancelSession: async (userId, sessionId, endedAt) => {
+    const sessionResult = await client.from('workout_sessions').select('started_at')
+      .eq('id', sessionId).eq('user_id', userId).eq('status', 'active').maybeSingle()
+    const session = assertData(sessionResult.data, sessionResult.error, 'load the workout to discard')
+    const durationSeconds = Math.max(0, Math.floor((Date.parse(endedAt) - Date.parse(session.started_at)) / 1000))
+    const { data, error } = await client.from('workout_sessions').update({
+      status: 'cancelled',
+      ended_at: endedAt,
+      duration_seconds: durationSeconds,
+    }).eq('id', sessionId).eq('user_id', userId).eq('status', 'active').select('id').maybeSingle()
+    assertData(data, error, 'discard the workout')
   },
 })
