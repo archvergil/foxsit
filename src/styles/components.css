@@ -1,0 +1,221 @@
+.button {
+  min-height: var(--touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.75rem 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.button svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.button--primary {
+  color: var(--inverse);
+  background: var(--inverse-surface);
+}
+
+.button--secondary {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
+.button--quiet {
+  color: var(--ink-soft);
+  background: transparent;
+}
+
+.button__spinner {
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(1turn); }
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field__label {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 680;
+}
+
+.field__control {
+  width: 100%;
+  min-height: 3.125rem;
+  padding: 0.85rem 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  outline: 0;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast), background var(--duration-fast);
+}
+
+.field__control:hover {
+  border-color: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.field__control:focus {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+}
+
+.field__control[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field__message {
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.field__message--error,
+.form-error {
+  color: var(--danger);
+}
+
+.form-error {
+  padding: var(--space-3) var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+  background: var(--danger-surface);
+  border-radius: var(--radius-sm);
+}
+
+.configuration-notice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  background: var(--sand);
+  border: 1px solid color-mix(in srgb, var(--sand-ink) 18%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.configuration-notice > svg {
+  width: 1.25rem;
+  color: var(--sand-ink);
+}
+
+.configuration-notice strong {
+  color: var(--sand-ink);
+  font-size: var(--text-sm);
+}
+
+.configuration-notice p {
+  margin: var(--space-1) 0 0;
+  color: var(--sand-ink);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.online-status {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  color: var(--sand-ink);
+  background: var(--sand);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+
+.online-status svg {
+  width: 1rem;
+}
+
+.update-toast {
+  position: fixed;
+  z-index: 80;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--inverse);
+  background: var(--inverse-surface);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-float);
+}
+
+.update-toast > span {
+  padding-left: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.app-loading {
+  min-height: 100dvh;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-5);
+}
+
+.app-loading__mark {
+  width: 5.5rem;
+  height: 5.5rem;
+  padding: var(--space-3);
+  overflow: hidden;
+  background: #11110f;
+  border-radius: 1.8rem;
+}
+
+.app-loading__mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.app-loading__pulse {
+  width: 3rem;
+  height: 0.2rem;
+  overflow: hidden;
+  background: var(--surface-muted);
+  border-radius: var(--radius-pill);
+}
+
+.app-loading__pulse::after {
+  content: '';
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--ink);
+  border-radius: inherit;
+  animation: loading-pulse 1s var(--ease-out) infinite alternate;
+}
+
+@keyframes loading-pulse {
+  to { transform: translateX(150%); }
+}

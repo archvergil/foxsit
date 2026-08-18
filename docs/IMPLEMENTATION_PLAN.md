@@ -1,0 +1,126 @@
+# Implementation plan
+
+Last updated: 2026-08-18
+
+Status legend: `[x]` complete, `[~]` in progress, `[ ]` pending, `[!]` blocked by an external input.
+
+## Phase 0 — Audit and decisions
+
+- [x] Inspect the complete initial workspace and verify Git/tooling baseline.
+- [x] Search for a ZIP, extracted legacy project and `.reference/` tree.
+- [x] Record that no legacy source is currently present; no extraction is possible.
+- [x] Create `REFERENCE_AUDIT.md` with reuse, rejection and deferred-audit rules.
+- [x] Confirm required stack and choose an email/password Supabase Auth foundation.
+- [x] Record architecture, database and visual decisions.
+- [x] Identify the supplied fox icon as the only reusable asset and preserve its source.
+- [x] Verify that no legacy secret or environment file exists in the workspace.
+
+Exit: complete. The missing legacy is a documented input limitation, not a blocker for the clean foundation.
+
+## Phase 1 — Foundation
+
+- [x] Scaffold React + TypeScript + Vite with strict settings and `@/` aliases.
+- [x] Pin an official portable Node.js LTS runtime and add verified bootstrap/wrapper scripts.
+- [x] Configure ESLint, Vitest, Testing Library and Playwright.
+- [x] Configure Supabase client with explicit missing-configuration behavior.
+- [x] Configure TanStack Query and React Router with feature-level lazy loading.
+- [x] Create a responsive shell: desktop sidebar, tablet rail and mobile capsule navigation.
+- [x] Create light/dark/system tokens with an inline no-flash theme bootstrap.
+- [x] Implement accessible button, field, loading, configuration, offline and update feedback.
+- [x] Implement email/password sign-in, sign-up, recovery, AuthGuard and sign-out.
+- [x] Create the profile bootstrap migration with RLS and an `auth.users` trigger.
+- [x] Configure PWA manifest, app-shell precache and safe SPA fallback.
+- [x] Add GitHub Actions quality workflow.
+- [x] Validate public responsive screenshots and direct-route SPA/AuthGuard refresh locally.
+- [ ] Validate a preview deployment against a real Supabase project and Cloudflare Pages.
+
+Exit criteria: login and authenticated shell work at 390 px, 768 px and 1280+ px; refresh on internal routes succeeds; lint, typecheck, unit tests and build pass.
+
+## Phase 2 — Database and domain contracts
+
+- [x] Add the first reproducible migration for `profiles`.
+- [~] Add normalized migrations for Calendar, Tasks, Focus, Habits and Workout (Calendar, Tasks, Focus and Habits complete; Workout pending).
+- [~] Add all RLS policies, FK/date indexes and cross-user verification scripts (Calendar, Tasks, Focus and Habits slices complete).
+- [ ] Generate `database.generated.ts` from a linked Supabase project.
+- [~] Create feature repositories, query hooks and Zod schemas (Profile preferences, Calendar, Tasks, Focus and Habits complete; Workout pending).
+- [ ] Implement the transactional `finish_workout_session` RPC.
+- [ ] Add deterministic seed/reference imports without user mock data.
+- [x] Add PGlite in-memory tests and a persistent local PostgreSQL-compatible server.
+- [x] Add project-scoped Supabase CLI commands for the Docker fidelity tier.
+- [x] Add a loopback-only PGlite account/data API for end-to-end local development without Docker.
+
+Exit: local database is reproducible and no exposed table is open across users.
+
+## Phase 3 — Tasks and Focus
+
+- [x] Projects, Inbox, Today, Upcoming and Completed queries with project create, rename and delete management.
+- [x] Task CRUD, checklist, optimistic completion/reordering with rollback and durable manual ordering.
+- [x] Persisted timestamp-based Pomodoro store and mini player.
+- [x] Durable focus session history and task integration.
+- [~] Unit, component and E2E coverage for the daily flow (unit/component and local authenticated E2E complete; Supabase E2E pending).
+
+## Phase 4 — Calendar
+
+- [x] Month, week and day views.
+- [x] Event CRUD with temporal/all-day validation.
+- [x] Profile-timezone conversions and local-day helpers for month and week slices.
+- [x] Derived task overlays without duplicated calendar rows.
+- [x] Mobile agenda, deterministic week overlap layout and month/week date edge-case tests.
+
+## Phase 5 — Habits
+
+- [!] Audit/port legacy algorithms if the reference source becomes available.
+- [x] Habit CRUD, daily/weekday schedules, count targets, skipped reasons, Today logs, archived management and durable accessible ordering.
+- [x] Tested daily history, current/longest streaks, weekly/monthly progress, 12-week heatmap and factual insights.
+- [x] Read-only Calendar adapter and ownership-safe Workout link contract.
+
+## Phase 6 — Workout
+
+- [!] Import and validate the legacy exercise catalog when supplied.
+- [!] Confirm rights and credentials before migrating any legacy GIF.
+- [ ] Routine builder and normalized persistence.
+- [ ] Local-first active workout with sets, rest timer and recovery.
+- [ ] Transactional finish, history, metrics, 1RM and PRs.
+- [ ] Workout ↔ habit and calendar adapters.
+
+## Phase 7 — Today integrations
+
+- [~] Replace foundation states with real aggregated queries (Today Tasks card complete).
+- [ ] Next event, agenda, tasks, habits, workout and current focus state.
+- [ ] Derived daily metrics with real loading/empty/error/success states.
+
+## Phase 8 — Rewards
+
+- [ ] Add the versioned reward-rule configuration, wallet, monthly counters, immutable ledger and redemption migrations with RLS.
+- [ ] Extend durable Focus runs and Workout sessions with the facts needed to award eligible activity exactly once.
+- [ ] Add transactional reward, conversion and redemption RPCs with profile-timezone monthly limits and idempotency constraints.
+- [ ] Build the responsive Rewards area: balances, monthly progress, conversions, ledger and both credit stores.
+- [ ] Cover the economy with unit, database/RLS, component and authenticated E2E tests.
+
+Exit: all balances are durable and auditable; monthly caps, conversions and duplicate-reward prevention are proven under the local data boundary.
+
+## Phase 9 — Release
+
+- [ ] Full visual and accessibility audit.
+- [ ] Performance, lazy-loading and reduced-connection checks.
+- [ ] PWA install/update/offline verification.
+- [ ] Supabase Security/Performance Advisor review.
+- [ ] Complete E2E suite and production documentation.
+- [ ] Remove foundation milestone copy and all temporary routes/states.
+
+## Next vertical slice
+
+Start Phase 6 with the Workout data model and a deliberately small routine/session vertical slice. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
+
+## Latest verification
+
+Completed Habits ordering and the read-only Calendar adapter at the local boundary on 2026-08-18:
+
+- `npm run lint`: passed with zero warnings;
+- `npm run typecheck`: passed under TypeScript 6 strict mode;
+- `npm run test -- --run`: 99/99 unit, component, database and local API tests passed;
+- `npm run test:db`: 23/23 focused PostgreSQL/local API integration tests passed;
+- `npm run test:e2e:local`: 10/10 authenticated mobile/desktop Calendar, Tasks, Focus and Habits persistence flows passed;
+- `npm run test:e2e`: 6/6 mobile/desktop public-flow tests passed;
+- `npm run build`: passed, PWA/service worker generated and no chunk exceeded the warning threshold;
+- `npm audit --audit-level=high`: zero vulnerabilities.

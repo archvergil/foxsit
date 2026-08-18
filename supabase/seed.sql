@@ -1,0 +1,2 @@
+-- Foundation seed intentionally contains no user or fake productivity data.
+-- Feature-specific reference data will be added through deterministic import scripts.

@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.local
+*.log
+
+# Local reference source and generated caches stay outside production tooling.
+.reference/
+.tools/
+.local-data/
+
+# Supabase local state and CLI artifacts.
+supabase/.branches/
+supabase/.temp/
