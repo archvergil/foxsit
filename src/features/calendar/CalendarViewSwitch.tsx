@@ -8,7 +8,7 @@ export function CalendarViewSwitch({
   dayDate: string
 }) {
   return (
-    <nav className="segmented-control calendar-view-switch" aria-label="Calendar view">
+    <nav className="segmented-control segmented-control--three calendar-view-switch" aria-label="Calendar view" data-active-index={active === 'month' ? 0 : active === 'week' ? 1 : 2}>
       <NavLink className={active === 'month' ? 'is-active' : ''} to="/calendar" end>Month</NavLink>
       <NavLink className={active === 'week' ? 'is-active' : ''} to="/calendar/week">Week</NavLink>
       <NavLink className={active === 'day' ? 'is-active' : ''} to={`/calendar/day/${dayDate}`}>Day</NavLink>

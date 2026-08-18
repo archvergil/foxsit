@@ -123,7 +123,7 @@
     color: #c7c8c2;
     background: #151614;
     border: 1px solid rgb(255 255 255 / 10%);
-    border-radius: 1.65rem;
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-float);
   }
 
@@ -137,7 +137,7 @@
     padding: 0.3rem;
     color: #9b9d96;
     font-size: 0.64rem;
-    border-radius: 1.25rem;
+    border-radius: var(--radius-md);
   }
 
   .mobile-nav .nav-item svg {
@@ -170,7 +170,7 @@
   .today-hero-card {
     min-height: 25rem;
     padding: var(--space-6);
-    border-radius: 1.75rem;
+    border-radius: var(--radius-lg);
   }
 
   .today-hero-card h2 {

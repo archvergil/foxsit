@@ -616,6 +616,6 @@ span.task-row__content { cursor: default; }
 
   .today-tasks-card {
     min-height: 24rem;
-    border-radius: 1.75rem;
+    border-radius: var(--radius-lg);
   }
 }

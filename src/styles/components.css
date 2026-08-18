@@ -8,7 +8,7 @@
   font-weight: 700;
   line-height: 1;
   border: 1px solid transparent;
-  border-radius: var(--radius-pill);
+  border-radius: 0.55rem;
   cursor: pointer;
   transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
 }
@@ -52,18 +52,46 @@
 }
 
 .segmented-control {
+  position: relative;
+  --segmented-gap: 0.2rem;
   width: fit-content;
-  display: flex;
-  gap: 0.2rem;
-  padding: 0.2rem;
+  display: grid;
+  gap: var(--segmented-gap);
+  padding: var(--segmented-gap);
   background: #1a1b18;
   border: 1px solid rgb(248 247 242 / 24%);
-  border-radius: 0.7rem;
+  border-radius: 0.65rem;
   box-shadow: inset 0 1px rgb(255 255 255 / 7%), 0 1px 2px rgb(0 0 0 / 18%);
 }
 
+.segmented-control--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.segmented-control--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.segmented-control::before {
+  position: absolute;
+  z-index: 0;
+  top: var(--segmented-gap);
+  bottom: var(--segmented-gap);
+  left: var(--segmented-gap);
+  width: calc((100% - 0.8rem) / 3);
+  content: '';
+  background: #f8f7f2;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 28%), inset 0 1px rgb(255 255 255 / 60%);
+  transform: translateX(0);
+  transition: transform 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.segmented-control--two::before { width: calc((100% - 0.6rem) / 2); }
+.segmented-control--two[data-active-index='1']::before { transform: translateX(calc(100% + var(--segmented-gap))); }
+.segmented-control--three[data-active-index='1']::before { transform: translateX(calc(100% + var(--segmented-gap))); }
+.segmented-control--three[data-active-index='2']::before { transform: translateX(calc(200% + 0.4rem)); }
+
 .segmented-control > a,
 .segmented-control > button {
+  position: relative;
+  z-index: 1;
   min-height: var(--touch-target);
   display: grid;
   padding: 0 var(--space-4);
@@ -79,7 +107,7 @@
   place-items: center;
   text-align: center;
   text-decoration: none;
-  transition: color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+  transition: color 180ms var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .segmented-control > a:hover,
@@ -95,8 +123,8 @@
 .segmented-control > a.is-active,
 .segmented-control > button[aria-pressed='true'] {
   color: #171815;
-  background: #f8f7f2;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 28%), inset 0 1px rgb(255 255 255 / 60%);
+  background: transparent;
+  box-shadow: none;
 }
 
 .segmented-control > button:disabled {
@@ -241,7 +269,7 @@
   padding: var(--space-3);
   overflow: hidden;
   background: #11110f;
-  border-radius: 1.8rem;
+  border-radius: var(--radius-lg);
 }
 
 .app-loading__mark img {

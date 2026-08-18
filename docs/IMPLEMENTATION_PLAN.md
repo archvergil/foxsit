@@ -101,7 +101,7 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Phase 9 — Release
 
-- [x] Standardize segmented navigation controls across Calendar, Habits, Focus and Workout with the production visual system.
+- [x] Standardize segmented navigation controls across Calendar, Habits, Focus and Workout with an elastic active-indicator transition and the compact production radius system.
 - [x] Redesign the Calendar month workspace with a compact grid, functional event search and real color/category/description-tag filters.
 - [ ] Full visual and accessibility audit.
 - [ ] Performance, lazy-loading and reduced-connection checks.
@@ -115,6 +115,12 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 Continue Phase 6 with ownership-safe Workout → Habit completion and read-only Calendar adapters, then expose the scheduled/active workout on Today. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
 
 ## Latest verification
+
+Completed the interaction and global radius correction on 2026-08-18:
+
+- added a dedicated active indicator that slides elastically between every two- and three-option segmented control;
+- normalized the application radius tokens and remaining oversized hard-coded radii to the compact Calendar standard, while retaining functional circles;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (115/115) and `npm run build` passed.
 
 Completed the compact Calendar month workspace slice on 2026-08-18:
 

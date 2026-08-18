@@ -46,6 +46,7 @@ export default function FocusPage() {
   const saveSession = useCreateFocusSession()
   const timer = usePomodoroStore()
   const active = timer.status !== 'idle' && timer.ownerUserId === session?.user.id
+  const activePhaseIndex = (Object.keys(phaseCopy) as FocusPhase[]).indexOf(timer.phase)
   const now = useTimerClock(active && timer.status === 'running')
   const remaining = remainingTimerMs(timer, now)
   const [selectedTaskId, setSelectedTaskId] = useState(() => searchParams.get('taskId') ?? '')
@@ -98,7 +99,7 @@ export default function FocusPage() {
 
       <div className="focus-layout">
         <section className={`focus-timer-card focus-timer-card--${timer.phase}`} aria-label="Pomodoro timer">
-          <div className="segmented-control focus-phase-tabs" aria-label="Timer phase">
+          <div className="segmented-control segmented-control--three focus-phase-tabs" aria-label="Timer phase" data-active-index={activePhaseIndex}>
             {(Object.keys(phaseCopy) as FocusPhase[]).map((phase) => (
               <button
                 type="button"

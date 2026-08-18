@@ -134,7 +134,7 @@ code {
   place-items: center;
   background: #11110f;
   border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 0.8rem;
+  border-radius: var(--radius-lg);
 }
 
 .brand-lockup__mark img {

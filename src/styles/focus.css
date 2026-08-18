@@ -267,7 +267,7 @@
 }
 
 @media (max-width: 47.99rem) {
-  .focus-timer-card { min-height: 27rem; padding: var(--space-4); border-radius: 1.75rem; }
+  .focus-timer-card { min-height: 27rem; padding: var(--space-4); border-radius: var(--radius-lg); }
   .focus-phase-tabs { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .focus-phase-tabs button { padding-inline: var(--space-2); font-size: var(--text-xs); }
   .focus-timer-card__clock > strong { font-size: clamp(4rem, 22vw, 6rem); }
