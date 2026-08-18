@@ -1,0 +1,81 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { useAuth } from '@/features/auth/authContext'
+import { workoutQueryKeys } from './repository'
+import type { WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import { useWorkoutRepository } from './workoutRepositoryContext'
+
+const useWorkoutIdentity = () => {
+  const { session } = useAuth()
+  if (!session) throw new Error('Workout requires an authenticated session.')
+  return session.user.id
+}
+
+export const useWorkoutRoutines = () => {
+  const repository = useWorkoutRepository()
+  const userId = useWorkoutIdentity()
+  return useQuery({
+    queryKey: workoutQueryKeys.routines(userId),
+    queryFn: () => repository.listRoutines(userId),
+  })
+}
+
+const useInvalidateRoutines = () => {
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return {
+    userId,
+    invalidate: () => queryClient.invalidateQueries({ queryKey: workoutQueryKeys.routines(userId) }),
+  }
+}
+
+export const useCreateWorkoutRoutine = () => {
+  const repository = useWorkoutRepository()
+  const { userId, invalidate } = useInvalidateRoutines()
+  return useMutation({
+    mutationKey: ['workout', 'routine', 'create', userId],
+    mutationFn: (input: WorkoutRoutineInput) => repository.createRoutine(userId, input),
+    onSuccess: invalidate,
+  })
+}
+
+export const useUpdateWorkoutRoutine = () => {
+  const repository = useWorkoutRepository()
+  const { userId, invalidate } = useInvalidateRoutines()
+  return useMutation({
+    mutationKey: ['workout', 'routine', 'update', userId],
+    mutationFn: ({ routineId, input }: { routineId: string; input: WorkoutRoutineInput }) =>
+      repository.updateRoutine(userId, routineId, input),
+    onSuccess: invalidate,
+  })
+}
+
+export const useDeleteWorkoutRoutine = () => {
+  const repository = useWorkoutRepository()
+  const { userId, invalidate } = useInvalidateRoutines()
+  return useMutation({
+    mutationKey: ['workout', 'routine', 'delete', userId],
+    mutationFn: (routineId: string) => repository.deleteRoutine(userId, routineId),
+    onSuccess: invalidate,
+  })
+}
+
+export const useCreateWorkoutExercise = () => {
+  const repository = useWorkoutRepository()
+  const { userId, invalidate } = useInvalidateRoutines()
+  return useMutation({
+    mutationKey: ['workout', 'exercise', 'create', userId],
+    mutationFn: (input: WorkoutRoutineExerciseInput) => repository.createExercise(userId, input),
+    onSuccess: invalidate,
+  })
+}
+
+export const useDeleteWorkoutExercise = () => {
+  const repository = useWorkoutRepository()
+  const { userId, invalidate } = useInvalidateRoutines()
+  return useMutation({
+    mutationKey: ['workout', 'exercise', 'delete', userId],
+    mutationFn: (exerciseId: string) => repository.deleteExercise(userId, exerciseId),
+    onSuccess: invalidate,
+  })
+}

@@ -32,17 +32,17 @@ Exit: complete. The missing legacy is a documented input limitation, not a block
 - [x] Configure PWA manifest, app-shell precache and safe SPA fallback.
 - [x] Add GitHub Actions quality workflow.
 - [x] Validate public responsive screenshots and direct-route SPA/AuthGuard refresh locally.
-- [~] Validate a production deployment against a real Supabase project and Cloudflare Worker.
+- [x] Validate a production deployment against a real Supabase project and Cloudflare Worker.
 
 Exit criteria: login and authenticated shell work at 390 px, 768 px and 1280+ px; refresh on internal routes succeeds; lint, typecheck, unit tests and build pass.
 
 ## Phase 2 — Database and domain contracts
 
 - [x] Add the first reproducible migration for `profiles`.
-- [~] Add normalized migrations for Calendar, Tasks, Focus, Habits and Workout (Calendar, Tasks, Focus and Habits complete; Workout pending).
+- [~] Add normalized migrations for Calendar, Tasks, Focus, Habits and Workout (Workout routines/exercises complete; sessions and sets pending).
 - [~] Add all RLS policies, FK/date indexes and cross-user verification scripts (Calendar, Tasks, Focus and Habits slices complete).
-- [~] Generate `database.generated.ts` from the production Supabase project after the initial migrations are applied.
-- [~] Create feature repositories, query hooks and Zod schemas (Profile preferences, Calendar, Tasks, Focus and Habits complete; Workout pending).
+- [x] Generate `database.generated.ts` from the production Supabase project after migrations are applied.
+- [~] Create feature repositories, query hooks and Zod schemas (Workout routine planning complete; active sessions pending).
 - [ ] Implement the transactional `finish_workout_session` RPC.
 - [ ] Add deterministic seed/reference imports without user mock data.
 - [x] Add PGlite in-memory tests and a persistent local PostgreSQL-compatible server.
@@ -78,7 +78,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 
 - [!] Import and validate the legacy exercise catalog when supplied.
 - [!] Confirm rights and credentials before migrating any legacy GIF.
-- [ ] Routine builder and normalized persistence.
+- [x] Routine builder and normalized persistence in production Supabase.
 - [ ] Local-first active workout with sets, rest timer and recovery.
 - [ ] Transactional finish, history, metrics, 1RM and PRs.
 - [ ] Workout ↔ habit and calendar adapters.
@@ -110,17 +110,15 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Start Phase 6 with the Workout data model and a deliberately small routine/session vertical slice. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
+Continue Phase 6 with active workout sessions, set logging and timestamp-based recovery. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
 
 ## Latest verification
 
-Completed Habits ordering and the read-only Calendar adapter at the local boundary on 2026-08-18:
+Completed the production Workout routine-planning slice on 2026-08-18:
 
 - `npm run lint`: passed with zero warnings;
 - `npm run typecheck`: passed under TypeScript 6 strict mode;
-- `npm run test -- --run`: 99/99 unit, component, database and local API tests passed;
-- `npm run test:db`: 23/23 focused PostgreSQL/local API integration tests passed;
-- `npm run test:e2e:local`: 10/10 authenticated mobile/desktop Calendar, Tasks, Focus and Habits persistence flows passed;
-- `npm run test:e2e`: 6/6 mobile/desktop public-flow tests passed;
+- `npm run test -- --run`: 104/104 unit, component and existing regression tests passed;
 - `npm run build`: passed, PWA/service worker generated and no chunk exceeded the warning threshold;
-- `npm audit --audit-level=high`: zero vulnerabilities.
+- production Supabase: migration `202608180004` applied and recorded, both Workout tables have RLS enabled with four ownership policies each, and anonymous reads expose zero rows;
+- production Cloudflare Worker: deployment remains Git-driven from `main`.

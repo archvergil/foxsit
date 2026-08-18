@@ -47,7 +47,7 @@ The seventh migration adds `habits.archived_at` and keeps it synchronized with `
 
 The eighth migration adds `reorder_habits(uuid[])`. It locks the user's active set, rejects empty, partial, duplicate, stale or inaccessible orders and rewrites stable positions in one transaction. Archived habits retain their historical position and are not accepted in the active ordering payload.
 
-Workout remains pending. Every user-owned table will carry `user_id`, RLS and join/date indexes. Workout history will be normalized; only active Pomodoro/workout drafts may remain local documents.
+Workout routine planning is live through `workout_routines` and `workout_routine_exercises`, both ownership-safe through composite foreign keys and RLS. Workout sessions, sets and history remain pending; only an active in-progress workout draft may eventually use Zustand for reload recovery, while every durable write belongs in Supabase.
 
 ## Types
 

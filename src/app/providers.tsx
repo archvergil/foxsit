@@ -8,6 +8,7 @@ import { HabitsRepositoryProvider } from '@/features/habits/HabitsRepositoryProv
 import { ThemeProvider } from '@/features/settings/ThemeProvider'
 import { ProfileRepositoryProvider } from '@/features/settings/ProfileRepositoryProvider'
 import { TasksRepositoryProvider } from '@/features/tasks/TasksRepositoryProvider'
+import { WorkoutRepositoryProvider } from '@/features/workout/WorkoutRepositoryProvider'
 import { queryClient } from './queryClient'
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -19,7 +20,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
             <CalendarRepositoryProvider>
               <TasksRepositoryProvider>
                 <FocusRepositoryProvider>
-                  <HabitsRepositoryProvider>{children}</HabitsRepositoryProvider>
+                  <HabitsRepositoryProvider>
+                    <WorkoutRepositoryProvider>{children}</WorkoutRepositoryProvider>
+                  </HabitsRepositoryProvider>
                 </FocusRepositoryProvider>
               </TasksRepositoryProvider>
             </CalendarRepositoryProvider>

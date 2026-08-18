@@ -390,6 +390,98 @@ export type Database = {
           },
         ]
       }
+      workout_routine_exercises: {
+        Row: {
+          created_at: string
+          exercise_name: string
+          id: string
+          muscle_group: string | null
+          notes: string | null
+          position: number
+          rest_seconds: number
+          routine_id: string
+          target_reps_max: number
+          target_reps_min: number
+          target_sets: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_name: string
+          id?: string
+          muscle_group?: string | null
+          notes?: string | null
+          position?: number
+          rest_seconds?: number
+          routine_id: string
+          target_reps_max?: number
+          target_reps_min?: number
+          target_sets?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          muscle_group?: string | null
+          notes?: string | null
+          position?: number
+          rest_seconds?: number
+          routine_id?: string
+          target_reps_max?: number
+          target_reps_min?: number
+          target_sets?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_routine_exercises_owner_fk"
+            columns: ["routine_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "workout_routines"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      workout_routines: {
+        Row: {
+          archived_at: string | null
+          color_token: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color_token?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          color_token?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
