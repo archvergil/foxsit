@@ -1,19 +1,21 @@
 # Deployment
 
-## Cloudflare Pages
+## Cloudflare Workers Builds
 
-Connect the GitHub repository with:
+This repository is deployed as a static-asset Worker, not through a Pages-only project. `wrangler.jsonc` declares the `dist` asset directory and the single-page-application fallback, so direct navigation to `/today`, `/tasks` and `/calendar` returns the app shell.
+
+In the existing Worker, open **Settings → Builds** and set:
 
 ```text
-Framework preset: Vite
-Production branch: main
-Build command: npm run build
-Build output directory: dist
+Git branch: main
 Root directory: /
-Node version: 24.18.1
+Build command: npm run build
+Deploy command: npx wrangler deploy
 ```
 
-Set these production build variables under **Workers & Pages → <project> → Settings → Environment variables → Production**:
+Do not set `npx wrangler deploy` as the build command: Workers Builds executes the build command first and the deploy command second. Node `24.18.1` is pinned by the committed `.nvmrc`.
+
+Set these variables under **Workers & Pages → foxsit → Settings → Variables and secrets → Production**:
 
 ```text
 VITE_SUPABASE_URL
@@ -22,7 +24,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY
 
 Use the Project URL and the **Publishable key** from **Supabase → Project Settings → API**. These two values are intentionally embedded in the Vite browser bundle and remain safe only because every exposed table has RLS. Do not add `VITE_LOCAL_BACKEND_URL` in Production; it selects the development-only loopback API. Never set a Supabase secret/service-role key, database password, personal access token or SMTP password in Cloudflare Pages frontend variables.
 
-The committed `.nvmrc` already pins Node `24.18.1`; set `NODE_VERSION=24.18.1` in Cloudflare only if the build logs show that the file was not honored. The build emits `public/_redirects` as `dist/_redirects`; `/* /index.html 200` is the SPA fallback for direct refresh on `/tasks`, `/calendar` and `/workout`.
+The Worker URL is shown on the Overview page after the first successful deployment, typically `https://foxsit.<account-subdomain>.workers.dev`. Use that URL for Supabase Auth until a custom domain is attached. The build also emits `public/_redirects` as `dist/_redirects` for static redirect support.
 
 ## Supabase
 
