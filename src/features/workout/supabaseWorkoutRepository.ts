@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database.generated'
 import type { WorkoutRepository } from './repository'
 import {
+  finishWorkoutSessionInputSchema,
   workoutColorTokenSchema,
   workoutRoutineExerciseInputSchema,
   workoutRoutineInputSchema,
@@ -67,6 +68,9 @@ const mapSet = (row: SetRow): WorkoutSet => ({
   reps: row.reps,
   rir: row.rir,
   completedAt: row.completed_at,
+  volumeKg: row.volume_kg,
+  estimatedOneRepMaxKg: row.estimated_1rm_kg,
+  isPersonalRecord: row.is_personal_record,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 })
@@ -76,6 +80,7 @@ const mapSessionExercise = (row: SessionExerciseRow, sets: WorkoutSet[]): Workou
   userId: row.user_id,
   sessionId: row.session_id,
   sourceRoutineExerciseId: row.source_routine_exercise_id,
+  exerciseKey: row.exercise_key ?? row.exercise_name.trim().toLowerCase(),
   exerciseName: row.exercise_name,
   muscleGroup: row.muscle_group,
   position: row.position,
@@ -89,6 +94,36 @@ const mapSessionExercise = (row: SessionExerciseRow, sets: WorkoutSet[]): Workou
   sets,
 })
 
+const loadSessionRelations = async (
+  client: SupabaseClient<Database>,
+  userId: string,
+  sessionRows: SessionRow[],
+): Promise<WorkoutSession[]> => {
+  if (sessionRows.length === 0) return []
+  const sessionIds = sessionRows.map(({ id }) => id)
+  const exerciseResult = await client.from('workout_session_exercises').select('*')
+    .eq('user_id', userId).in('session_id', sessionIds)
+    .order('position').order('created_at')
+  const exerciseRows = assertData(exerciseResult.data, exerciseResult.error, 'load workout session exercises')
+  const setResult = await client.from('workout_sets').select('*')
+    .eq('user_id', userId).in('session_id', sessionIds)
+    .order('set_number')
+  const sets = assertData(setResult.data, setResult.error, 'load workout session sets').map(mapSet)
+  const setsByExercise = new Map<string, WorkoutSet[]>()
+  for (const set of sets) {
+    const exerciseSets = setsByExercise.get(set.sessionExerciseId) ?? []
+    exerciseSets.push(set)
+    setsByExercise.set(set.sessionExerciseId, exerciseSets)
+  }
+  const exercisesBySession = new Map<string, WorkoutSessionExercise[]>()
+  for (const row of exerciseRows) {
+    const sessionExercises = exercisesBySession.get(row.session_id) ?? []
+    sessionExercises.push(mapSessionExercise(row, setsByExercise.get(row.id) ?? []))
+    exercisesBySession.set(row.session_id, sessionExercises)
+  }
+  return sessionRows.map((row) => mapSession(row, exercisesBySession.get(row.id) ?? []))
+}
+
 const mapSession = (row: SessionRow, exercises: WorkoutSessionExercise[]): WorkoutSession => ({
   id: row.id,
   userId: row.user_id,
@@ -99,6 +134,10 @@ const mapSession = (row: SessionRow, exercises: WorkoutSessionExercise[]): Worko
   endedAt: row.ended_at,
   durationSeconds: row.duration_seconds,
   notes: row.notes,
+  completedSets: row.completed_sets,
+  totalVolumeKg: row.total_volume_kg,
+  bestEstimatedOneRepMaxKg: row.best_estimated_1rm_kg,
+  personalRecords: row.personal_records,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   exercises,
@@ -113,21 +152,7 @@ const loadActiveSession = async (
   if (sessionResult.error) throw new WorkoutRepositoryError('Could not load the active workout.', { cause: sessionResult.error })
   if (!sessionResult.data) return null
 
-  const exerciseResult = await client.from('workout_session_exercises').select('*')
-    .eq('user_id', userId).eq('session_id', sessionResult.data.id)
-    .order('position').order('created_at')
-  const exerciseRows = assertData(exerciseResult.data, exerciseResult.error, 'load active workout exercises')
-  const setResult = await client.from('workout_sets').select('*')
-    .eq('user_id', userId).eq('session_id', sessionResult.data.id)
-    .order('set_number')
-  const sets = assertData(setResult.data, setResult.error, 'load active workout sets').map(mapSet)
-  const setsByExercise = new Map<string, WorkoutSet[]>()
-  for (const set of sets) {
-    const exerciseSets = setsByExercise.get(set.sessionExerciseId) ?? []
-    exerciseSets.push(set)
-    setsByExercise.set(set.sessionExerciseId, exerciseSets)
-  }
-  return mapSession(sessionResult.data, exerciseRows.map((row) => mapSessionExercise(row, setsByExercise.get(row.id) ?? [])))
+  return (await loadSessionRelations(client, userId, [sessionResult.data]))[0] ?? null
 }
 
 export const createSupabaseWorkoutRepository = (
@@ -243,5 +268,22 @@ export const createSupabaseWorkoutRepository = (
       duration_seconds: durationSeconds,
     }).eq('id', sessionId).eq('user_id', userId).eq('status', 'active').select('id').maybeSingle()
     assertData(data, error, 'discard the workout')
+  },
+
+  finishSession: async (_userId, input) => {
+    const value = finishWorkoutSessionInputSchema.parse(input)
+    const { data, error } = await client.rpc('finish_workout_session', {
+      p_session_id: value.sessionId,
+      p_notes: value.notes ?? '',
+    })
+    assertData(data, error, 'finish the workout')
+  },
+
+  listCompletedSessions: async (userId) => {
+    const result = await client.from('workout_sessions').select('*')
+      .eq('user_id', userId).eq('status', 'completed')
+      .order('ended_at', { ascending: false }).limit(50)
+    const rows = assertData(result.data, result.error, 'load workout history')
+    return loadSessionRelations(client, userId, rows)
   },
 })

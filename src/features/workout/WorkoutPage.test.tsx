@@ -6,13 +6,16 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { AuthContext, type AuthContextValue } from '@/features/auth/authContext'
+import type { ProfileRepository } from '@/features/settings/profileRepository'
+import { ProfileRepositoryProvider } from '@/features/settings/ProfileRepositoryProvider'
 import type { WorkoutRepository } from './repository'
 import type {
+  FinishWorkoutSessionInput,
+  SaveWorkoutSetInput,
   WorkoutRoutine,
   WorkoutRoutineExercise,
   WorkoutRoutineExerciseInput,
   WorkoutRoutineInput,
-  SaveWorkoutSetInput,
   WorkoutSession,
 } from './types'
 import WorkoutPage from './WorkoutPage'
@@ -23,6 +26,7 @@ const USER_ID = 'a13075d3-fc92-45a0-8fa5-bc790046fb8a'
 class MemoryWorkoutRepository implements WorkoutRepository {
   routines: WorkoutRoutine[] = []
   activeSession: WorkoutSession | null = null
+  history: WorkoutSession[] = []
 
   listRoutines(): Promise<WorkoutRoutine[]> { return Promise.resolve(this.routines) }
   createRoutine(userId: string, input: WorkoutRoutineInput): Promise<WorkoutRoutine> {
@@ -67,20 +71,24 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     if (this.activeSession) return Promise.resolve(this.activeSession)
     const routine = this.routines.find(({ id }) => id === routineId)
     if (!routine || routine.exercises.length === 0) return Promise.reject(new Error('Add at least one exercise.'))
-    this.activeSession = {
+    const activeSession: WorkoutSession = {
       id: crypto.randomUUID(), userId, routineId, routineName: routine.name, status: 'active',
       startedAt: '2026-08-18T12:00:00.000Z', endedAt: null, durationSeconds: null, notes: null,
+      completedSets: 0, totalVolumeKg: 0, bestEstimatedOneRepMaxKg: null, personalRecords: 0,
       createdAt: '2026-08-18T12:00:00.000Z', updatedAt: '2026-08-18T12:00:00.000Z',
       exercises: routine.exercises.map((exercise) => ({
         ...exercise, sessionId: 'session-id', sourceRoutineExerciseId: exercise.id,
+        exerciseKey: exercise.exerciseName.trim().toLowerCase(),
         sets: Array.from({ length: exercise.targetSets }, (_, index) => ({
           id: crypto.randomUUID(), userId, sessionId: 'session-id', sessionExerciseId: exercise.id,
           setNumber: index + 1, weightKg: null, reps: null, rir: null, completedAt: null,
+          volumeKg: null, estimatedOneRepMaxKg: null, isPersonalRecord: false,
           createdAt: '2026-08-18T12:00:00.000Z', updatedAt: '2026-08-18T12:00:00.000Z',
         })),
       })),
     }
-    return Promise.resolve(this.activeSession)
+    this.activeSession = activeSession
+    return Promise.resolve(activeSession)
   }
   saveSet(_userId: string, input: SaveWorkoutSetInput): Promise<void> {
     if (!this.activeSession) return Promise.reject(new Error('No active workout.'))
@@ -96,6 +104,30 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     return Promise.resolve()
   }
   cancelSession(): Promise<void> { this.activeSession = null; return Promise.resolve() }
+  finishSession(_userId: string, input: FinishWorkoutSessionInput): Promise<void> {
+    if (!this.activeSession) return Promise.reject(new Error('No active workout.'))
+    const exercises = this.activeSession.exercises.map((exercise) => ({
+      ...exercise,
+      sets: exercise.sets.map((set) => {
+        if (!set.completedAt || set.reps === null) return set
+        const volumeKg = (set.weightKg ?? 0) * set.reps
+        const estimatedOneRepMaxKg = set.weightKg === null ? null : Math.round(set.weightKg * (1 + set.reps / 30) * 100) / 100
+        return { ...set, volumeKg, estimatedOneRepMaxKg, isPersonalRecord: estimatedOneRepMaxKg !== null }
+      }),
+    }))
+    const sets = exercises.flatMap((exercise) => exercise.sets).filter((set) => set.completedAt)
+    const finished: WorkoutSession = {
+      ...this.activeSession, exercises, status: 'completed', endedAt: '2026-08-18T12:10:00.000Z',
+      durationSeconds: 600, notes: input.notes, completedSets: sets.length,
+      totalVolumeKg: sets.reduce((total, set) => total + (set.volumeKg ?? 0), 0),
+      bestEstimatedOneRepMaxKg: Math.max(...sets.map((set) => set.estimatedOneRepMaxKg ?? 0)),
+      personalRecords: sets.filter((set) => set.isPersonalRecord).length,
+    }
+    this.history.unshift(finished)
+    this.activeSession = null
+    return Promise.resolve()
+  }
+  listCompletedSessions(): Promise<WorkoutSession[]> { return Promise.resolve(this.history) }
 }
 
 const authValue: AuthContextValue = {
@@ -107,20 +139,30 @@ const authValue: AuthContextValue = {
   signOut: () => Promise.resolve(), requestPasswordReset: () => Promise.resolve(), updatePassword: () => Promise.resolve(),
 }
 
+const profileRepository: ProfileRepository = {
+  getProfile: () => Promise.resolve({
+    id: USER_ID, display_name: null, avatar_url: null, timezone: 'America/Sao_Paulo',
+    week_starts_on: 1, theme: 'system', created_at: '2026-08-18T12:00:00.000Z', updated_at: '2026-08-18T12:00:00.000Z',
+  }),
+}
+
 const renderPage = (repository: WorkoutRepository) => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={authValue}>
-        <WorkoutRepositoryProvider repository={repository}>
-          <MemoryRouter initialEntries={['/workout/routines']}>
-            <Routes>
-              <Route path="/workout/routines" element={<WorkoutPage />} />
-              <Route path="/workout/routine/:routineId" element={<WorkoutPage />} />
-              <Route path="/workout/session/active" element={<WorkoutPage />} />
-            </Routes>
-          </MemoryRouter>
-        </WorkoutRepositoryProvider>
+        <ProfileRepositoryProvider repository={profileRepository}>
+          <WorkoutRepositoryProvider repository={repository}>
+            <MemoryRouter initialEntries={['/workout/routines']}>
+              <Routes>
+                <Route path="/workout/routines" element={<WorkoutPage />} />
+                <Route path="/workout/routine/:routineId" element={<WorkoutPage />} />
+                <Route path="/workout/session/active" element={<WorkoutPage />} />
+                <Route path="/workout/history" element={<WorkoutPage />} />
+              </Routes>
+            </MemoryRouter>
+          </WorkoutRepositoryProvider>
+        </ProfileRepositoryProvider>
       </AuthContext.Provider>
     </QueryClientProvider>,
   )
@@ -162,5 +204,14 @@ describe('Workout routine flow', () => {
       weightKg: 40, reps: 10, rir: 2,
     }))
     expect(await screen.findByLabelText('Rest timer')).toBeVisible()
-  })
+
+    const finishButton = screen.getByRole('button', { name: 'Finish workout' })
+    await waitFor(() => expect(finishButton).toBeEnabled())
+    await user.click(finishButton)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Workout history' })).toBeVisible()
+    expect((await screen.findAllByText('400 kg'))[0]).toBeVisible()
+    expect(repository.history).toHaveLength(1)
+    expect(repository.history[0]).toMatchObject({ completedSets: 1, totalVolumeKg: 400, personalRecords: 1 })
+  }, 10_000)
 })

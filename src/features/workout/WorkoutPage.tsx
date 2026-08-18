@@ -8,6 +8,7 @@ import { ActiveWorkoutSession } from './ActiveWorkoutSession'
 import { useActiveWorkoutSession, useDeleteWorkoutExercise, useDeleteWorkoutRoutine, useStartWorkoutSession, useWorkoutRoutines } from './queries'
 import type { WorkoutRoutine } from './types'
 import { WorkoutExerciseEditor } from './WorkoutExerciseEditor'
+import { WorkoutHistory } from './WorkoutHistory'
 import { WorkoutRoutineEditor } from './WorkoutRoutineEditor'
 
 const RoutineCard = ({ routine }: { routine: WorkoutRoutine }) => (
@@ -92,16 +93,16 @@ export default function WorkoutPage() {
 
   return (
     <div className="workout-page">
-      <PageHeader eyebrow="Workout · production" title={activeView ? (activeSession.data?.routineName ?? 'Active workout') : selectedRoutine?.name ?? (historyView ? 'Workout history' : 'Train with context.')} description={activeView ? 'Sets are saved to Supabase as you complete them.' : selectedRoutine ? 'Build the repeatable plan, then start a durable workout session.' : 'Routines and active training are stored in Supabase and isolated by your account.'} actions={!routineId && !historyView && !activeView ? <Button onClick={() => setEditorRoutine('new')}><Plus aria-hidden />New routine</Button> : undefined} />
+      <PageHeader eyebrow="Workout · production" title={activeView ? (activeSession.data?.routineName ?? 'Active workout') : selectedRoutine?.name ?? (historyView ? 'Workout history' : 'Train with context.')} description={activeView ? 'Sets are saved to Supabase as you complete them.' : historyView ? 'Completed sessions, volume, estimated strength and personal records.' : selectedRoutine ? 'Build the repeatable plan, then start a durable workout session.' : 'Routines and active training are stored in Supabase and isolated by your account.'} actions={!routineId && !historyView && !activeView ? <Button onClick={() => setEditorRoutine('new')}><Plus aria-hidden />New routine</Button> : undefined} />
       <nav className="workout-view-switch" aria-label="Workout views"><Link className={!historyView && !activeView ? 'is-active' : ''} to="/workout/routines">Routines</Link>{activeSession.data ? <Link className={activeView ? 'is-active' : ''} to="/workout/session/active">Active</Link> : null}<Link className={historyView ? 'is-active' : ''} to="/workout/history">History</Link></nav>
       {!activeView && activeSession.data ? <Link className="workout-active-banner" to="/workout/session/active"><span><span className="eyebrow">Workout in progress</span><strong>{activeSession.data.routineName}</strong></span><span>Continue<ChevronRight aria-hidden /></span></Link> : null}
       {activeView && activeSession.isLoading ? <div className="workout-state" role="status">Recovering your active workout…</div> : null}
       {activeView && activeSession.error ? <div className="workout-state workout-state--error"><strong>Active workout could not be loaded.</strong><p>{activeSession.error.message}</p><Button variant="secondary" onClick={() => void activeSession.refetch()}>Try again</Button></div> : null}
       {activeView && !activeSession.isLoading && !activeSession.error && activeSession.data ? <ActiveWorkoutSession session={activeSession.data} /> : null}
       {activeView && !activeSession.isLoading && !activeSession.error && !activeSession.data ? <div className="workout-state"><Dumbbell aria-hidden /><strong>No workout is active.</strong><p>Start one from a routine with at least one exercise.</p><Link to="/workout/routines">Choose a routine</Link></div> : null}
-      {!activeView && routines.isLoading ? <div className="workout-state" role="status">Loading workout routines…</div> : null}
-      {!activeView && routines.error ? <div className="workout-state workout-state--error"><strong>Workout routines could not be loaded.</strong><p>{routines.error.message}</p><Button variant="secondary" onClick={() => void routines.refetch()}>Try again</Button></div> : null}
-      {!routines.isLoading && !routines.error && historyView ? <div className="workout-state"><Dumbbell aria-hidden /><strong>No completed workout sessions yet.</strong><p>Active set logging is live. Transactional completion and completed-session history are the next Workout slice.</p></div> : null}
+      {!activeView && !historyView && routines.isLoading ? <div className="workout-state" role="status">Loading workout routines…</div> : null}
+      {!activeView && !historyView && routines.error ? <div className="workout-state workout-state--error"><strong>Workout routines could not be loaded.</strong><p>{routines.error.message}</p><Button variant="secondary" onClick={() => void routines.refetch()}>Try again</Button></div> : null}
+      {historyView ? <WorkoutHistory /> : null}
       {!routines.isLoading && !routines.error && routineId && selectedRoutine ? <WorkoutRoutineDetail routine={selectedRoutine} onEdit={() => setEditorRoutine(selectedRoutine)} /> : null}
       {!routines.isLoading && !routines.error && routineId && !selectedRoutine ? <div className="workout-state workout-state--error"><strong>Routine not found.</strong><Link to="/workout/routines">Return to routines</Link></div> : null}
       {!routines.isLoading && !routines.error && !routineId && !historyView && !activeView ? (

@@ -58,6 +58,9 @@ export interface WorkoutSet {
   reps: number | null
   rir: number | null
   completedAt: string | null
+  volumeKg: number | null
+  estimatedOneRepMaxKg: number | null
+  isPersonalRecord: boolean
   createdAt: string
   updatedAt: string
 }
@@ -67,6 +70,7 @@ export interface WorkoutSessionExercise {
   userId: string
   sessionId: string
   sourceRoutineExerciseId: string | null
+  exerciseKey: string
   exerciseName: string
   muscleGroup: string | null
   position: number
@@ -90,6 +94,10 @@ export interface WorkoutSession {
   endedAt: string | null
   durationSeconds: number | null
   notes: string | null
+  completedSets: number
+  totalVolumeKg: number
+  bestEstimatedOneRepMaxKg: number | null
+  personalRecords: number
   createdAt: string
   updatedAt: string
   exercises: WorkoutSessionExercise[]
@@ -101,4 +109,9 @@ export interface SaveWorkoutSetInput {
   weightKg: number | null
   reps: number
   rir: number | null
+}
+
+export interface FinishWorkoutSessionInput {
+  sessionId: string
+  notes: string | null
 }

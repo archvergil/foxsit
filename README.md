@@ -6,7 +6,7 @@ The final product name is intentionally unresolved. `APP_NAME` is centralized in
 
 ## Current phase
 
-The production foundation, Tasks/Focus, Calendar and Habits slices are live on Supabase. Workout now supports durable routine planning, atomic session start, set logging with load/reps/RIR, reload recovery and a timestamp-based rest timer. Transactional workout completion, history and progression are the next feature work; no mock user data is used to mask those pending contracts.
+The production foundation, Tasks/Focus, Calendar and Habits slices are live on Supabase. Workout supports durable routine planning, atomic session start, set logging with load/reps/RIR, reload recovery, rest timing, transactional completion and history with volume, estimated 1RM and personal records. Workout integrations with Habits, Calendar and Today are next; no mock user data is used to mask pending contracts.
 
 See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) for progress and acceptance criteria.
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  finishWorkoutSessionInputSchema,
   resolveWorkoutExerciseForm,
   resolveWorkoutRoutineForm,
   saveWorkoutSetInputSchema,
@@ -61,5 +62,15 @@ describe('workout schemas', () => {
       rir: 11,
     })
     expect(result.success).toBe(false)
+  })
+
+  it('validates completion notes before calling the transaction', () => {
+    expect(finishWorkoutSessionInputSchema.parse({
+      sessionId: '31fb2733-62ca-4b36-a68f-fdf6423a3809',
+      notes: '  Strong session  ',
+    })).toEqual({
+      sessionId: '31fb2733-62ca-4b36-a68f-fdf6423a3809',
+      notes: 'Strong session',
+    })
   })
 })

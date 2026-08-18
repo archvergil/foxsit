@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 
 export const workoutColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
 
@@ -75,3 +75,8 @@ export const saveWorkoutSetInputSchema = z.object({
   reps: z.number().int().min(1, 'Enter at least one rep.').max(1000),
   rir: z.number().int().min(0).max(10).nullable(),
 }) satisfies z.ZodType<SaveWorkoutSetInput>
+
+export const finishWorkoutSessionInputSchema = z.object({
+  sessionId: z.string().uuid(),
+  notes: z.string().trim().max(5000).nullable(),
+}) satisfies z.ZodType<FinishWorkoutSessionInput>

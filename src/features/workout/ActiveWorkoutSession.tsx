@@ -1,11 +1,11 @@
-import { Check, CircleStop, Dumbbell, TimerReset, X } from 'lucide-react'
+import { Check, CheckCircle2, CircleStop, Dumbbell, TimerReset, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/authContext'
 import { useTimerClock } from '@/features/focus/useTimerClock'
-import { useCancelWorkoutSession, useSaveWorkoutSet } from './queries'
+import { useCancelWorkoutSession, useFinishWorkoutSession, useSaveWorkoutSet } from './queries'
 import { formatWorkoutDuration, remainingWorkoutRestMs } from './restTimer'
 import type { WorkoutSession, WorkoutSessionExercise, WorkoutSet } from './types'
 import { useWorkoutRestStore } from './workoutRestStore'
@@ -97,7 +97,9 @@ export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
   const navigate = useNavigate()
   const { session: authSession } = useAuth()
   const cancelSession = useCancelWorkoutSession()
+  const finishSession = useFinishWorkoutSession()
   const rest = useWorkoutRestStore()
+  const [notes, setNotes] = useState('')
   const now = useTimerClock(true)
   const elapsed = Math.max(0, now - Date.parse(session.startedAt))
   const allSets = session.exercises.flatMap((exercise) => exercise.sets)
@@ -116,6 +118,16 @@ export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
       await navigate('/workout/routines')
     } catch {
       // The durable-write error remains visible below.
+    }
+  }
+
+  const finish = async () => {
+    try {
+      await finishSession.mutateAsync({ sessionId: session.id, notes: notes.trim() || null })
+      rest.clear()
+      await navigate('/workout/history')
+    } catch {
+      // The transaction error remains visible below.
     }
   }
 
@@ -145,10 +157,14 @@ export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
       </section>
 
       <section className="workout-active__footer">
-        <div><strong>Your progress is durable.</strong><p>Every completed set is stored in Supabase and restored on reload or another device.</p></div>
-        <Button variant="quiet" isLoading={cancelSession.isPending} onClick={() => void discard()}><CircleStop aria-hidden />Discard workout</Button>
+        <label><span>Workout notes</span><textarea maxLength={5000} placeholder="How did the session feel?" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
+        <div className="workout-active__footer-actions">
+          <Button variant="quiet" isLoading={cancelSession.isPending} onClick={() => void discard()}><CircleStop aria-hidden />Discard workout</Button>
+          <Button disabled={completedSets === 0} isLoading={finishSession.isPending} onClick={() => void finish()}><CheckCircle2 aria-hidden />Finish workout</Button>
+        </div>
       </section>
       {cancelSession.error ? <p className="workout-write-error" role="alert">{cancelSession.error.message}</p> : null}
+      {finishSession.error ? <p className="workout-write-error" role="alert">{finishSession.error.message}</p> : null}
     </div>
   )
 }

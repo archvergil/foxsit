@@ -485,6 +485,7 @@ export type Database = {
       workout_session_exercises: {
         Row: {
           created_at: string
+          exercise_key: string | null
           exercise_name: string
           id: string
           muscle_group: string | null
@@ -501,6 +502,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          exercise_key?: string | null
           exercise_name: string
           id?: string
           muscle_group?: string | null
@@ -517,6 +519,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          exercise_key?: string | null
           exercise_name?: string
           id?: string
           muscle_group?: string | null
@@ -550,41 +553,53 @@ export type Database = {
       }
       workout_sessions: {
         Row: {
+          best_estimated_1rm_kg: number | null
+          completed_sets: number
           created_at: string
           duration_seconds: number | null
           ended_at: string | null
           id: string
           notes: string | null
+          personal_records: number
           routine_id: string | null
           routine_name: string
           started_at: string
           status: string
+          total_volume_kg: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          best_estimated_1rm_kg?: number | null
+          completed_sets?: number
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          personal_records?: number
           routine_id?: string | null
           routine_name: string
           started_at?: string
           status?: string
+          total_volume_kg?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          best_estimated_1rm_kg?: number | null
+          completed_sets?: number
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
           notes?: string | null
+          personal_records?: number
           routine_id?: string | null
           routine_name?: string
           started_at?: string
           status?: string
+          total_volume_kg?: number
           updated_at?: string
           user_id?: string
         }
@@ -602,7 +617,9 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          estimated_1rm_kg: number | null
           id: string
+          is_personal_record: boolean
           reps: number | null
           rir: number | null
           session_exercise_id: string
@@ -610,12 +627,15 @@ export type Database = {
           set_number: number
           updated_at: string
           user_id: string
+          volume_kg: number | null
           weight_kg: number | null
         }
         Insert: {
           completed_at?: string | null
           created_at?: string
+          estimated_1rm_kg?: number | null
           id?: string
+          is_personal_record?: boolean
           reps?: number | null
           rir?: number | null
           session_exercise_id: string
@@ -623,12 +643,15 @@ export type Database = {
           set_number: number
           updated_at?: string
           user_id: string
+          volume_kg?: number | null
           weight_kg?: number | null
         }
         Update: {
           completed_at?: string | null
           created_at?: string
+          estimated_1rm_kg?: number | null
           id?: string
+          is_personal_record?: boolean
           reps?: number | null
           rir?: number | null
           session_exercise_id?: string
@@ -636,6 +659,7 @@ export type Database = {
           set_number?: number
           updated_at?: string
           user_id?: string
+          volume_kg?: number | null
           weight_kg?: number | null
         }
         Relationships: [
@@ -660,6 +684,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      finish_workout_session: {
+        Args: { p_notes?: string; p_session_id: string }
+        Returns: string
+      }
       is_valid_weekdays: { Args: { value: number[] }; Returns: boolean }
       reorder_habits: {
         Args: { p_habit_ids: string[] }

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/features/auth/authContext'
 import { workoutQueryKeys } from './repository'
-import type { SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 import { useWorkoutRepository } from './workoutRepositoryContext'
 
 const useWorkoutIdentity = () => {
@@ -26,6 +26,16 @@ export const useActiveWorkoutSession = () => {
   return useQuery({
     queryKey: workoutQueryKeys.activeSession(userId),
     queryFn: () => repository.getActiveSession(userId),
+  })
+}
+
+export const useWorkoutHistory = (enabled = true) => {
+  const repository = useWorkoutRepository()
+  const userId = useWorkoutIdentity()
+  return useQuery({
+    queryKey: workoutQueryKeys.history(userId),
+    queryFn: () => repository.listCompletedSessions(userId),
+    enabled,
   })
 }
 
@@ -120,5 +130,19 @@ export const useCancelWorkoutSession = () => {
     mutationFn: ({ sessionId, endedAt }: { sessionId: string; endedAt: string }) =>
       repository.cancelSession(userId, sessionId, endedAt),
     onSuccess: () => queryClient.setQueryData(workoutQueryKeys.activeSession(userId), null),
+  })
+}
+
+export const useFinishWorkoutSession = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'session', 'finish', userId],
+    mutationFn: (input: FinishWorkoutSessionInput) => repository.finishSession(userId, input),
+    onSuccess: async () => {
+      queryClient.setQueryData(workoutQueryKeys.activeSession(userId), null)
+      await queryClient.invalidateQueries({ queryKey: workoutQueryKeys.history(userId) })
+    },
   })
 }
