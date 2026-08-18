@@ -47,7 +47,6 @@ On macOS/Linux or a machine with Node installed, use Node `24.18.1` and standard
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
 VITE_LOCAL_BACKEND_URL
-VITE_APP_ENV
 ```
 
 Never expose a Supabase service-role key through `VITE_*` variables. Copy `.env.example` to `.env.local` and use a publishable/anon key; RLS is the authorization boundary.

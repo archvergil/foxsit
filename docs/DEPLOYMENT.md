@@ -18,7 +18,6 @@ Set these production build variables under **Workers & Pages → <project> → S
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
-VITE_APP_ENV=production
 ```
 
 Use the Project URL and the **Publishable key** from **Supabase → Project Settings → API**. These two values are intentionally embedded in the Vite browser bundle and remain safe only because every exposed table has RLS. Do not add `VITE_LOCAL_BACKEND_URL` in Production; it selects the development-only loopback API. Never set a Supabase secret/service-role key, database password, personal access token or SMTP password in Cloudflare Pages frontend variables.
