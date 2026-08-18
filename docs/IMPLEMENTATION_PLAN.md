@@ -102,6 +102,7 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 ## Phase 9 — Release
 
 - [x] Standardize segmented navigation controls across Calendar, Habits, Focus and Workout with the production visual system.
+- [x] Redesign the Calendar month workspace with a compact grid, functional event search and real color/category/description-tag filters.
 - [ ] Full visual and accessibility audit.
 - [ ] Performance, lazy-loading and reduced-connection checks.
 - [ ] PWA install/update/offline verification.
@@ -114,6 +115,12 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 Continue Phase 6 with ownership-safe Workout → Habit completion and read-only Calendar adapters, then expose the scheduled/active workout on Today. New slices target production Supabase and the Cloudflare Worker directly; the historical local backend is not extended. Keep the missing legacy catalog and authorized GIF source as an explicit audit limitation; do not fabricate those assets.
 
 ## Latest verification
+
+Completed the compact Calendar month workspace slice on 2026-08-18:
+
+- replaced the oversized month composition with a full-width, low-radius calendar grid and restrained controls;
+- added production-backed event search plus Color, Category and `#tag`-in-description filters without introducing local event state or new database fields;
+- focused Calendar tests passed, including event creation, filtering, editing and deletion.
 
 Completed the segmented-control visual slice on 2026-08-18:
 

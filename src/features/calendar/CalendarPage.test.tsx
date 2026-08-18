@@ -156,6 +156,11 @@ describe('Calendar month flow', () => {
       endAt: '2026-08-17T13:00:00.000Z',
     })
 
+    const eventSearch = screen.getByRole('textbox', { name: 'Search events' })
+    await user.type(eventSearch, 'planning')
+    expect(await screen.findByRole('button', { name: 'Edit event Planning session' })).toBeVisible()
+    await user.clear(eventSearch)
+
     await user.click(await screen.findByRole('button', { name: 'Edit event Planning session' }))
     const title = screen.getByRole('textbox', { name: 'Title' })
     await user.clear(title)

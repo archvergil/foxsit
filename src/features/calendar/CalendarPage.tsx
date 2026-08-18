@@ -2,7 +2,6 @@ import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { useHabitLogs, useHabits } from '@/features/habits/queries'
 import { useTaskList } from '@/features/tasks/queries'
@@ -10,6 +9,7 @@ import { addLocalDays, localDateKey, localDateTimeToTimestamp } from '@/lib/date
 import { CalendarDayAgenda } from './CalendarDayAgenda'
 import { CalendarDayPage } from './CalendarDayPage'
 import { CalendarEventEditor } from './CalendarEventEditor'
+import { CalendarFilters } from './CalendarFilterBar'
 import { CalendarMonthGrid } from './CalendarMonthGrid'
 import { CalendarViewSwitch } from './CalendarViewSwitch'
 import { CalendarWeekPage } from './CalendarWeekPage'
@@ -20,6 +20,7 @@ import {
   shiftMonthKey,
   taskOccursOnDate,
 } from './calendarMonth'
+import { emptyCalendarEventFilters, filterCalendarEvents } from './calendarFilters'
 import { useCalendarDateContext, useCalendarEvents } from './queries'
 import type { CalendarEvent, CalendarEventRange } from './types'
 import { projectHabitCalendarItems } from './habitCalendarAdapter'
@@ -29,6 +30,7 @@ function CalendarMonthPage() {
   const today = localDateKey(new Date(), timeZone)
   const [monthKey, setMonthKey] = useState(() => monthKeyForDate(new Date(), timeZone))
   const [selectedDate, setSelectedDate] = useState(today)
+  const [filters, setFilters] = useState(emptyCalendarEventFilters)
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | undefined>()
   const month = useMemo(() => buildCalendarMonth(monthKey, weekStartsOn), [monthKey, weekStartsOn])
@@ -45,7 +47,8 @@ function CalendarMonthPage() {
   const events = eventsQuery.data ?? []
   const tasks = tasksQuery.data ?? []
   const habitItems = projectHabitCalendarItems(habitsQuery.data ?? [], habitLogsQuery.data ?? [], month.gridStart, month.gridEnd, timeZone)
-  const selectedEvents = events.filter((event) => eventOccursOnDate(event, selectedDate, timeZone))
+  const filteredEvents = filterCalendarEvents(events, filters)
+  const selectedEvents = filteredEvents.filter((event) => eventOccursOnDate(event, selectedDate, timeZone))
   const selectedTasks = tasks.filter((task) => taskOccursOnDate(task, selectedDate, timeZone))
   const selectedHabits = habitItems.filter((habit) => habit.date === selectedDate)
 
@@ -73,12 +76,10 @@ function CalendarMonthPage() {
 
   return (
     <section className="page-stack calendar-page">
-      <PageHeader
-        eyebrow="Calendar · Month"
-        title="Make time visible."
-        description={`Events use ${timeZone}; tasks and habits remain owned by their modules.`}
-        actions={<Button type="button" onClick={createEvent}><Plus aria-hidden />New event</Button>}
-      />
+      <header className="calendar-page__header">
+        <span><span className="eyebrow">Calendar · Month</span><h1>Calendar</h1></span>
+        <Button className="calendar-page__new-event" type="button" onClick={createEvent}><Plus aria-hidden />New event</Button>
+      </header>
       <CalendarViewSwitch active="month" dayDate={selectedDate} />
       <div className="calendar-toolbar">
         <Button variant="secondary" type="button" onClick={goToday}>Today</Button>
@@ -88,6 +89,7 @@ function CalendarMonthPage() {
           <button type="button" aria-label="Next month" onClick={() => navigateMonth(1)}><ChevronRight aria-hidden /></button>
         </span>
       </div>
+      <CalendarFilters events={events} filters={filters} onChange={setFilters} />
       {eventsQuery.isPending || tasksQuery.isPending || habitsQuery.isPending || habitLogsQuery.isPending ? (
         <div className="calendar-loading" role="status" aria-label="Loading calendar"><span /><span /><span /></div>
       ) : eventsQuery.error || tasksQuery.error || habitsQuery.error || habitLogsQuery.error ? (
@@ -103,7 +105,7 @@ function CalendarMonthPage() {
             weekStartsOn={weekStartsOn}
             selectedDate={selectedDate}
             timeZone={timeZone}
-            events={events}
+            events={filteredEvents}
             tasks={tasks}
             habits={habitItems}
             onSelectDate={(date) => { setSelectedDate(date); setEditorOpen(false) }}
