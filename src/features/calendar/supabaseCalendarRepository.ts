@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '@/types/database.generated'
-import { calendarEventInputSchema } from './schemas'
+import { calendarColorTokenSchema, calendarEventInputSchema } from './schemas'
 import type { CalendarRepository } from './repository'
 import type { CalendarEvent, CalendarEventInput } from './types'
 
@@ -30,7 +30,7 @@ const mapEvent = (row: CalendarEventRow): CalendarEvent => ({
   startDate: row.start_date,
   endDate: row.end_date,
   category: row.category,
-  colorToken: row.color_token,
+  colorToken: calendarColorTokenSchema.parse(row.color_token),
   location: row.location,
   createdAt: row.created_at,
   updatedAt: row.updated_at,

@@ -32,7 +32,7 @@ Exit: complete. The missing legacy is a documented input limitation, not a block
 - [x] Configure PWA manifest, app-shell precache and safe SPA fallback.
 - [x] Add GitHub Actions quality workflow.
 - [x] Validate public responsive screenshots and direct-route SPA/AuthGuard refresh locally.
-- [ ] Validate a preview deployment against a real Supabase project and Cloudflare Pages.
+- [~] Validate a production deployment against a real Supabase project and Cloudflare Worker.
 
 Exit criteria: login and authenticated shell work at 390 px, 768 px and 1280+ px; refresh on internal routes succeeds; lint, typecheck, unit tests and build pass.
 
@@ -41,7 +41,7 @@ Exit criteria: login and authenticated shell work at 390 px, 768 px and 1280+ px
 - [x] Add the first reproducible migration for `profiles`.
 - [~] Add normalized migrations for Calendar, Tasks, Focus, Habits and Workout (Calendar, Tasks, Focus and Habits complete; Workout pending).
 - [~] Add all RLS policies, FK/date indexes and cross-user verification scripts (Calendar, Tasks, Focus and Habits slices complete).
-- [ ] Generate `database.generated.ts` from a linked Supabase project.
+- [~] Generate `database.generated.ts` from the production Supabase project after the initial migrations are applied.
 - [~] Create feature repositories, query hooks and Zod schemas (Profile preferences, Calendar, Tasks, Focus and Habits complete; Workout pending).
 - [ ] Implement the transactional `finish_workout_session` RPC.
 - [ ] Add deterministic seed/reference imports without user mock data.

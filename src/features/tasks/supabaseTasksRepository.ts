@@ -5,6 +5,9 @@ import {
   createChecklistItemSchema,
   createTaskProjectSchema,
   createTaskSchema,
+  taskColorTokenSchema,
+  taskPrioritySchema,
+  taskStatusSchema,
   updateChecklistItemSchema,
   updateTaskProjectSchema,
   updateTaskSchema,
@@ -57,7 +60,7 @@ const mapProject = (row: ProjectRow): TaskProject => ({
   id: row.id,
   userId: row.user_id,
   name: row.name,
-  colorToken: row.color_token,
+  colorToken: taskColorTokenSchema.parse(row.color_token),
   icon: row.icon,
   position: row.position,
   archivedAt: row.archived_at,
@@ -71,8 +74,8 @@ const mapTask = (row: TaskRow): Task => ({
   projectId: row.project_id,
   title: row.title,
   notes: row.notes,
-  status: row.status,
-  priority: row.priority,
+  status: taskStatusSchema.parse(row.status),
+  priority: taskPrioritySchema.parse(row.priority),
   scheduledDate: row.scheduled_date,
   dueAt: row.due_at,
   estimateMinutes: row.estimate_minutes,
@@ -255,7 +258,7 @@ export const createSupabaseTasksRepository = (
     const current = assertData(currentResult.data, currentResult.error, 'load the task')
     const next = transitionTaskStatus(
       {
-        status: current.status,
+        status: taskStatusSchema.parse(current.status),
         completedAt: current.completed_at,
         archivedAt: current.archived_at,
       },

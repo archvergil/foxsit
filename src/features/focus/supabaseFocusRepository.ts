@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '@/types/database.generated'
 import type { FocusRepository } from './repository'
-import { createFocusSessionSchema } from './schemas'
+import { createFocusSessionSchema, focusPhaseSchema } from './schemas'
 import type { FocusSession, FocusSessionFilters } from './types'
 
 type FocusSessionRow = Database['public']['Tables']['focus_sessions']['Row']
@@ -22,7 +22,7 @@ const mapSession = (row: FocusSessionRow): FocusSession => ({
   endedAt: row.ended_at,
   plannedSeconds: row.planned_seconds,
   focusedSeconds: row.focused_seconds,
-  sessionType: row.session_type,
+  sessionType: focusPhaseSchema.parse(row.session_type),
   completed: row.completed,
   createdAt: row.created_at,
 })

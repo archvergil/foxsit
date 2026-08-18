@@ -1,7 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '@/types/database.generated'
-import { habitInputSchema, habitLogInputSchema } from './schemas'
+import {
+  habitColorTokenSchema,
+  habitIconSchema,
+  habitInputSchema,
+  habitLogInputSchema,
+  habitLogStatusSchema,
+  habitScheduleTypeSchema,
+} from './schemas'
 import type { HabitLogRange, HabitsRepository } from './repository'
 import type { Habit, HabitInput, HabitLog } from './types'
 
@@ -25,9 +32,9 @@ const mapHabit = (row: HabitRow): Habit => ({
   userId: row.user_id,
   title: row.title,
   description: row.description,
-  icon: row.icon,
-  colorToken: row.color_token,
-  scheduleType: row.schedule_type,
+  icon: habitIconSchema.parse(row.icon),
+  colorToken: habitColorTokenSchema.parse(row.color_token),
+  scheduleType: habitScheduleTypeSchema.parse(row.schedule_type),
   weekdays: row.weekdays,
   targetCount: row.target_count,
   unit: row.unit,
@@ -44,9 +51,11 @@ const mapLog = (row: HabitLogRow): HabitLog => ({
   habitId: row.habit_id,
   localDate: row.local_date,
   count: row.count,
-  status: row.status,
+  status: habitLogStatusSchema.parse(row.status),
   note: row.note,
-  source: row.source,
+  source: row.source === null ? null : row.source === 'manual' || row.source === 'workout'
+    ? row.source
+    : (() => { throw new HabitsRepositoryError('Habit log source is invalid.') })(),
   sourceId: row.source_id,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
