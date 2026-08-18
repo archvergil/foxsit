@@ -28,7 +28,7 @@ The committed `.nvmrc` already pins Node `24.18.1`; set `NODE_VERSION=24.18.1` i
 
 1. In **Project Settings → API**, copy the Project URL and Publishable key into the Cloudflare variables above. Do not copy the `secret`/`service_role` key.
 2. In **Authentication → URL Configuration**, set `Site URL` to the final production URL, for example `https://<project>.pages.dev` or the custom domain.
-3. Add exact redirect URLs for `https://<production-host>/reset-password`; also retain `http://localhost:5173/reset-password` for local work. The app calculates recovery redirects from `window.location.origin`.
+3. Add exact redirect URLs for `https://<production-host>/today` and `https://<production-host>/reset-password`; also retain the equivalent `http://localhost:5173/today` and `http://localhost:5173/reset-password` URLs for local Supabase work. The app calculates both confirmation and recovery redirects from `window.location.origin`.
 4. In a local terminal, authenticate the CLI with a Supabase Personal Access Token: `./scripts/npm.cmd exec supabase login`.
 5. Link this folder to the hosted project: `./scripts/npm.cmd exec supabase link --project-ref <project-ref>`. The project ref is the subdomain in `https://<project-ref>.supabase.co`; enter the database password only in the CLI prompt, never in this repository.
 6. Review the remote migration plan: `./scripts/npm.cmd exec supabase db push --dry-run`.
