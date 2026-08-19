@@ -206,7 +206,7 @@ export function TaskDetailPanel({
         <header><strong id="task-checklist-title">Checklist</strong><small>{checklistQuery.data?.filter(({ completed }) => completed).length ?? 0}/{checklistQuery.data?.length ?? 0}</small></header>
         <form onSubmit={(event) => void addChecklist(event)}>
           <input aria-label="New checklist item" placeholder="Add a step" {...checklistForm.register('title')} />
-          <button type="submit" aria-label="Add checklist item" disabled={createChecklist.isPending}><Plus aria-hidden /></button>
+          <button type="submit" aria-label="Add checklist item" disabled={createChecklist.isPending}><Plus aria-hidden /><span>Add step</span></button>
         </form>
         {checklistForm.formState.errors.title ? <small role="alert">Enter a checklist item.</small> : null}
         {checklistQuery.isPending ? <p role="status">Loading checklist…</p> : null}

@@ -534,10 +534,18 @@ span.task-row__content { cursor: default; }
   }
 
   .tasks-navigation {
+    min-height: 3.75rem;
     overflow-x: auto;
+    overflow-y: hidden;
     flex-direction: row;
-    gap: var(--space-4);
-    scrollbar-width: thin;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.45rem;
+    scrollbar-width: none;
+  }
+
+  .tasks-navigation::-webkit-scrollbar {
+    display: none;
   }
 
   .tasks-navigation nav,
@@ -545,11 +553,47 @@ span.task-row__content { cursor: default; }
     min-width: max-content;
     display: flex;
     align-items: center;
+    gap: var(--space-1);
+  }
+
+  .tasks-navigation__item {
+    box-sizing: border-box;
+    min-height: var(--touch-target);
+    display: inline-flex;
+    flex: 0 0 auto;
+    padding: 0 var(--space-3);
   }
 
   .tasks-navigation__label,
   .tasks-navigation__muted {
     white-space: nowrap;
+  }
+
+  .tasks-navigation__label {
+    padding: 0 var(--space-2);
+  }
+
+  .task-quick-add {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .task-quick-add__title {
+    grid-column: 1 / -1;
+  }
+
+  .task-quick-add__field {
+    min-width: 0;
+  }
+
+  .task-quick-add__field input,
+  .task-quick-add__field select {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .task-quick-add > .button {
+    min-width: 7.5rem;
   }
 }
 
@@ -604,6 +648,7 @@ span.task-row__content { cursor: default; }
 
   .task-quick-add > .button {
     grid-column: 1 / -1;
+    min-width: 0;
   }
 
   .task-row {

@@ -130,7 +130,10 @@
 }
 
 .focus-task-field select,
+.focus-task-field textarea,
 .focus-custom-form input {
+  min-width: 0;
+  max-width: 100%;
   width: 100%;
   min-height: var(--touch-target);
   padding: 0 var(--space-3);
@@ -138,6 +141,12 @@
   background: var(--canvas-raised);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
+}
+
+.focus-task-field textarea {
+  min-height: 7rem;
+  padding-block: var(--space-3);
+  resize: vertical;
 }
 
 .focus-custom-form {
@@ -261,9 +270,10 @@
 
 @media (max-width: 68rem) {
   .focus-layout { grid-template-columns: 1fr; }
-  .focus-setup-card { grid-template-columns: repeat(2, 1fr); }
+  .focus-setup-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .focus-setup-card > header,
-  .focus-custom-form { grid-column: 1 / -1; }
+  .focus-custom-form,
+  .focus-task-field--link { grid-column: 1 / -1; }
 }
 
 @media (max-width: 47.99rem) {
@@ -273,7 +283,8 @@
   .focus-timer-card__clock > strong { font-size: clamp(4rem, 22vw, 6rem); }
   .focus-setup-card { grid-template-columns: 1fr; }
   .focus-setup-card > header,
-  .focus-custom-form { grid-column: auto; }
+  .focus-custom-form,
+  .focus-task-field--link { grid-column: auto; }
   .focus-insights { grid-template-columns: 1fr; }
   .focus-insights > article { min-height: 7rem; }
   .focus-history__row { grid-template-columns: auto 1fr auto; gap: var(--space-3); padding-inline: var(--space-4); }

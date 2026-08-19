@@ -108,6 +108,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Keep the full timed Day grid visible on mobile, with the desktop time-column model and mobile-safe sizing.
 - [x] Replace the mobile More destination with Workout and move Settings to a gear next to the profile photo.
 - [x] Remove mobile Rewards horizontal overflow and constrain store/conversion controls within the viewport.
+- [x] Add a dedicated tablet composition for Task navigation/quick-add, stable Habit header actions and shrink-safe Task, Focus and Calendar form controls.
 
 ## Phase 8 — Rewards
 
@@ -139,6 +140,16 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 Apply migrations `202608180012`, `202608190001`, `202608190002` and `202608190003`; verify Habit award/reversal, Workout history deletion, Calendar preferences, profile-photo Storage policies, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the four listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the iPad responsive consistency audit on 2026-08-19:
+
+- rebuilt the intermediate Task quick-add layout so title, date, project and action remain inside the workspace, and stabilized the horizontal task navigation at one fixed touch-safe height;
+- kept Habit creation actions aligned with a real gap at tablet widths and converted the narrow layout to a balanced two-action row;
+- prevented Safari date, datetime, select and textarea controls from retaining intrinsic widths that overlap neighboring Task and Calendar grid cells;
+- kept disabled Focus tabs legible in iPad Safari, styled the run description consistently and made Link a task full-width and usable while an idle break phase is selected;
+- replaced the isolated circular checklist control with a compact icon-and-label Add step action;
+- `npm run lint`, `npm run typecheck`, focused Tasks/Habits/Focus/shared-control tests, `npm run test -- --run` (143/143), `npm run build` and `git diff --check` passed;
+- direct browser visual QA remained unavailable because no integrated or extension browser was connected in this session.
 
 Completed the first data-flow and perceived-performance upgrade on 2026-08-19:
 

@@ -215,6 +215,8 @@
 
 .segmented-control > button:disabled {
   cursor: default;
+  opacity: 1;
+  -webkit-text-fill-color: currentcolor;
 }
 
 @keyframes spin {

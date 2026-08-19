@@ -205,11 +205,11 @@ export default function FocusPage() {
             {timer.rewardRunId && !active ? <Button variant="quiet" type="button" isLoading={abandonRewardRun.isPending} onClick={() => void saveInterrupted('stop')}>End rewarded run</Button> : null}
           </label>
 
-          <label className="focus-task-field">
+          <label className="focus-task-field focus-task-field--link">
             <span>Link a task</span>
             <select
               value={selectedTaskId}
-              disabled={active || timer.phase !== 'focus' || taskQuery.isPending}
+              disabled={active || taskQuery.isPending}
               onChange={(event) => setSelectedTaskId(event.target.value)}
             >
               <option value="">No linked task</option>
