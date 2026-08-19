@@ -1,10 +1,11 @@
-import { CalendarDays, Database, Dumbbell, Gift, LogOut, Monitor, Moon, Sun, TimerReset } from 'lucide-react'
+import { CalendarDays, Camera, Database, Dumbbell, Gift, LogOut, Monitor, Moon, Sun, TimerReset, UserRound } from 'lucide-react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/authContext'
-import { useProfile, useUpdateCalendarPreferences } from './profileQueries'
+import { useProfile, useUpdateCalendarPreferences, useUpdateProfile, useUploadProfileAvatar } from './profileQueries'
 import type { CalendarDisplayPreferences } from './profileRepository'
 import { useTheme, type ThemePreference } from './themeContext'
 
@@ -25,8 +26,12 @@ export default function SettingsPage() {
   const { session, signOut } = useAuth()
   const profileQuery = useProfile(session?.user.id ?? '')
   const calendarPreferences = useUpdateCalendarPreferences()
+  const updateProfile = useUpdateProfile()
+  const uploadAvatar = useUploadProfileAvatar()
+  const [editedDisplayName, setEditedDisplayName] = useState<string | null>(null)
   const page = pathname.endsWith('/appearance') ? 'Appearance' : pathname.endsWith('/data') ? 'Data' : 'Settings'
   const profile = profileQuery.data
+  const displayName = editedDisplayName ?? profile?.display_name ?? ''
   const updateCalendarPreference = (key: keyof CalendarDisplayPreferences, checked: boolean) => {
     calendarPreferences.mutate({
       calendar_show_events: profile?.calendar_show_events ?? true,
@@ -34,6 +39,31 @@ export default function SettingsPage() {
       calendar_show_habits: profile?.calendar_show_habits ?? true,
       [key]: checked,
     })
+  }
+  const saveProfile = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (displayName.trim().length < 2) return
+    try {
+      await updateProfile.mutateAsync({ display_name: displayName.trim(), avatar_url: profile?.avatar_url ?? null })
+      setEditedDisplayName(null)
+    } catch {
+      // The durable error stays visible below the form.
+    }
+  }
+  const selectAvatar = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 1_048_576) {
+      return
+    }
+    try {
+      const avatarUrl = await uploadAvatar.mutateAsync(file)
+      await updateProfile.mutateAsync({ display_name: displayName.trim() || null, avatar_url: avatarUrl })
+      setEditedDisplayName(null)
+    } catch {
+      // The durable error stays visible below the form.
+    }
   }
 
   return (
@@ -74,6 +104,27 @@ export default function SettingsPage() {
               </label>
             ))}
           </fieldset>
+        </article>
+
+        <article className="settings-card settings-card--profile">
+          <div>
+            <span className="eyebrow">Profile</span>
+            <h2>Your identity</h2>
+            <p>Choose the name and photo shown in your workspace.</p>
+          </div>
+          <form className="profile-settings-form" onSubmit={(event) => void saveProfile(event)}>
+            <span className="profile-settings-form__avatar">
+              {profile?.avatar_url ? <img src={profile.avatar_url} alt="Current profile" /> : <UserRound aria-hidden />}
+            </span>
+            <label className="profile-settings-form__photo button button--secondary">
+              <Camera aria-hidden /><span>Choose photo</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void selectAvatar(event)} disabled={uploadAvatar.isPending || updateProfile.isPending} />
+            </label>
+            <small>PNG, JPG or WebP, up to 1 MB.</small>
+            <label className="profile-settings-form__name"><span>Name</span><input value={displayName} minLength={2} maxLength={60} onChange={(event) => setEditedDisplayName(event.target.value)} disabled={profileQuery.isPending || updateProfile.isPending} /></label>
+            <Button type="submit" disabled={displayName.trim().length < 2} isLoading={updateProfile.isPending}>Save profile</Button>
+          </form>
+          {uploadAvatar.error || updateProfile.error ? <p className="settings-error" role="alert">{(uploadAvatar.error ?? updateProfile.error)?.message}</p> : null}
         </article>
 
         <article className="settings-card settings-card--calendar">

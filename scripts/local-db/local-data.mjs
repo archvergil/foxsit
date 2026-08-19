@@ -15,6 +15,10 @@ const calendarPreferences = z.object({
   calendar_show_tasks: z.boolean(),
   calendar_show_habits: z.boolean(),
 })
+const profileDetails = z.object({
+  display_name: z.string().trim().min(2).max(60).nullable(),
+  avatar_url: z.string().max(1_500_000).nullable(),
+})
 
 const projectCreate = z.object({
   name: z.string().trim().min(1).max(120),
@@ -288,6 +292,24 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
       week_starts_on: row.week_starts_on, theme: row.theme,
       created_at: iso(row.created_at), updated_at: iso(row.updated_at),
     }
+  }),
+
+  updateProfile: (userId, input) => withAuthenticatedUser(userId, async () => {
+    const details = profileDetails.parse(input)
+    await database.query(
+      'update public.profiles set display_name=$2, avatar_url=$3, updated_at=now() where id=$1',
+      [userId, details.display_name, details.avatar_url],
+    )
+    return await database.query('select * from public.profiles where id=$1', [userId]).then((result) => {
+      const row = one(result, 'save profile details')
+      return {
+        id: row.id, display_name: row.display_name, avatar_url: row.avatar_url,
+        calendar_show_events: row.calendar_show_events, calendar_show_tasks: row.calendar_show_tasks,
+        calendar_show_habits: row.calendar_show_habits, timezone: row.timezone,
+        week_starts_on: row.week_starts_on, theme: row.theme,
+        created_at: iso(row.created_at), updated_at: iso(row.updated_at),
+      }
+    })
   }),
 
   listProjects: (userId, includeArchived) => withAuthenticatedUser(userId, async () => {

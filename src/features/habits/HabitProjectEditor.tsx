@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Trash2, X } from 'lucide-react'
+import { MoreHorizontal, Trash2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
@@ -7,17 +8,10 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { BannerPicker } from '@/components/visual/BannerPicker'
 import { collectionBannerAssets } from '@/lib/bannerAssets'
 import { HabitProjectGlyph } from './HabitProjectGlyph'
+import { habitProjectIconOptions } from './habitProjectIcons'
 import { useCreateHabitProject, useDeleteHabitProject, useUpdateHabitProject } from './queries'
 import { habitProjectFormSchema, resolveHabitProjectForm, type HabitProjectFormValues } from './schemas'
 import type { HabitProject } from './types'
-
-const projectIcons = [
-  { value: 'folder', label: 'General' },
-  { value: 'dumbbell', label: 'Fitness' },
-  { value: 'graduation-cap', label: 'Studies' },
-  { value: 'briefcase-business', label: 'Work' },
-  { value: 'heart-pulse', label: 'Health' },
-]
 
 export function HabitProjectEditor({ project, projects, onClose }: {
   project?: HabitProject | undefined
@@ -27,6 +21,7 @@ export function HabitProjectEditor({ project, projects, onClose }: {
   const createProject = useCreateHabitProject()
   const updateProject = useUpdateHabitProject()
   const deleteProject = useDeleteHabitProject()
+  const [iconDialogOpen, setIconDialogOpen] = useState(false)
   const form = useForm<HabitProjectFormValues>({
     resolver: zodResolver(habitProjectFormSchema),
     defaultValues: {
@@ -53,12 +48,28 @@ export function HabitProjectEditor({ project, projects, onClose }: {
     try { await deleteProject.mutateAsync(project.id); onClose() } catch { /* Error stays visible. */ }
   }
 
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      if (iconDialogOpen) setIconDialogOpen(false)
+      else onClose()
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [iconDialogOpen, onClose])
+
+  const chooseIcon = (icon: string) => {
+    form.setValue('icon', icon, { shouldDirty: true })
+    setIconDialogOpen(false)
+  }
+
   return (
-    <aside className="habit-project-editor" aria-label={project ? `Edit habit project ${project.name}` : 'Create habit project'}>
+    <div className="habit-project-editor__backdrop">
+    <aside className="habit-project-editor" aria-modal="true" role="dialog" aria-label={project ? `Edit habit project ${project.name}` : 'Create habit project'}>
       <header><span><span className="eyebrow">Habit project</span><h2>{project ? 'Edit collection' : 'New collection'}</h2></span><button type="button" aria-label="Close habit project editor" onClick={onClose}><X aria-hidden /></button></header>
       <form onSubmit={(event) => void submit(event)}>
         <label><span>Name</span><input autoFocus {...form.register('name')} />{form.formState.errors.name ? <small role="alert">{form.formState.errors.name.message}</small> : null}</label>
-        <fieldset className="habit-project-editor__icons"><legend>Icon</legend><div>{projectIcons.map(({ value, label }) => <button type="button" className={selectedIcon === value ? 'is-selected' : ''} aria-label={label} aria-pressed={selectedIcon === value} key={value} onClick={() => form.setValue('icon', value, { shouldDirty: true })}><HabitProjectGlyph icon={value} /><small>{label}</small></button>)}</div></fieldset>
+        <fieldset className="habit-project-editor__icons"><legend>Icon</legend><div>{habitProjectIconOptions.slice(0, 5).map(({ value, label }) => <button type="button" className={selectedIcon === value ? 'is-selected' : ''} aria-label={label} aria-pressed={selectedIcon === value} key={value} onClick={() => chooseIcon(value)}><HabitProjectGlyph icon={value} /><small>{label}</small></button>)}<button type="button" aria-label="More project icons" onClick={() => setIconDialogOpen(true)}><MoreHorizontal aria-hidden /><small>More</small></button></div></fieldset>
         <label><span>Accent</span><select {...form.register('colorToken')}><option value="mint">Mint</option><option value="coral">Coral</option><option value="blue">Blue</option><option value="sand">Sand</option><option value="slate">Slate</option></select></label>
         <BannerPicker assets={collectionBannerAssets} value={bannerAsset || null} monochrome={bannerMonochrome} onChange={(value) => form.setValue('bannerAsset', value ?? '', { shouldDirty: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
         <Button type="submit" isLoading={createProject.isPending || updateProject.isPending}>{project ? 'Save project' : 'Create project'}</Button>
@@ -75,5 +86,7 @@ export function HabitProjectEditor({ project, projects, onClose }: {
         />
       ) : null}
     </aside>
+    {iconDialogOpen ? <div className="habit-project-icon-dialog__backdrop"><section className="habit-project-icon-dialog" aria-label="More project icons" aria-modal="true" role="dialog"><header><span><span className="eyebrow">Project icon</span><h3>Choose an icon</h3></span><button type="button" aria-label="Close icon picker" onClick={() => setIconDialogOpen(false)}><X aria-hidden /></button></header><div>{habitProjectIconOptions.map(({ value, label }) => <button type="button" className={selectedIcon === value ? 'is-selected' : ''} aria-label={label} aria-pressed={selectedIcon === value} key={value} onClick={() => chooseIcon(value)}><HabitProjectGlyph icon={value} /><small>{label}</small></button>)}</div></section></div> : null}
+    </div>
   )
 }

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Archive, Check, Trash2, X } from 'lucide-react'
+import { Archive, Check, MoreHorizontal, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
@@ -40,6 +41,7 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
   const updateHabit = useUpdateHabit()
   const deleteHabit = useDeleteHabit()
   const clearHistory = useClearHabitHistory()
+  const [iconDialogOpen, setIconDialogOpen] = useState(false)
   const form = useForm<HabitFormValues>({ resolver: zodResolver(habitFormSchema), defaultValues: formDefaults(habit) })
   const scheduleType = useWatch({ control: form.control, name: 'scheduleType' })
   const selectedIcon = useWatch({ control: form.control, name: 'icon' }) ?? 'circle-check-big'
@@ -81,6 +83,10 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
     if (!habit) return
     await clearHistory.mutateAsync(habit.id)
   }
+  const chooseIcon = (icon: HabitFormValues['icon']) => {
+    form.setValue('icon', icon, { shouldDirty: true, shouldValidate: true })
+    setIconDialogOpen(false)
+  }
 
   return (
     <aside className="habit-editor" aria-label={habit ? `Edit habit ${habit.title}` : 'Create habit'}>
@@ -97,7 +103,7 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
         <label className="habit-editor__wide"><span>Project</span><select {...form.register('projectId')}><option value="">Unfiled</option>{projects.map((project) => <option value={project.id} key={project.id}>{project.name}</option>)}</select></label>
         <fieldset className="habit-editor__icon-picker habit-editor__wide">
           <legend>Icon</legend>
-          <div>{habitIconOptions.map(({ value, label }) => <button className={selectedIcon === value ? 'is-selected' : ''} key={value} type="button" aria-label={label} aria-pressed={selectedIcon === value} onClick={() => form.setValue('icon', value, { shouldDirty: true, shouldValidate: true })}><HabitGlyph icon={value} /><small>{label}</small></button>)}</div>
+          <div>{habitIconOptions.slice(0, 6).map(({ value, label }) => <button className={selectedIcon === value ? 'is-selected' : ''} key={value} type="button" aria-label={label} aria-pressed={selectedIcon === value} onClick={() => chooseIcon(value)}><HabitGlyph icon={value} /><small>{label}</small></button>)}<button type="button" aria-label="More habit icons" onClick={() => setIconDialogOpen(true)}><MoreHorizontal aria-hidden /><small>More</small></button></div>
         </fieldset>
         <fieldset className="habit-editor__color-picker habit-editor__wide">
           <legend>Color</legend>
@@ -126,6 +132,7 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
       </form>
       {writeError ? <p className="habit-editor__error" role="alert">{writeError.message}</p> : null}
       {habit ? <div className="habit-editor__danger-actions"><Button variant="quiet" type="button" disabled={pending} onClick={() => void archive()}><Archive aria-hidden />Archive</Button><ConfirmDialog actionLabel="Delete habit" description="Delete the habit and all its records, or clear only its completion history and keep the habit." onConfirm={remove} pending={deleteHabit.isPending} secondaryAction={{ label: 'Clear history only', onAction: clear, pending: clearHistory.isPending }} title={`Delete “${habit.title}”?`} trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete</Button>} /></div> : null}
+      {iconDialogOpen ? <div className="habit-icon-dialog__backdrop"><section className="habit-icon-dialog" aria-label="More habit icons" aria-modal="true" role="dialog"><header><span><span className="eyebrow">Habit icon</span><h3>Choose an icon</h3></span><button type="button" aria-label="Close icon picker" onClick={() => setIconDialogOpen(false)}><X aria-hidden /></button></header><div>{habitIconOptions.map(({ value, label }) => <button type="button" className={selectedIcon === value ? 'is-selected' : ''} key={value} aria-label={label} aria-pressed={selectedIcon === value} onClick={() => chooseIcon(value)}><HabitGlyph icon={value} /><small>{label}</small></button>)}</div></section></div> : null}
     </aside>
   )
 }

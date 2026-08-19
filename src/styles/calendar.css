@@ -228,6 +228,14 @@
   .calendar-day { min-height: 5rem; padding: 0.15rem; }
   .calendar-day__number { margin-right: auto; }
   .calendar-day__items { display: none; }
+  .calendar-day__mobile-markers { min-height: 0.65rem; display: flex; justify-content: center; gap: 0.16rem; overflow: hidden; }
+  .calendar-day__mobile-markers i { width: 0.32rem; height: 0.32rem; flex: 0 0 auto; background: var(--habit-accent, var(--blue)); border-radius: 50%; }
+  .calendar-day__mobile-markers b { margin-top: -0.38rem; color: var(--ink-faint); font-size: 0.7rem; font-weight: 800; letter-spacing: -0.08em; }
+  .calendar-day__mobile-markers .calendar-marker--mint { background: var(--habit-accent, var(--mint)); }
+  .calendar-day__mobile-markers .calendar-marker--coral { background: var(--habit-accent, var(--coral)); }
+  .calendar-day__mobile-markers .calendar-marker--sand { background: var(--habit-accent, var(--sand)); }
+  .calendar-day__mobile-markers .calendar-marker--slate { background: var(--habit-accent, var(--ink-faint)); }
+  .calendar-day__mobile-markers .calendar-marker--task { background: var(--ink-faint); }
   .calendar-agenda,
   .calendar-editor { padding: var(--space-4); border-radius: 0.65rem; }
   .calendar-agenda > header { align-items: center; }

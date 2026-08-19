@@ -55,6 +55,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .settings-card--profile,
   .settings-card--calendar,
   .settings-card--account {
     grid-column: 1;
@@ -251,6 +252,7 @@
     grid-template-columns: 1fr;
   }
 
+  .settings-card--profile,
   .settings-card--calendar,
   .settings-card--account {
     grid-column: 1;

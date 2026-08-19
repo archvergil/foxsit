@@ -150,6 +150,8 @@ const profileRepository: ProfileRepository = {
     calendar_show_events: true, calendar_show_tasks: true, calendar_show_habits: true,
   }),
   updateCalendarPreferences: (_userId, preferences) => profileRepository.getProfile('user-1').then((profile) => ({ ...profile, ...preferences })),
+  updateProfile: (_userId, details) => profileRepository.getProfile('user-1').then((profile) => ({ ...profile, ...details })),
+  uploadAvatar: () => Promise.resolve('data:image/png;base64,'),
 }
 
 const renderPage = (repository: WorkoutRepository, initialEntry = '/workout/routines') => {

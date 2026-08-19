@@ -1,5 +1,5 @@
 export type HabitColorToken = 'mint' | 'coral' | 'blue' | 'sand' | 'slate'
-export type HabitIcon = 'circle-check-big' | 'glass-water' | 'book-open' | 'dumbbell' | 'footprints' | 'brain'
+export type HabitIcon = 'circle-check-big' | 'glass-water' | 'book-open' | 'dumbbell' | 'footprints' | 'brain' | 'apple' | 'bed-double' | 'bike' | 'book-heart' | 'brush-cleaning' | 'calendar-check-2' | 'camera' | 'chef-hat' | 'circle-gauge' | 'coffee' | 'heart-handshake' | 'languages' | 'music-2' | 'notebook-pen' | 'pill' | 'sun' | 'utensils' | 'wallet-cards'
 export type HabitScheduleType = 'daily' | 'weekdays'
 export type HabitLogStatus = 'in_progress' | 'completed' | 'skipped'
 

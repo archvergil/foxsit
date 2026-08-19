@@ -11,7 +11,7 @@ import { NavLink, useLocation, useParams } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { VisualBanner } from '@/components/visual/VisualBanner'
-import { addLocalDays, localDateKey } from '@/lib/dates'
+import { localDateKey } from '@/lib/dates'
 import { tasksCopy } from './copy'
 import {
   useSetTaskStatus,
@@ -77,11 +77,7 @@ export default function TasksPage() {
   const projectTree = flattenTaskProjects(projects)
   const copy = tasksCopy.views[view]
   const title = currentProject?.name ?? copy.title
-  const defaultDate = view === 'today'
-    ? today
-    : view === 'upcoming'
-      ? addLocalDays(today, 1)
-      : ''
+  const defaultDate = today
 
   const mutationError = statusMutation.error ?? updateMutation.error ?? reorderMutation.error
   const pendingTaskId = statusMutation.isPending

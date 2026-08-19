@@ -218,6 +218,8 @@ const profile: UserProfile = {
 const profileRepository: ProfileRepository = {
   getProfile: () => Promise.resolve(profile),
   updateCalendarPreferences: (_userId, preferences) => Promise.resolve({ ...profile, ...preferences }),
+  updateProfile: (_userId, details) => Promise.resolve({ ...profile, ...details }),
+  uploadAvatar: () => Promise.resolve('data:image/png;base64,'),
 }
 
 const focusRepository: FocusRepository = {
@@ -256,14 +258,17 @@ afterEach(() => {
 
 describe('TasksPage daily flow', () => {
   it('creates an Inbox task with Enter and completes it', async () => {
+    vi.setSystemTime(new Date('2026-08-18T01:30:00.000Z'))
     const user = userEvent.setup()
     const repository = new MemoryTasksRepository()
     renderPage(repository)
 
+    await waitFor(() => expect(screen.getByLabelText('Scheduled date')).toHaveValue('2026-08-17'))
     const title = await screen.findByRole('textbox', { name: 'Task title' })
     await user.type(title, 'Prepare tomorrow{Enter}')
 
     expect(await screen.findByText('Prepare tomorrow')).toBeInTheDocument()
+    expect(repository.tasks[0]?.scheduledDate).toBe('2026-08-17')
     await user.click(screen.getByRole('button', { name: 'Complete Prepare tomorrow' }))
 
     await waitFor(() => expect(screen.queryByText('Prepare tomorrow')).not.toBeInTheDocument())

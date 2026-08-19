@@ -7,6 +7,7 @@ import { APP_NAME } from '@/config/product'
 import { backendEnvironment } from '@/config/backend'
 import { useAuth } from '@/features/auth/authContext'
 import { ActiveFocusPlayer } from '@/features/focus/ActiveFocusPlayer'
+import { useProfile } from '@/features/settings/profileQueries'
 import { MobileNavigation } from './MobileNavigation'
 import { NavItem } from './NavItem'
 import { primaryNavigation, utilityNavigation } from './navigation'
@@ -16,8 +17,10 @@ const userLabel = (email: string | undefined, displayName: unknown) =>
 
 export function AppShell() {
   const { session, signOut } = useAuth()
-  const label = userLabel(session?.user.email, session?.user.user_metadata.display_name)
+  const profile = useProfile(session?.user.id ?? '')
+  const label = userLabel(session?.user.email, profile.data?.display_name ?? session?.user.user_metadata.display_name)
   const initial = label.charAt(0).toUpperCase()
+  const avatarUrl = profile.data?.avatar_url
 
   return (
     <div className="app-shell">
@@ -36,7 +39,7 @@ export function AppShell() {
           {utilityNavigation.map((item) => <NavItem key={item.to} item={item} />)}
         </nav>
         <div className="account-chip">
-          <span className="account-chip__avatar" aria-hidden>{initial}</span>
+          <span className="account-chip__avatar" aria-hidden>{avatarUrl ? <img src={avatarUrl} alt="" /> : initial}</span>
           <span className="account-chip__identity">
             <strong>{label}</strong>
             <span>{backendEnvironment.mode === 'local' ? 'Local data' : 'Personal'}</span>
@@ -55,7 +58,7 @@ export function AppShell() {
             </span>
             <span>{APP_NAME}</span>
           </div>
-          <span className="mobile-header__avatar" aria-label={`Signed in as ${label}`}>{initial}</span>
+          <span className="mobile-header__avatar" aria-label={`Signed in as ${label}`}>{avatarUrl ? <img src={avatarUrl} alt="" /> : initial}</span>
         </header>
         <OnlineStatus />
         <main id="main-content" className="app-content" tabIndex={-1}>

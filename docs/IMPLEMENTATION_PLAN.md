@@ -48,6 +48,7 @@ Exit criteria: login and authenticated shell work at 390 px, 768 px and 1280+ px
 - [x] Add PGlite in-memory tests and a persistent local PostgreSQL-compatible server.
 - [x] Add project-scoped Supabase CLI commands for the Docker fidelity tier.
 - [x] Add a loopback-only PGlite account/data API for end-to-end local development without Docker.
+- [x] Add profile name and avatar management with user-scoped Supabase Storage policies and local-data parity.
 
 Exit: local database is reproducible and no exposed table is open across users.
 
@@ -56,6 +57,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Projects, Inbox, Today, Upcoming and Completed queries with project create, rename and delete management.
 - [x] Add ownership-safe nested task projects and customizable faded GIF banners in production.
 - [x] Task CRUD, checklist, optimistic completion/reordering with rollback and durable manual ordering.
+- [x] Default every new task's scheduled date to the user's local today.
 - [x] Persisted timestamp-based Pomodoro store and mini player.
 - [x] Durable focus session history and task integration.
 - [~] Unit, component and E2E coverage for the daily flow (unit/component complete; authenticated E2E needs the loopback Workout/Rewards repository gap and stale Habits assertions resolved before deployed Supabase E2E).
@@ -79,6 +81,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add first-class Habit projects with project assignment, visual icons and customizable faded GIF banners in production.
 - [x] Add an explicit clear-history-only choice to Habit deletion and keep the habit itself intact.
 - [x] Make Habit project banners keyboard-accessible collapse controls on mobile and desktop.
+- [x] Add expanded Lucide icon pickers for Habits and Habit projects, and a centered mobile-safe project dialog.
 
 ## Phase 6 — Workout
 
@@ -126,9 +129,17 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001` and `202608190002`; verify Habit award/reversal, Workout history deletion, Calendar preferences, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the three listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002` and `202608190003`; verify Habit award/reversal, Workout history deletion, Calendar preferences, profile-photo Storage policies, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the four listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the Calendar marker, profile and mobile-dialog correction on 2026-08-19:
+
+- made mobile Calendar markers activate from the viewport breakpoint as well as touch-pointer detection, so their colored dots render in mobile emulation and on touch devices;
+- replaced the colored Workout rest banner with the neutral black, gray and white surface treatment;
+- added persistent display-name/profile-photo editing with a 1 MB JPG/PNG/WebP Storage bucket and local-mode equivalent;
+- defaulted all new task scheduled dates to profile-local today, expanded Habit and Habit-project icon libraries with More dialogs, and centered the Habit-project dialog above the mobile navigation;
+- focused component, database and production build checks passed.
 
 Completed the responsive Workout, Calendar and navigation interaction slice on 2026-08-19:
 

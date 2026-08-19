@@ -124,7 +124,7 @@ const profile: UserProfile = {
   week_starts_on: 1, theme: 'system', created_at: '2026-08-17T12:00:00.000Z', updated_at: '2026-08-17T12:00:00.000Z',
   calendar_show_events: true, calendar_show_tasks: true, calendar_show_habits: true,
 }
-const profileRepository: ProfileRepository = { getProfile: () => Promise.resolve(profile), updateCalendarPreferences: (_userId, preferences) => Promise.resolve({ ...profile, ...preferences }) }
+const profileRepository: ProfileRepository = { getProfile: () => Promise.resolve(profile), updateCalendarPreferences: (_userId, preferences) => Promise.resolve({ ...profile, ...preferences }), updateProfile: (_userId, details) => Promise.resolve({ ...profile, ...details }), uploadAvatar: () => Promise.resolve('data:image/png;base64,') }
 
 const renderPage = (repository: HabitsRepository, initialEntry = '/habits') => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })

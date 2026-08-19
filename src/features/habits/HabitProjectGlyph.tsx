@@ -1,9 +1,8 @@
-import { BriefcaseBusiness, Dumbbell, Folder, GraduationCap, HeartPulse } from 'lucide-react'
+import { Folder } from 'lucide-react'
+
+import { habitProjectIconOptions } from './habitProjectIcons'
 
 export function HabitProjectGlyph({ icon }: { icon: string | null }) {
-  if (icon === 'dumbbell') return <Dumbbell aria-hidden />
-  if (icon === 'graduation-cap') return <GraduationCap aria-hidden />
-  if (icon === 'briefcase-business') return <BriefcaseBusiness aria-hidden />
-  if (icon === 'heart-pulse') return <HeartPulse aria-hidden />
-  return <Folder aria-hidden />
+  const Icon = habitProjectIconOptions.find((option) => option.value === icon)?.icon ?? Folder
+  return <Icon aria-hidden />
 }

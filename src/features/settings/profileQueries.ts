@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/features/auth/authContext'
-import { profileQueryKey, type CalendarDisplayPreferences } from './profileRepository'
+import { profileQueryKey, type CalendarDisplayPreferences, type ProfileDetails } from './profileRepository'
 import { useProfileRepository } from './profileRepositoryContext'
 
 export const useProfile = (userId: string) => {
@@ -22,5 +22,28 @@ export const useUpdateCalendarPreferences = () => {
     mutationKey: ['profile', 'calendar-preferences', userId],
     mutationFn: (preferences: CalendarDisplayPreferences) => repository.updateCalendarPreferences(userId, preferences),
     onSuccess: (profile) => queryClient.setQueryData(profileQueryKey(userId), profile),
+  })
+}
+
+export const useUpdateProfile = () => {
+  const { session } = useAuth()
+  const repository = useProfileRepository()
+  const queryClient = useQueryClient()
+  if (!session) throw new Error('Profile details require an authenticated session.')
+  const userId = session.user.id
+  return useMutation({
+    mutationKey: ['profile', 'update', userId],
+    mutationFn: (details: ProfileDetails) => repository.updateProfile(userId, details),
+    onSuccess: (profile) => queryClient.setQueryData(profileQueryKey(userId), profile),
+  })
+}
+
+export const useUploadProfileAvatar = () => {
+  const { session } = useAuth()
+  const repository = useProfileRepository()
+  if (!session) throw new Error('Profile photo upload requires an authenticated session.')
+  return useMutation({
+    mutationKey: ['profile', 'avatar', session.user.id],
+    mutationFn: (file: File) => repository.uploadAvatar(session.user.id, file),
   })
 }
