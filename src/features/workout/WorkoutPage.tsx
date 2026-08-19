@@ -31,12 +31,8 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
   const startSession = useStartWorkoutSession()
 
   const removeRoutine = async () => {
-    try {
-      await deleteRoutine.mutateAsync(routine.id)
-      await navigate('/workout/routines')
-    } catch {
-      // The durable-write error remains visible.
-    }
+    await deleteRoutine.mutateAsync(routine.id)
+    await navigate('/workout/routines', { replace: true })
   }
 
   const startWorkout = async () => {

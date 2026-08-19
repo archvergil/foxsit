@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icons/app-icon.png', 'icons/brand-mark.png'],
       manifest: {
-        name: 'APP_NAME',
-        short_name: 'APP_NAME',
+        name: 'Foxsit',
+        short_name: 'Foxsit',
         description: 'A quiet personal productivity workspace.',
         theme_color: '#11110f',
         background_color: '#f5f2ea',

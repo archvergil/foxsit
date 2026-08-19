@@ -119,6 +119,21 @@ export const useDeleteHabit = () => {
     onSuccess: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) }),
       queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
+      queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
+    ]),
+  })
+}
+
+export const useClearHabitHistory = () => {
+  const repository = useHabitsRepository()
+  const queryClient = useQueryClient()
+  const { userId } = useHabitIdentity()
+  return useMutation({
+    mutationKey: ['habits', 'history', 'clear', userId],
+    mutationFn: (habitId: string) => repository.clearHabitHistory(userId, habitId),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
+      queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
     ]),
   })
 }
@@ -161,6 +176,9 @@ export const useUpsertHabitLog = () => {
   return useMutation({
     mutationKey: ['habits', 'progress', userId],
     mutationFn: (input: HabitLogInput) => repository.upsertLog(userId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
+      queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
+    ]),
   })
 }

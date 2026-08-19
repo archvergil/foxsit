@@ -44,4 +44,4 @@ The implementation plan keeps the catalog/GIF import work blocked on receiving t
 - The exercise catalog and useful legacy test cases cannot yet be evaluated.
 - Rights and permanence of any legacy hosted GIF URLs remain unknown.
 - The transparent extraction is raster, not a true SVG source. It is suitable for the PWA and UI; a manually traced vector can be added later without changing the current identity tokens.
-- The app name remains deliberately unresolved; no brand name was inferred from the fox icon.
+- The product name is Foxsit, confirmed during the 2026-08-18 product-polish pass and centralized in `src/config/product.ts`.

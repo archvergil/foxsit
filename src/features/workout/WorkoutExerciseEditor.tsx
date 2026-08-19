@@ -41,7 +41,9 @@ export function WorkoutExerciseEditor({ routineId }: { routineId: string }) {
       <label><span>Max reps</span><input type="number" min="1" max="100" {...form.register('targetRepsMax', { valueAsNumber: true })} />{form.formState.errors.targetRepsMax ? <small role="alert">{form.formState.errors.targetRepsMax.message}</small> : null}</label>
       <label><span>Rest (seconds)</span><input type="number" min="0" max="3600" {...form.register('restSeconds', { valueAsNumber: true })} /></label>
       <label className="workout-exercise-editor__notes"><span>Notes</span><textarea rows={2} placeholder="Tempo, setup or substitutions" {...form.register('notes')} /></label>
-      <Button type="submit" isLoading={createExercise.isPending}>Add exercise</Button>
+      <div className="workout-exercise-editor__actions">
+        <Button type="submit" isLoading={createExercise.isPending}><Plus aria-hidden />Add exercise</Button>
+      </div>
       {createExercise.error ? <p role="alert">{createExercise.error.message}</p> : null}
     </form>
   )

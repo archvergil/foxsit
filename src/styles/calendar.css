@@ -69,6 +69,7 @@
 .calendar-item-chip--slate { background: var(--surface-muted); }
 .calendar-item-chip--task { background: transparent; border: 1px dashed var(--border-strong); }
 .calendar-item-chip--habit { --habit-accent: var(--blue); background: var(--habit-accent); border: 1px solid color-mix(in srgb, currentColor 12%, transparent); text-decoration: none; }
+.calendar-item-chip--habit { min-height: 1.4rem; padding-block: 0.16rem; }
 .calendar-item-chip--habit.calendar-item-chip--mint { --habit-accent: var(--mint); }
 .calendar-item-chip--habit.calendar-item-chip--coral { --habit-accent: var(--coral); }
 .calendar-item-chip--habit.calendar-item-chip--sand { --habit-accent: var(--sand); }

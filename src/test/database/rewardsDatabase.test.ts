@@ -117,4 +117,61 @@ describe('Rewards economy on local PGlite', () => {
       await resetLocalRole(database!)
     }
   })
+
+  it('awards all habits completed today and reverses an accidental completion', async () => {
+    const localDate = (await database!.query<{ local_date: string }>(
+      "select (now() at time zone 'America/Sao_Paulo')::date::text as local_date",
+    )).rows[0]!.local_date
+    const habits = await database!.query<{ id: string }>(`
+      insert into public.habits(user_id,title,schedule_type,target_count,position)
+      values ($1,'Read','daily',1,1000),($1,'Stretch','daily',1,2000)
+      returning id
+    `, [USER_B])
+    const [read, stretch] = habits.rows
+
+    await authenticateLocalUser(database!, USER_B)
+    try {
+      await database!.query(`
+        insert into public.habit_logs(user_id,habit_id,local_date,count,status,source)
+        values($1,$2,$3::date,1,'completed','manual')
+      `, [USER_B, read!.id, localDate])
+      expect((await database!.query('select * from public.reward_wallets')).rows).toHaveLength(0)
+
+      await database!.query(`
+        insert into public.habit_logs(user_id,habit_id,local_date,count,status,source)
+        values($1,$2,$3::date,1,'completed','manual')
+      `, [USER_B, stretch!.id, localDate])
+      let wallet = await database!.query<{ silver_balance: bigint; gold_balance: bigint }>('select silver_balance,gold_balance from public.reward_wallets')
+      expect(Number(wallet.rows[0]!.silver_balance)).toBe(10)
+      expect(Number(wallet.rows[0]!.gold_balance)).toBe(2)
+      await resetLocalRole(database!)
+      await expect(database!.query(
+        'update public.reward_wallets set silver_balance=0 where user_id=$1', [USER_B],
+      )).rejects.toThrow(/reserved/i)
+      await authenticateLocalUser(database!, USER_B)
+
+      await database!.query(`
+        update public.habit_logs set count=0,status='in_progress'
+        where user_id=$1 and habit_id=$2 and local_date=$3::date
+      `, [USER_B, stretch!.id, localDate])
+      wallet = await database!.query<{ silver_balance: bigint; gold_balance: bigint }>('select silver_balance,gold_balance from public.reward_wallets')
+      expect(Number(wallet.rows[0]!.silver_balance)).toBe(0)
+      expect(Number(wallet.rows[0]!.gold_balance)).toBe(0)
+
+      await database!.query(`
+        update public.habit_logs set count=1,status='completed'
+        where user_id=$1 and habit_id=$2 and local_date=$3::date
+      `, [USER_B, stretch!.id, localDate])
+      wallet = await database!.query<{ silver_balance: bigint; gold_balance: bigint }>('select silver_balance,gold_balance from public.reward_wallets')
+      expect(Number(wallet.rows[0]!.silver_balance)).toBe(10)
+      expect(Number(wallet.rows[0]!.gold_balance)).toBe(2)
+
+      const ledger = await database!.query<{ reason: string }>('select reason from public.reward_transactions order by created_at,id')
+      expect(ledger.rows.map(({ reason }) => reason)).toEqual([
+        'habit_daily_completion', 'habit_daily_completion_revoked', 'habit_daily_completion',
+      ])
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
 })

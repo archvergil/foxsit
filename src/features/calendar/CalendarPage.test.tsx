@@ -90,6 +90,7 @@ const habitsRepository: HabitsRepository = {
   createHabit: () => Promise.reject(new Error('Not used.')),
   updateHabit: () => Promise.reject(new Error('Not used.')),
   deleteHabit: () => Promise.reject(new Error('Not used.')),
+  clearHabitHistory: () => Promise.reject(new Error('Not used.')),
   reorderHabits: () => Promise.reject(new Error('Not used.')),
   listLogs: () => Promise.resolve([habitLog]),
   upsertLog: () => Promise.reject(new Error('Not used.')),

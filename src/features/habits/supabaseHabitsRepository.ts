@@ -161,6 +161,11 @@ export const createSupabaseHabitsRepository = (
       .eq('id', habitId).eq('user_id', userId).select('id').maybeSingle()
     assertData(data, error, 'delete the habit')
   },
+  clearHabitHistory: async (userId, habitId) => {
+    const { error } = await client.from('habit_logs').delete()
+      .eq('habit_id', habitId).eq('user_id', userId)
+    if (error) throw new HabitsRepositoryError('Could not clear the habit history.', { cause: error })
+  },
   reorderHabits: async (_userId, orderedHabitIds) => {
     const { data, error } = await client.rpc('reorder_habits', { p_habit_ids: orderedHabitIds })
     return sortHabits(assertData(data, error, 'reorder habits').map(mapHabit))

@@ -15,6 +15,7 @@ export interface HabitsRepository {
   createHabit(userId: string, input: HabitInput): Promise<Habit>
   updateHabit(userId: string, habitId: string, input: HabitInput): Promise<Habit>
   deleteHabit(userId: string, habitId: string): Promise<void>
+  clearHabitHistory(userId: string, habitId: string): Promise<void>
   reorderHabits(userId: string, orderedHabitIds: string[]): Promise<Habit[]>
   listLogs(userId: string, range: HabitLogRange): Promise<HabitLog[]>
   upsertLog(userId: string, input: HabitLogInput): Promise<HabitLog>

@@ -333,6 +333,13 @@ describe('local account and data API', () => {
       habitId: habit.id, localDate: '2026-08-17', count: 2, status: 'completed',
     }])
 
+    const clearHistoryResponse = await request(server.url, session.accessToken, `/v1/habits/${habit.id}/history`, { method: 'DELETE' })
+    expect(clearHistoryResponse.status).toBe(200)
+    const clearedLogsResponse = await request(server.url, session.accessToken, `/v1/habit-logs?${params}`)
+    expect((await clearedLogsResponse.json()).data).toEqual([])
+    const habitsAfterClear = await request(server.url, session.accessToken, '/v1/habits')
+    expect((await habitsAfterClear.json()).data).toEqual(expect.arrayContaining([expect.objectContaining({ id: habit.id })]))
+
     const archiveResponse = await request(server.url, session.accessToken, `/v1/habits/${habit.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ ...habit, isActive: false }),

@@ -11,6 +11,7 @@ export const createLocalHabitsRepository = (client: LocalApiClient): HabitsRepos
   createHabit: (_userId, input) => client.post('/v1/habits', habitInputSchema.parse(input)),
   updateHabit: (_userId, habitId, input) => client.patch(`/v1/habits/${habitId}`, habitInputSchema.parse(input)),
   deleteHabit: (_userId, habitId) => client.delete(`/v1/habits/${habitId}`),
+  clearHabitHistory: (_userId, habitId) => client.delete(`/v1/habits/${habitId}/history`),
   reorderHabits: (_userId, orderedHabitIds) => client.patch('/v1/habits/reorder', { orderedHabitIds }),
   listLogs: (_userId, range) => {
     const params = new URLSearchParams({ dateStart: range.dateStart, dateEnd: range.dateEnd })

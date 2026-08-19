@@ -15,6 +15,8 @@ const reasonLabels: Record<string, string> = {
   strength_reward: 'Strength workout',
   cardio_reward: 'Cardio workout',
   cardio_monthly_bonus: 'Monthly cardio bonus',
+  habit_daily_completion: 'All daily habits completed',
+  habit_daily_completion_revoked: 'Daily habit reward reversed',
   silver_store_purchase: 'Silver credit request',
   gold_store_purchase: 'Gold credit request',
   silver_to_gold_conversion: 'Silver to Gold conversion',
@@ -79,7 +81,7 @@ export default function RewardsPage() {
       <PageHeader
         eyebrow="Private, audited credits"
         title="Rewards"
-        description="Earn coins through completed Focus runs and workouts, then exchange them for internal credit requests. No payment or automatic cash transfer occurs here."
+        description="Earn coins through completed habits, Focus runs and workouts, then exchange them for internal credit requests. No payment or automatic cash transfer occurs here."
       />
 
       <div className="reward-balances">

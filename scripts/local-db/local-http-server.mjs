@@ -95,6 +95,7 @@ export const createLocalHttpServer = ({
         const checklistId = routeId(path, '/v1/checklist')
         const calendarEventId = routeId(path, '/v1/calendar-events')
         const habitId = routeId(path, '/v1/habits')
+        const habitHistoryId = routeId(path, '/v1/habits', '/history')
 
         if (method === 'GET' && path === '/v1/profile') result = await data.profile(user.id)
         else if (method === 'GET' && path === '/v1/projects') result = await data.listProjects(user.id, url.searchParams.get('includeArchived') === 'true')
@@ -141,6 +142,7 @@ export const createLocalHttpServer = ({
         else if (method === 'PATCH' && habitId) {
           result = await data.updateHabit(user.id, habitId, await readJson(request))
         }
+        else if (method === 'DELETE' && habitHistoryId) result = await data.clearHabitHistory(user.id, habitHistoryId)
         else if (method === 'DELETE' && habitId) result = await data.deleteHabit(user.id, habitId)
         else if (method === 'GET' && path === '/v1/habit-logs') {
           result = await data.listHabitLogs(user.id, Object.fromEntries(url.searchParams))

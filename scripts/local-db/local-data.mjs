@@ -561,6 +561,14 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
     ), 'delete the habit')
   }),
 
+  clearHabitHistory: (userId, habitId) => withAuthenticatedUser(userId, async () => {
+    one(await database.query(
+      'select id from public.habits where id = $1 and user_id = $2',
+      [habitId, userId],
+    ), 'find the habit')
+    await database.query('delete from public.habit_logs where habit_id = $1 and user_id = $2', [habitId, userId])
+  }),
+
   reorderHabits: (userId, input) => withAuthenticatedUser(userId, async () => {
     const { orderedHabitIds } = habitOrder.parse(input)
     await database.query('begin')

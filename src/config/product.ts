@@ -1,4 +1,4 @@
-export const APP_NAME = 'APP_NAME'
+export const APP_NAME = 'Foxsit'
 
 export const productCopy = {
   tagline: 'One quiet place for the day ahead.',

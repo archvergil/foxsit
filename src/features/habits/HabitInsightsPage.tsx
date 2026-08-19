@@ -14,7 +14,7 @@ import {
   startOfHabitWeek,
   type HabitHistoryDay,
 } from './habitRules'
-import { useDeleteHabit, useHabitDateContext, useHabitLogs, useHabits, useUpdateHabit } from './queries'
+import { useClearHabitHistory, useDeleteHabit, useHabitDateContext, useHabitLogs, useHabits, useUpdateHabit } from './queries'
 import { habitToInput } from './schemas'
 import type { Habit } from './types'
 
@@ -68,6 +68,7 @@ export function HabitInsightsPage() {
   )
   const updateHabit = useUpdateHabit()
   const deleteHabit = useDeleteHabit()
+  const clearHistory = useClearHabitHistory()
   const selected = habits.find((habit) => habit.id === selectedId) ?? habits[0]
   const selectedLogs = useMemo(
     () => selected ? (logsQuery.data ?? []).filter((log) => log.habitId === selected.id) : [],
@@ -103,20 +104,21 @@ export function HabitInsightsPage() {
 
   const remove = async () => {
     if (!selected) return
-    try {
-      await deleteHabit.mutateAsync(selected.id)
-      setSelectedId(undefined)
-    } catch {
-      // Durable error remains visible below the actions.
-    }
+    await deleteHabit.mutateAsync(selected.id)
+    setSelectedId(undefined)
+  }
+
+  const clear = async () => {
+    if (!selected) return
+    await clearHistory.mutateAsync(selected.id)
   }
 
   const recentHistory = insight?.days
     .filter((day) => day.scheduled || day.state !== 'unscheduled')
     .slice(-10)
     .reverse() ?? []
-  const pending = updateHabit.isPending || deleteHabit.isPending
-  const writeError = updateHabit.error ?? deleteHabit.error
+  const pending = updateHabit.isPending || deleteHabit.isPending || clearHistory.isPending
+  const writeError = updateHabit.error ?? deleteHabit.error ?? clearHistory.error
 
   return (
     <section className="page-stack habits-page habit-insights-page">
@@ -194,7 +196,7 @@ export function HabitInsightsPage() {
               <span><strong>{selected.title} is archived.</strong><small>Its history stays available and no later day affects its rates.</small></span>
               <span>
                 <Button variant="secondary" type="button" disabled={pending} onClick={() => void restore()}><ArchiveRestore aria-hidden />Restore</Button>
-                <ConfirmDialog actionLabel="Delete habit" description="This archived habit and its complete history will be permanently removed. This action cannot be undone." onConfirm={remove} pending={deleteHabit.isPending} title={`Delete “${selected.title}”?`} trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete</Button>} />
+                <ConfirmDialog actionLabel="Delete habit" description="Delete the habit and all its records, or clear only its completion history and keep the habit." onConfirm={remove} pending={deleteHabit.isPending} secondaryAction={{ label: 'Clear history only', onAction: clear, pending: clearHistory.isPending }} title={`Delete “${selected.title}”?`} trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete</Button>} />
               </span>
             </section>
           ) : null}

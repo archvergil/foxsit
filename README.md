@@ -1,8 +1,8 @@
-# APP_NAME
+# Foxsit
 
 A personal productivity PWA for Today, Calendar, Tasks, Focus, Habits and Workout. The product uses React, TypeScript, Vite and Supabase and targets Cloudflare Pages.
 
-The final product name is intentionally unresolved. `APP_NAME` is centralized in `src/config/product.ts` and must remain the placeholder until the owner chooses a name.
+The product name is centralized in `src/config/product.ts` and mirrored in the PWA manifest and document title.
 
 ## Current phase
 

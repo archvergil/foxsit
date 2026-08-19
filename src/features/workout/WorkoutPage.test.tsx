@@ -146,14 +146,14 @@ const profileRepository: ProfileRepository = {
   }),
 }
 
-const renderPage = (repository: WorkoutRepository) => {
+const renderPage = (repository: WorkoutRepository, initialEntry = '/workout/routines') => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={authValue}>
         <ProfileRepositoryProvider repository={profileRepository}>
           <WorkoutRepositoryProvider repository={repository}>
-            <MemoryRouter initialEntries={['/workout/routines']}>
+            <MemoryRouter initialEntries={[initialEntry]}>
               <Routes>
                 <Route path="/workout/routines" element={<WorkoutPage />} />
                 <Route path="/workout/routine/:routineId" element={<WorkoutPage />} />
@@ -169,6 +169,23 @@ const renderPage = (repository: WorkoutRepository) => {
 }
 
 describe('Workout routine flow', () => {
+  it('waits for routine deletion and returns to the routine list', async () => {
+    const repository = new MemoryWorkoutRepository()
+    const routine = await repository.createRoutine(USER_ID, {
+      name: 'Pull day', description: null, colorToken: 'slate', activityType: 'strength',
+      bannerAsset: 'gym_1.gif', bannerMonochrome: true,
+    })
+    const user = userEvent.setup()
+    renderPage(repository, `/workout/routine/${routine.id}`)
+
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete routine' }))
+
+    await waitFor(() => expect(repository.routines).toHaveLength(0))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Train with context.' })).toBeVisible()
+    expect(screen.getByText(/Create your first split or full-body plan/)).toBeVisible()
+  })
+
   it('creates a routine and persists its first exercise', async () => {
     const repository = new MemoryWorkoutRepository()
     const user = userEvent.setup()

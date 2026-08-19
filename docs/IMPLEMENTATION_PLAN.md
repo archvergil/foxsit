@@ -76,6 +76,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Read-only Calendar adapter and ownership-safe Workout link contract.
 - [x] Rework the Habit workspace into compact routine rows and a responsive visual editor with icon, palette and custom-color selection in production.
 - [x] Add first-class Habit projects with project assignment, visual icons and customizable faded GIF banners in production.
+- [x] Add an explicit clear-history-only choice to Habit deletion and keep the habit itself intact.
 
 ## Phase 6 — Workout
 
@@ -98,6 +99,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add the versioned reward-rule configuration, wallet, monthly counters, immutable ledger and redemption migrations with RLS.
 - [x] Extend durable Focus runs and Workout sessions with the facts needed to award eligible activity exactly once.
 - [x] Add transactional reward, conversion and redemption RPCs with profile-timezone monthly limits and idempotency constraints.
+- [x] Add a transactional 10 Silver + 2 Gold daily Habit award with exact reversal and safe re-award after an accidental undo.
 - [x] Build the responsive Rewards area: balances, monthly progress, conversions, ledger and both credit stores.
 - [~] Cover the economy with unit, database/RLS, component and authenticated E2E tests; migration `202608180011` is applied and deployed authenticated E2E remains pending.
 
@@ -118,9 +120,20 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Verify rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations `202608180009`, `202608180010` and `202608180011` are applied.
+Apply migration `202608180012`, verify Habit award/reversal plus rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are applied; `202608180012` is pending production application.
 
 ## Latest verification
+
+Completed the product-polish and daily Habit reward slice on 2026-08-18:
+
+- named the product Foxsit across the shell, PWA manifest, document title and product documentation;
+- bounded Training blocks with internal scrolling, stopped the Workout hero and form actions from stretching, and kept icon-label buttons horizontal;
+- made confirmation dialogs await durable writes before closing, fixed routine deletion navigation and added a regression test;
+- added a clear-history-only Habit deletion choice plus the local and Supabase repository contracts;
+- added migration `202608180012` for Slate data/default normalization and the reversible 10 Silver + 2 Gold all-Habits daily award; the pending daily amount is protected from spending so reversal never creates a negative balance;
+- reduced Calendar Habit-chip height and refined the Rewards conversion summary;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (135/135), `npm run test:db` (31/31) and `npm run build` passed;
+- migration `202608180012` still requires production application.
 
 Completed the shared interaction correction on 2026-08-18:
 

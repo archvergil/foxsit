@@ -1,6 +1,6 @@
 # Master Prompt para o Codex — Productivity Workspace
 
-> Copie este documento para a raiz do novo repositório como `CODEX_MASTER_PROMPT.md` e use-o como a primeira solicitação para o Codex. O nome definitivo do produto ainda não foi definido; use `APP_NAME` como placeholder centralizado e não invente uma marca final.
+> Copie este documento para a raiz do novo repositório como `CODEX_MASTER_PROMPT.md` e use-o como a primeira solicitação para o Codex. O nome definitivo do produto é **Foxsit** e deve permanecer centralizado na configuração de produto.
 
 ---
 
@@ -48,7 +48,7 @@ Considere estas decisões como válidas para o MVP, salvo impedimento técnico r
 - A interface inicial usará textos curtos em inglês, coerentes com os nomes dos módulos fornecidos. Toda a copy deve ficar centralizada para permitir pt-BR depois, sem implementar uma infraestrutura excessiva de internacionalização no MVP.
 - A semana começa na segunda-feira por padrão, mas isso deve ser uma preferência editável.
 - O fuso horário inicial deve ser detectado pelo navegador e salvo como timezone IANA no perfil.
-- Não invente um nome final para o produto. Use uma constante/configuração `APP_NAME` e um wordmark temporário discreto.
+- Use o nome final **Foxsit** por meio da constante/configuração centralizada `APP_NAME`.
 
 Não expanda o escopo com recursos sociais, chat, e-mail, finanças, anotações, gamificação pública, ranking, marketplace ou recursos não solicitados. A economia privada de Rewards definida na seção 14 é uma exceção expressamente aprovada: ela registra créditos internos e pedidos de resgate, mas não processa pagamentos, transfere dinheiro, coleta dados bancários nem promete liquidação automática.
 

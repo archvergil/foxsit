@@ -362,7 +362,8 @@
 .reward-conversion__form { display: grid; grid-template-columns: minmax(13rem, 1.4fr) minmax(7rem, .5fr) 1fr auto; align-items: end; gap: var(--space-3); }
 .reward-conversion__form label { display: grid; gap: var(--space-2); font-size: var(--text-sm); font-weight: 600; }
 .reward-conversion__form select, .reward-conversion__form input { min-height: var(--touch-target); padding: 0 var(--space-3); color: var(--ink); background: var(--canvas-raised); border: 1px solid var(--border-strong); border-radius: var(--radius-md); }
-.reward-conversion__result { min-height: var(--touch-target); display: grid; grid-template-columns: auto auto; gap: .15rem var(--space-3); align-content: center; padding-inline: var(--space-4); background: var(--canvas-raised); border-radius: var(--radius-md); }
+.reward-conversion__result { min-height: var(--touch-target); display: grid; grid-template-columns: max-content minmax(5rem, 1fr); gap: .35rem var(--space-4); align-content: center; padding: var(--space-3) var(--space-4); background: var(--canvas-raised); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.reward-conversion__result strong { text-align: right; font-family: var(--font-mono); }
 .reward-conversion__result small { color: var(--ink-faint); }
 .reward-store__notice { margin: calc(var(--space-3) * -1) 0 0; color: var(--ink-soft); font-size: var(--text-sm); }
 .reward-store__grid { display: grid; grid-template-columns: repeat(5, minmax(9rem, 1fr)); gap: var(--space-3); }

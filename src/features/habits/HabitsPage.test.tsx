@@ -79,6 +79,11 @@ class MemoryHabitsRepository implements HabitsRepository {
     return Promise.resolve()
   }
 
+  clearHabitHistory(_userId: string, habitId: string): Promise<void> {
+    this.logs = this.logs.filter((log) => log.habitId !== habitId)
+    return Promise.resolve()
+  }
+
   reorderHabits(_userId: string, orderedHabitIds: string[]): Promise<Habit[]> {
     const positions = new Map(orderedHabitIds.map((id, index) => [id, (index + 1) * 1000]))
     this.habits = this.habits.map((habit) => ({ ...habit, position: positions.get(habit.id) ?? habit.position }))
@@ -229,7 +234,13 @@ describe('Habits Today flow', () => {
     await waitFor(() => expect(repository.habits[0]?.title).toBe('Hydrate'))
 
     await user.click(await screen.findByRole('button', { name: 'Edit habit Hydrate' }))
-    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const deleteButton = await waitFor(() => screen.getByRole('button', { name: 'Delete' }))
+    await user.click(deleteButton)
+    await user.click(await screen.findByRole('button', { name: 'Clear history only' }))
+    await waitFor(() => expect(repository.logs).toHaveLength(0))
+    expect(repository.habits).toHaveLength(1)
+
+    await user.click(await waitFor(() => screen.getByRole('button', { name: 'Delete' })))
     await user.click(await screen.findByRole('button', { name: 'Delete habit' }))
     await waitFor(() => expect(repository.habits).toHaveLength(0))
     expect(await screen.findByText('Your first habit starts here.')).toBeVisible()

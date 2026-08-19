@@ -4,7 +4,7 @@ import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { useCreateHabit, useDeleteHabit, useUpdateHabit } from './queries'
+import { useClearHabitHistory, useCreateHabit, useDeleteHabit, useUpdateHabit } from './queries'
 import { habitFormSchema, habitToInput, resolveHabitForm, type HabitFormValues } from './schemas'
 import { HabitGlyph } from './HabitGlyph'
 import { colorOptionForHabit, habitAccentStyle, habitColorOptions, habitIconOptions } from './habitVisuals'
@@ -39,6 +39,7 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
   const createHabit = useCreateHabit()
   const updateHabit = useUpdateHabit()
   const deleteHabit = useDeleteHabit()
+  const clearHistory = useClearHabitHistory()
   const form = useForm<HabitFormValues>({ resolver: zodResolver(habitFormSchema), defaultValues: formDefaults(habit) })
   const scheduleType = useWatch({ control: form.control, name: 'scheduleType' })
   const selectedIcon = useWatch({ control: form.control, name: 'icon' }) ?? 'circle-check-big'
@@ -46,8 +47,8 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
   const customColor = useWatch({ control: form.control, name: 'customColor' }) ?? ''
   const title = useWatch({ control: form.control, name: 'title' }) ?? ''
   const previewHabit = { customColor: customColor || null }
-  const pending = createHabit.isPending || updateHabit.isPending || deleteHabit.isPending
-  const writeError = createHabit.error ?? updateHabit.error ?? deleteHabit.error
+  const pending = createHabit.isPending || updateHabit.isPending || deleteHabit.isPending || clearHistory.isPending
+  const writeError = createHabit.error ?? updateHabit.error ?? deleteHabit.error ?? clearHistory.error
 
   const submit = form.handleSubmit(async (values) => {
     try {
@@ -72,12 +73,13 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
 
   const remove = async () => {
     if (!habit) return
-    try {
-      await deleteHabit.mutateAsync(habit.id)
-      onSaved()
-    } catch {
-      // The durable-write error remains visible.
-    }
+    await deleteHabit.mutateAsync(habit.id)
+    onSaved()
+  }
+
+  const clear = async () => {
+    if (!habit) return
+    await clearHistory.mutateAsync(habit.id)
   }
 
   return (
@@ -123,7 +125,7 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
         <Button className="habit-editor__wide" type="submit" isLoading={createHabit.isPending || updateHabit.isPending}>{habit ? 'Save habit' : 'Create habit'}</Button>
       </form>
       {writeError ? <p className="habit-editor__error" role="alert">{writeError.message}</p> : null}
-      {habit ? <div className="habit-editor__danger-actions"><Button variant="quiet" type="button" disabled={pending} onClick={() => void archive()}><Archive aria-hidden />Archive</Button><ConfirmDialog actionLabel="Delete habit" description="This habit and its complete history will be permanently removed. This action cannot be undone." onConfirm={remove} pending={deleteHabit.isPending} title={`Delete “${habit.title}”?`} trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete</Button>} /></div> : null}
+      {habit ? <div className="habit-editor__danger-actions"><Button variant="quiet" type="button" disabled={pending} onClick={() => void archive()}><Archive aria-hidden />Archive</Button><ConfirmDialog actionLabel="Delete habit" description="Delete the habit and all its records, or clear only its completion history and keep the habit." onConfirm={remove} pending={deleteHabit.isPending} secondaryAction={{ label: 'Clear history only', onAction: clear, pending: clearHistory.isPending }} title={`Delete “${habit.title}”?`} trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete</Button>} /></div> : null}
     </aside>
   )
 }
