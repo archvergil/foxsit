@@ -52,5 +52,50 @@ describe('Workout history deletion', () => {
       await resetLocalRole(database!)
     }
   })
-})
 
+  it('deletes a routine while preserving its completed-session snapshot', async () => {
+    const routineId = (await database!.query<{ id: string }>(
+      `insert into public.workout_routines(user_id,name,color_token,position)
+       values($1,'Archived routine','slate',1000) returning id`, [USER_A],
+    )).rows[0]!.id
+    const sessionId = (await database!.query<{ id: string }>(
+      `insert into public.workout_sessions(user_id,routine_id,routine_name,status,started_at,ended_at,duration_seconds)
+       values($1,$2,'Archived routine','completed',now() - interval '10 minutes',now(),600) returning id`, [USER_A, routineId],
+    )).rows[0]!.id
+
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      const deleted = await database!.query<{ id: string }>(
+        'delete from public.workout_routines where id=$1 and user_id=$2 returning id', [routineId, USER_A],
+      )
+      expect(deleted.rows).toEqual([{ id: routineId }])
+    } finally {
+      await resetLocalRole(database!)
+    }
+
+    const preserved = await database!.query<{ routine_id: string | null; routine_name: string }>(
+      'select routine_id, routine_name from public.workout_sessions where id=$1', [sessionId],
+    )
+    expect(preserved.rows).toEqual([{ routine_id: null, routine_name: 'Archived routine' }])
+  })
+
+  it('still rejects manually detaching a completed session from an existing routine', async () => {
+    const routineId = (await database!.query<{ id: string }>(
+      `insert into public.workout_routines(user_id,name,color_token,position)
+       values($1,'Protected routine','slate',2000) returning id`, [USER_A],
+    )).rows[0]!.id
+    const sessionId = (await database!.query<{ id: string }>(
+      `insert into public.workout_sessions(user_id,routine_id,routine_name,status,started_at,ended_at,duration_seconds)
+       values($1,$2,'Protected routine','completed',now() - interval '10 minutes',now(),600) returning id`, [USER_A, routineId],
+    )).rows[0]!.id
+
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      await expect(database!.query(
+        'update public.workout_sessions set routine_id=null where id=$1', [sessionId],
+      )).rejects.toThrow(/immutable/i)
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+})

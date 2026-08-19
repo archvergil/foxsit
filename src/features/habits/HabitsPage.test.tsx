@@ -164,6 +164,7 @@ describe('Habits Today flow', () => {
       name: 'Fitness', icon: 'dumbbell', bannerAsset: 'habits_2.gif', bannerMonochrome: true,
     }))
     expect(await screen.findByText('Fitness')).toBeVisible()
+    expect(document.querySelector('.habit-project-banner .visual-banner__media')).toHaveAttribute('src', '/gifs/habits_2.gif')
 
     await user.click(screen.getByRole('button', { name: 'New habit' }))
     await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Morning workout')

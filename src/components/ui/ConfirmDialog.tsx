@@ -16,6 +16,7 @@ export function ConfirmDialog({
   title,
   trigger,
   secondaryAction,
+  errorMessage,
 }: {
   actionLabel: string
   description: string
@@ -24,6 +25,7 @@ export function ConfirmDialog({
   title: string
   trigger: ReactElement
   secondaryAction?: SecondaryAction | undefined
+  errorMessage?: string | null | undefined
 }) {
   const [open, setOpen] = useState(false)
   const [workingAction, setWorkingAction] = useState<'primary' | 'secondary' | null>(null)
@@ -64,6 +66,7 @@ export function ConfirmDialog({
                   <AlertDialogPrimitive.Title>{title}</AlertDialogPrimitive.Title>
                   <AlertDialogPrimitive.Description>{description}</AlertDialogPrimitive.Description>
                 </header>
+                {errorMessage ? <p className="confirm-dialog__error" role="alert">{errorMessage}</p> : null}
                 <footer className="confirm-dialog__footer">
                   {secondaryAction ? (
                     <button className="confirm-dialog__secondary-action" disabled={working || secondaryAction.pending} type="button" onClick={() => void runAction('secondary')}>

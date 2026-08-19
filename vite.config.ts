@@ -36,8 +36,16 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,png,svg,woff2,json}'],
+        globPatterns: ['**/*.{js,css,html,jpg,png,svg,woff2,json}'],
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/gifs/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'visual-banners-v1',
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/exercises/'),
             handler: 'CacheFirst',

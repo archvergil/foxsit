@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { VisualBanner } from '@/components/visual/VisualBanner'
+import { defaultWorkoutBannerAsset } from '@/lib/bannerAssets'
 import { ActiveWorkoutSession } from './ActiveWorkoutSession'
 import { useActiveWorkoutSession, useDeleteWorkoutExercise, useDeleteWorkoutRoutine, useStartWorkoutSession, useWorkoutRoutines } from './queries'
 import type { WorkoutRoutine } from './types'
@@ -15,7 +16,7 @@ import { WorkoutHistory } from './WorkoutHistory'
 import { WorkoutRoutineEditor } from './WorkoutRoutineEditor'
 
 const RoutineCard = ({ routine }: { routine: WorkoutRoutine }) => (
-  <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className="workout-routine-card workout-routine-card--slate">
+  <VisualBanner assetId={routine.bannerAsset ?? defaultWorkoutBannerAsset} monochrome={routine.bannerAsset ? (routine.bannerMonochrome ?? true) : true} className="workout-routine-card workout-routine-card--slate">
     <Link className="workout-routine-card__link" to={`/workout/routine/${routine.id}`}>
       <span className="workout-routine-card__icon"><Dumbbell aria-hidden /></span>
       <span><span className="eyebrow">{routine.exercises.length} exercises</span><strong>{routine.name}</strong><small>{routine.description ?? 'Ready for exercise planning.'}</small></span>
@@ -56,12 +57,13 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
             description="This routine and its planned exercises will be permanently removed. Completed workout history will remain available."
             onConfirm={removeRoutine}
             pending={deleteRoutine.isPending}
+            errorMessage={deleteRoutine.error?.message}
             title={`Delete “${routine.name}”?`}
             trigger={<Button variant="quiet" disabled={deleteRoutine.isPending}><Trash2 aria-hidden />Delete</Button>}
           />
         </span>
       </div>
-      <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className="workout-detail__hero workout-detail__hero--slate">
+      <VisualBanner assetId={routine.bannerAsset ?? defaultWorkoutBannerAsset} monochrome={routine.bannerAsset ? (routine.bannerMonochrome ?? true) : true} className="workout-detail__hero workout-detail__hero--slate">
         <span className="eyebrow">Workout routine</span><h2>{routine.name}</h2>
         <p>{routine.description ?? 'Add exercises below to turn this routine into a repeatable plan.'}</p>
         <dl><div><dt>Exercises</dt><dd>{routine.exercises.length}</dd></div><div><dt>Planned sets</dt><dd>{routine.exercises.reduce((total, exercise) => total + exercise.targetSets, 0)}</dd></div></dl>
@@ -88,7 +90,6 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
         {deleteExercise.error ? <p className="workout-write-error" role="alert">{deleteExercise.error.message}</p> : null}
       </section>
       <WorkoutExerciseEditor routineId={routine.id} />
-      {deleteRoutine.error ? <p className="workout-write-error" role="alert">{deleteRoutine.error.message}</p> : null}
       {startSession.error ? <p className="workout-write-error" role="alert">{startSession.error.message}</p> : null}
     </div>
   )
@@ -115,7 +116,7 @@ export default function WorkoutPage() {
       {activeView && activeSession.error ? <div className="workout-state workout-state--error"><strong>Active workout could not be loaded.</strong><p>{activeSession.error.message}</p><Button variant="secondary" onClick={() => void activeSession.refetch()}>Try again</Button></div> : null}
       {activeView && !activeSession.isLoading && !activeSession.error && activeSession.data ? (() => {
         const activeRoutine = routines.data?.find((routine) => routine.id === activeSession.data?.routineId)
-        return <ActiveWorkoutSession session={activeSession.data} bannerAsset={activeRoutine?.bannerAsset} bannerMonochrome={activeRoutine?.bannerMonochrome ?? true} />
+        return <ActiveWorkoutSession session={activeSession.data} bannerAsset={activeRoutine?.bannerAsset ?? defaultWorkoutBannerAsset} bannerMonochrome={activeRoutine?.bannerAsset ? (activeRoutine.bannerMonochrome ?? true) : true} />
       })() : null}
       {activeView && !activeSession.isLoading && !activeSession.error && !activeSession.data ? <div className="workout-state"><Dumbbell aria-hidden /><strong>No workout is active.</strong><p>Start one from a routine with at least one exercise.</p><Link to="/workout/routines">Choose a routine</Link></div> : null}
       {!activeView && !historyView && routines.isLoading ? <div className="workout-state" role="status">Loading workout routines…</div> : null}

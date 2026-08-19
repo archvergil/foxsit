@@ -27,6 +27,7 @@ class MemoryWorkoutRepository implements WorkoutRepository {
   routines: WorkoutRoutine[] = []
   activeSession: WorkoutSession | null = null
   history: WorkoutSession[] = []
+  deleteFailure: Error | null = null
 
   listRoutines(): Promise<WorkoutRoutine[]> { return Promise.resolve(this.routines) }
   createRoutine(userId: string, input: WorkoutRoutineInput): Promise<WorkoutRoutine> {
@@ -45,6 +46,7 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     return Promise.resolve(updated)
   }
   deleteRoutine(_userId: string, routineId: string): Promise<void> {
+    if (this.deleteFailure) return Promise.reject(this.deleteFailure)
     this.routines = this.routines.filter(({ id }) => id !== routineId)
     return Promise.resolve()
   }
@@ -177,11 +179,24 @@ const renderPage = (repository: WorkoutRepository, initialEntry = '/workout/rout
 }
 
 describe('Workout routine flow', () => {
+  it('renders a monochrome default GIF for legacy routines without a banner', async () => {
+    const repository = new MemoryWorkoutRepository()
+    await repository.createRoutine(USER_ID, {
+      name: 'Legacy routine', description: null, colorToken: 'slate', activityType: 'strength',
+      bannerAsset: null, bannerMonochrome: false,
+    })
+    const { container } = renderPage(repository)
+
+    expect(await screen.findByText('Legacy routine')).toBeVisible()
+    expect(container.querySelector('.workout-routine-card .visual-banner__media')).toHaveAttribute('src', '/gifs/workout_1.gif')
+    expect(container.querySelector('.workout-routine-card')).toHaveClass('visual-banner--monochrome')
+  })
+
   it('waits for routine deletion and returns to the routine list', async () => {
     const repository = new MemoryWorkoutRepository()
     const routine = await repository.createRoutine(USER_ID, {
       name: 'Pull day', description: null, colorToken: 'slate', activityType: 'strength',
-      bannerAsset: 'gym_1.gif', bannerMonochrome: true,
+      bannerAsset: 'workout_1.gif', bannerMonochrome: true,
     })
     const user = userEvent.setup()
     renderPage(repository, `/workout/routine/${routine.id}`)
@@ -191,7 +206,25 @@ describe('Workout routine flow', () => {
 
     await waitFor(() => expect(repository.routines).toHaveLength(0))
     expect(await screen.findByRole('heading', { level: 1, name: 'Train with context.' })).toBeVisible()
-    expect(screen.getByText(/Create your first split or full-body plan/)).toBeVisible()
+    expect(await screen.findByText(/Create your first split or full-body plan/)).toBeVisible()
+  })
+
+  it('keeps a durable deletion error visible inside the confirmation dialog', async () => {
+    const repository = new MemoryWorkoutRepository()
+    repository.deleteFailure = new Error('The routine could not be deleted.')
+    const routine = await repository.createRoutine(USER_ID, {
+      name: 'Protected day', description: null, colorToken: 'slate', activityType: 'strength',
+      bannerAsset: 'workout_2.gif', bannerMonochrome: true,
+    })
+    const user = userEvent.setup()
+    renderPage(repository, `/workout/routine/${routine.id}`)
+
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete routine' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('The routine could not be deleted.')
+    expect(screen.getByRole('alertdialog')).toBeVisible()
+    expect(repository.routines).toHaveLength(1)
   })
 
   it('creates a routine and persists its first exercise', async () => {
@@ -209,6 +242,8 @@ describe('Workout routine flow', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Upper body' })).toBeVisible()
     expect(repository.routines).toHaveLength(1)
     expect(repository.routines[0]?.colorToken).toBe('slate')
+    expect(repository.routines[0]?.bannerAsset).toBe('workout_1.gif')
+    expect(repository.routines[0]?.bannerMonochrome).toBe(true)
 
     await user.type(screen.getByRole('textbox', { name: 'Exercise' }), 'Bench press')
     await user.type(screen.getByRole('textbox', { name: 'Muscle group' }), 'Chest')

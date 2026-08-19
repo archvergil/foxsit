@@ -125,6 +125,7 @@
 .confirm-dialog__action { color: white; background: #e11d48; }
 .confirm-dialog__cancel:hover,
 .confirm-dialog__action:hover:not(:disabled) { transform: translateY(-1px); }
+.confirm-dialog__error { padding: var(--space-3); margin: 0; color: var(--danger); background: var(--danger-surface); border-radius: var(--radius-sm); font-size: var(--text-sm); }
 .confirm-dialog__secondary-action:hover:not(:disabled) { transform: translateY(-1px); }
 .confirm-dialog__cancel:hover { color: var(--ink); background: var(--border); }
 .confirm-dialog__action:hover:not(:disabled) { filter: brightness(0.94); }

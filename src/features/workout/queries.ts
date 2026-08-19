@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/features/auth/authContext'
 import { workoutQueryKeys } from './repository'
-import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutine, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 import { useWorkoutRepository } from './workoutRepositoryContext'
 
 const useWorkoutIdentity = () => {
@@ -58,6 +58,7 @@ const useInvalidateRoutines = () => {
   const userId = useWorkoutIdentity()
   return {
     userId,
+    queryClient,
     invalidate: () => queryClient.invalidateQueries({ queryKey: workoutQueryKeys.routines(userId) }),
   }
 }
@@ -85,11 +86,15 @@ export const useUpdateWorkoutRoutine = () => {
 
 export const useDeleteWorkoutRoutine = () => {
   const repository = useWorkoutRepository()
-  const { userId, invalidate } = useInvalidateRoutines()
+  const { userId, queryClient, invalidate } = useInvalidateRoutines()
   return useMutation({
     mutationKey: ['workout', 'routine', 'delete', userId],
     mutationFn: (routineId: string) => repository.deleteRoutine(userId, routineId),
-    onSuccess: invalidate,
+    onSuccess: (_data, routineId) => {
+      queryClient.setQueryData<WorkoutRoutine[]>(workoutQueryKeys.routines(userId), (routines) =>
+        routines?.filter(({ id }) => id !== routineId))
+      void invalidate()
+    },
   })
 }
 

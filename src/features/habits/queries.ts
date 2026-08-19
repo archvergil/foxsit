@@ -5,7 +5,7 @@ import { useProfile } from '@/features/settings/profileQueries'
 import { resolveTimeZone } from '@/lib/dates'
 import { useHabitsRepository } from './habitsRepositoryContext'
 import { habitQueryKeys, type HabitLogRange } from './repository'
-import type { Habit, HabitInput, HabitLog, HabitLogInput, HabitProjectInput } from './types'
+import type { Habit, HabitInput, HabitLog, HabitLogInput, HabitProject, HabitProjectInput } from './types'
 
 const useHabitIdentity = () => {
   const { session } = useAuth()
@@ -45,7 +45,11 @@ export const useCreateHabitProject = () => {
   return useMutation({
     mutationKey: ['habits', 'projects', 'create', userId],
     mutationFn: (input: HabitProjectInput) => repository.createProject(userId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) }),
+    onSuccess: (project) => {
+      queryClient.setQueryData<HabitProject[]>(habitQueryKeys.projects(userId), (projects) =>
+        [...(projects ?? []), project].sort((left, right) => left.position - right.position || left.createdAt.localeCompare(right.createdAt)))
+      return queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) })
+    },
   })
 }
 
@@ -56,7 +60,11 @@ export const useUpdateHabitProject = () => {
   return useMutation({
     mutationKey: ['habits', 'projects', 'update', userId],
     mutationFn: ({ projectId, input }: { projectId: string; input: HabitProjectInput }) => repository.updateProject(userId, projectId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) }),
+    onSuccess: (project) => {
+      queryClient.setQueryData<HabitProject[]>(habitQueryKeys.projects(userId), (projects) =>
+        projects?.map((item) => item.id === project.id ? project : item))
+      return queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) })
+    },
   })
 }
 

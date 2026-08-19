@@ -137,9 +137,20 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002` and `202608190003`; verify Habit award/reversal, Workout history deletion, Calendar preferences, profile-photo Storage policies, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the four listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003` and `202608190004`; verify Habit award/reversal, Workout history/routine deletion, Calendar preferences, profile-photo Storage policies, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the five listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the iPad visual-banner and Workout deletion repair on 2026-08-19:
+
+- replaced the Safari-fragile negative-layer GIF background with a real image layer, increased useful image contrast and added a large animated selected preview to the banner picker;
+- made picker images load reliably inside horizontal modal scrollers and added a PWA runtime cache for visual GIF assets;
+- defaulted new and legacy Workout routines to visible monochrome Workout banners while preserving explicit Habit-project banner choices;
+- reconciled Habit-project and Workout-routine query caches immediately after durable writes so saved banners and deletions appear without a stale intermediate render;
+- added migration `202608190004` to let routine deletion detach immutable completed-session snapshots through the existing foreign key, backfill missing Workout banners and keep history intact;
+- moved Workout deletion errors into the confirmation dialog and added component/database regressions for GIF rendering, banner persistence, deletion failures and routine deletion with retained history;
+- `npm run lint`, `npm run typecheck`, focused database/component tests, `npm run test -- --run` (149/149), `npm run build` and `git diff --check` passed;
+- direct browser visual QA remained unavailable because no integrated or extension browser was connected in this session.
 
 Completed the iPad responsive consistency audit on 2026-08-19:
 

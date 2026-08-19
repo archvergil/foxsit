@@ -4,7 +4,7 @@ import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
 import { BannerPicker } from '@/components/visual/BannerPicker'
-import { workoutBannerAssets } from '@/lib/bannerAssets'
+import { defaultWorkoutBannerAsset, workoutBannerAssets } from '@/lib/bannerAssets'
 import { useCreateWorkoutRoutine, useUpdateWorkoutRoutine } from './queries'
 import {
   resolveWorkoutRoutineForm,
@@ -31,8 +31,8 @@ export function WorkoutRoutineEditor({
       description: routine?.description ?? '',
       colorToken: 'slate',
       activityType: routine?.activityType ?? 'strength',
-      bannerAsset: routine?.bannerAsset ?? '',
-      bannerMonochrome: routine?.bannerMonochrome ?? false,
+      bannerAsset: routine?.bannerAsset ?? defaultWorkoutBannerAsset,
+      bannerMonochrome: routine?.bannerAsset ? (routine.bannerMonochrome ?? true) : true,
     },
   })
   const bannerAsset = useWatch({ control: form.control, name: 'bannerAsset' }) ?? ''
@@ -64,7 +64,7 @@ export function WorkoutRoutineEditor({
           {form.formState.errors.name ? <small role="alert">{form.formState.errors.name.message}</small> : null}
         </label>
         <div className="workout-editor__wide">
-          <BannerPicker assets={workoutBannerAssets} value={bannerAsset || null} monochrome={bannerMonochrome} onChange={(value) => form.setValue('bannerAsset', value ?? '', { shouldDirty: true, shouldValidate: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
+          <BannerPicker assets={workoutBannerAssets} value={bannerAsset || defaultWorkoutBannerAsset} monochrome={bannerMonochrome} allowNone={false} onChange={(value) => form.setValue('bannerAsset', value ?? defaultWorkoutBannerAsset, { shouldDirty: true, shouldValidate: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
         </div>
         <input type="hidden" {...form.register('colorToken')} />
         <label>
