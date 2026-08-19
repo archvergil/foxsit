@@ -1,5 +1,5 @@
 import { CheckSquare2, Leaf } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { Task } from '@/features/tasks/types'
@@ -9,6 +9,7 @@ import { eventOccursOnDate, formatCalendarDateLabel, formatCalendarEventTime, ta
 import { formatCalendarHour, layoutCalendarDayTimedEvents } from './calendarWeek'
 import type { CalendarEvent } from './types'
 import type { CalendarHabitItem } from './habitCalendarAdapter'
+import { useCalendarEventDrag, type CalendarEventDrop } from './calendarEventMove'
 
 const HOUR_HEIGHT = 56
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
@@ -21,6 +22,7 @@ export function CalendarDayGrid({
   habits,
   onCreateAt,
   onEditEvent,
+  onMoveEvent,
 }: {
   date: string
   timeZone: string
@@ -29,12 +31,25 @@ export function CalendarDayGrid({
   habits: CalendarHabitItem[]
   onCreateAt: (hour: number) => void
   onEditEvent: (event: CalendarEvent) => void
+  onMoveEvent: (event: CalendarEvent, drop: CalendarEventDrop) => void
 }) {
   const today = localDateKey(new Date(), timeZone)
   const timedSegments = layoutCalendarDayTimedEvents(events, date, timeZone)
   const allDayEvents = events.filter((event) => event.allDay && eventOccursOnDate(event, date, timeZone))
   const dayTasks = tasks.filter((task) => taskOccursOnDate(task, date, timeZone))
   const bodyScrollRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+
+  const resolveDrop = useCallback((clientX: number, clientY: number): CalendarEventDrop | null => {
+    const body = bodyRef.current
+    if (!body) return null
+    const rect = body.getBoundingClientRect()
+    if (clientX < rect.left || clientX > rect.right) return null
+    const relativeY = clientY - rect.top
+    if (relativeY < 0 || relativeY >= 24 * HOUR_HEIGHT) return null
+    return { date, minutes: Math.min(23 * 60 + 30, Math.max(0, Math.round(relativeY / (HOUR_HEIGHT / 2)) * 30)) }
+  }, [date])
+  const eventDrag = useCalendarEventDrag({ onDrop: onMoveEvent, resolveDrop })
 
   useEffect(() => {
     const currentHour = Number(formatTimestampForInput(new Date().toISOString(), timeZone).slice(11, 13))
@@ -77,13 +92,13 @@ export function CalendarDayGrid({
         </div>
       </div>
       <div className="calendar-day-grid__body-scroll" ref={bodyScrollRef}>
-        <div className="calendar-day-grid__body" style={{ height: `${24 * HOUR_HEIGHT}px` }}>
+        <div className="calendar-day-grid__body" ref={bodyRef} style={{ height: `${24 * HOUR_HEIGHT}px` }}>
           <div className="calendar-day-grid__times" aria-hidden>
             {HOURS.map((hour) => (
               <span key={hour} style={{ top: `${hour * HOUR_HEIGHT}px` }}>{formatCalendarHour(hour)}</span>
             ))}
           </div>
-          <div className={`calendar-day-grid__column${date === today ? ' calendar-day-grid__column--today' : ''}`}>
+          <div className={`calendar-day-grid__column${date === today ? ' calendar-day-grid__column--today' : ''}`} data-calendar-date={date}>
             {HOURS.map((hour) => (
               <button
                 className="calendar-week-slot"
@@ -99,7 +114,7 @@ export function CalendarDayGrid({
               const height = Math.max(28, (segment.endMinutes - segment.startMinutes) / 60 * HOUR_HEIGHT)
               return (
                 <button
-                  className={`calendar-week-event calendar-week-event--${segment.event.colorToken}`}
+                  className={`calendar-week-event calendar-week-event--${segment.event.colorToken}${eventDrag.draggingEventId === segment.event.id ? ' calendar-week-event--dragging' : ''}`}
                   type="button"
                   key={segment.event.id}
                   style={{
@@ -109,7 +124,11 @@ export function CalendarDayGrid({
                     width: `${100 / segment.columnCount}%`,
                   }}
                   aria-label={`Edit event ${segment.event.title}`}
-                  onClick={() => onEditEvent(segment.event)}
+                  onPointerDown={(pointerEvent) => eventDrag.onPointerDown(pointerEvent, segment.event)}
+                  onPointerMove={eventDrag.onPointerMove}
+                  onPointerUp={eventDrag.onPointerUp}
+                  onPointerCancel={eventDrag.onPointerCancel}
+                  onClick={() => { if (!eventDrag.consumeClick()) onEditEvent(segment.event) }}
                 >
                   <strong>{segment.event.title}</strong>
                   <span>{formatCalendarEventTime(segment.event, timeZone)}</span>

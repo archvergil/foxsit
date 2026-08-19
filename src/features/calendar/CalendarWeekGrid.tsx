@@ -1,5 +1,5 @@
 import { CheckSquare2, Leaf } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { Task } from '@/features/tasks/types'
@@ -9,6 +9,7 @@ import { eventOccursOnDate, formatCalendarDateLabel, formatCalendarEventTime, ta
 import { formatCalendarHour, layoutWeekTimedEvents, type CalendarWeekModel } from './calendarWeek'
 import type { CalendarEvent } from './types'
 import type { CalendarHabitItem } from './habitCalendarAdapter'
+import { useCalendarEventDrag, type CalendarEventDrop } from './calendarEventMove'
 
 const HOUR_HEIGHT = 56
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
@@ -23,6 +24,7 @@ export function CalendarWeekGrid({
   onSelectDate,
   onCreateAt,
   onEditEvent,
+  onMoveEvent,
 }: {
   week: CalendarWeekModel
   selectedDate: string
@@ -33,10 +35,28 @@ export function CalendarWeekGrid({
   onSelectDate: (date: string) => void
   onCreateAt: (date: string, hour: number) => void
   onEditEvent: (event: CalendarEvent) => void
+  onMoveEvent: (event: CalendarEvent, drop: CalendarEventDrop) => void
 }) {
   const today = localDateKey(new Date(), timeZone)
   const timedSegments = layoutWeekTimedEvents(events, week, timeZone)
   const bodyScrollRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+
+  const resolveDrop = useCallback((clientX: number, clientY: number): CalendarEventDrop | null => {
+    const body = bodyRef.current
+    if (!body) return null
+    const bodyRect = body.getBoundingClientRect()
+    const relativeY = clientY - bodyRect.top
+    if (relativeY < 0 || relativeY >= 24 * HOUR_HEIGHT) return null
+    const column = [...body.querySelectorAll<HTMLElement>('[data-calendar-date]')].find((item) => {
+      const rect = item.getBoundingClientRect()
+      return clientX >= rect.left && clientX <= rect.right
+    })
+    const date = column?.dataset.calendarDate
+    if (!date) return null
+    return { date, minutes: Math.min(23 * 60 + 30, Math.max(0, Math.round(relativeY / (HOUR_HEIGHT / 2)) * 30)) }
+  }, [])
+  const eventDrag = useCalendarEventDrag({ onDrop: onMoveEvent, resolveDrop })
 
   useEffect(() => {
     const currentHour = Number(formatTimestampForInput(new Date().toISOString(), timeZone).slice(11, 13))
@@ -96,14 +116,14 @@ export function CalendarWeekGrid({
             })}
           </div>
           <div className="calendar-week-grid__body-scroll" ref={bodyScrollRef}>
-            <div className="calendar-week-grid__body" style={{ height: `${24 * HOUR_HEIGHT}px` }}>
+            <div className="calendar-week-grid__body" ref={bodyRef} style={{ height: `${24 * HOUR_HEIGHT}px` }}>
               <div className="calendar-week-grid__times" aria-hidden>
                 {HOURS.map((hour) => (
                   <span key={hour} style={{ top: `${hour * HOUR_HEIGHT}px` }}>{formatCalendarHour(hour)}</span>
                 ))}
               </div>
               {week.days.map((day) => (
-                <div className={`calendar-week-grid__column${day.date === today ? ' calendar-week-grid__column--today' : ''}`} key={day.date}>
+                <div className={`calendar-week-grid__column${day.date === today ? ' calendar-week-grid__column--today' : ''}`} data-calendar-date={day.date} key={day.date}>
                   {HOURS.map((hour) => (
                     <button
                       className="calendar-week-slot"
@@ -119,7 +139,7 @@ export function CalendarWeekGrid({
                     const height = Math.max(28, (segment.endMinutes - segment.startMinutes) / 60 * HOUR_HEIGHT)
                     return (
                       <button
-                        className={`calendar-week-event calendar-week-event--${segment.event.colorToken}`}
+                        className={`calendar-week-event calendar-week-event--${segment.event.colorToken}${eventDrag.draggingEventId === segment.event.id ? ' calendar-week-event--dragging' : ''}`}
                         type="button"
                         key={`${segment.event.id}-${segment.date}`}
                         style={{
@@ -129,7 +149,11 @@ export function CalendarWeekGrid({
                           width: `${100 / segment.columnCount}%`,
                         }}
                         aria-label={`Edit event ${segment.event.title}`}
-                        onClick={() => onEditEvent(segment.event)}
+                        onPointerDown={(pointerEvent) => eventDrag.onPointerDown(pointerEvent, segment.event)}
+                        onPointerMove={eventDrag.onPointerMove}
+                        onPointerUp={eventDrag.onPointerUp}
+                        onPointerCancel={eventDrag.onPointerCancel}
+                        onClick={() => { if (!eventDrag.consumeClick()) onEditEvent(segment.event) }}
                       >
                         <strong>{segment.event.title}</strong>
                         <span>{formatCalendarEventTime(segment.event, timeZone)}</span>

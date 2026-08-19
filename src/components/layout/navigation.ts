@@ -1,7 +1,6 @@
 import {
   CalendarDays,
   CheckSquare2,
-  CircleEllipsis,
   Dumbbell,
   Gauge,
   Leaf,
@@ -37,5 +36,5 @@ export const mobileNavigation: NavigationItem[] = [
   { label: 'Calendar', to: '/calendar', icon: CalendarDays },
   { label: 'Tasks', to: '/tasks', icon: CheckSquare2 },
   { label: 'Habits', to: '/habits', icon: Leaf },
-  { label: 'More', to: '/settings', icon: CircleEllipsis },
+  { label: 'Workout', to: '/workout', icon: Dumbbell },
 ]

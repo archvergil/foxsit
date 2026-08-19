@@ -8,11 +8,12 @@ import { useTaskList } from '@/features/tasks/queries'
 import { addLocalDays, localDateKey, localDateTimeToTimestamp } from '@/lib/dates'
 import { CalendarDayAgenda } from './CalendarDayAgenda'
 import { CalendarEventEditor } from './CalendarEventEditor'
+import { moveTimedCalendarEvent, type CalendarEventDrop } from './calendarEventMove'
 import { CalendarViewSwitch } from './CalendarViewSwitch'
 import { CalendarWeekGrid } from './CalendarWeekGrid'
 import { buildCalendarWeek, shiftCalendarWeek, startOfCalendarWeek } from './calendarWeek'
 import { eventOccursOnDate, taskOccursOnDate } from './calendarMonth'
-import { useCalendarDateContext, useCalendarEvents } from './queries'
+import { useCalendarDateContext, useCalendarEvents, useUpdateCalendarEvent } from './queries'
 import type { CalendarEvent, CalendarEventRange } from './types'
 import { projectHabitCalendarItems } from './habitCalendarAdapter'
 
@@ -24,6 +25,8 @@ export function CalendarWeekPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | undefined>()
   const [initialStartHour, setInitialStartHour] = useState<number | undefined>()
+  const [moveError, setMoveError] = useState<string | null>(null)
+  const updateEvent = useUpdateCalendarEvent()
   const weekStart = useMemo(() => startOfCalendarWeek(anchorDate, weekStartsOn), [anchorDate, weekStartsOn])
   const week = useMemo(() => buildCalendarWeek(weekStart), [weekStart])
   const range = useMemo<CalendarEventRange>(() => {
@@ -67,6 +70,17 @@ export function CalendarWeekPage() {
     setSelectedDate(today)
     setEditorOpen(false)
   }
+  const moveEvent = async (event: CalendarEvent, drop: CalendarEventDrop) => {
+    const input = moveTimedCalendarEvent(event, drop, timeZone)
+    if (!input) return
+    setMoveError(null)
+    try {
+      await updateEvent.mutateAsync({ eventId: event.id, input })
+      setSelectedDate(drop.date)
+    } catch {
+      setMoveError('The event could not be moved. Its original time was kept.')
+    }
+  }
 
   return (
     <section className="page-stack calendar-page">
@@ -105,6 +119,7 @@ export function CalendarWeekPage() {
             onSelectDate={(date) => { setSelectedDate(date); setEditorOpen(false) }}
             onCreateAt={openCreate}
             onEditEvent={openEdit}
+            onMoveEvent={(event, drop) => void moveEvent(event, drop)}
           />
           {editorOpen ? (
             <CalendarEventEditor
@@ -148,6 +163,7 @@ export function CalendarWeekPage() {
           )}
         </div>
       )}
+      {moveError ? <p className="calendar-move-error" role="alert">{moveError}</p> : null}
     </section>
   )
 }

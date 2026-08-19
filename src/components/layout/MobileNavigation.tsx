@@ -6,9 +6,9 @@ import { mobileNavigation } from './navigation'
 export function MobileNavigation() {
   const { pathname } = useLocation()
   const directIndex = mobileNavigation.findIndex((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
-  const activeIndex = directIndex >= 0 ? directIndex : 4
+  const activeIndex = directIndex
   return (
-    <nav className="mobile-nav" aria-label="Main navigation" data-active-index={activeIndex}>
+    <nav className="mobile-nav" aria-label="Main navigation" {...(activeIndex >= 0 ? { 'data-active-index': activeIndex } : {})}>
       {mobileNavigation.map((item, index) => <NavItem key={item.to} item={item} compact activeOverride={index === activeIndex} />)}
     </nav>
   )

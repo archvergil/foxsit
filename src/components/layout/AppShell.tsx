@@ -1,5 +1,5 @@
-import { LogOut } from 'lucide-react'
-import { Outlet } from 'react-router-dom'
+import { LogOut, Settings2 } from 'lucide-react'
+import { Link, Outlet } from 'react-router-dom'
 
 import { OnlineStatus } from '@/components/feedback/OnlineStatus'
 import { BrandMark } from '@/components/ui/BrandMark'
@@ -58,7 +58,10 @@ export function AppShell() {
             </span>
             <span>{APP_NAME}</span>
           </div>
-          <span className="mobile-header__avatar" aria-label={`Signed in as ${label}`}>{avatarUrl ? <img src={avatarUrl} alt="" /> : initial}</span>
+          <span className="mobile-header__account">
+            <span className="mobile-header__avatar" aria-label={`Signed in as ${label}`}>{avatarUrl ? <img src={avatarUrl} alt="" /> : initial}</span>
+            <Link className="mobile-header__settings" to="/settings" aria-label="Open settings"><Settings2 aria-hidden /></Link>
+          </span>
         </header>
         <OnlineStatus />
         <main id="main-content" className="app-content" tabIndex={-1}>

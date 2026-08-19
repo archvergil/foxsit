@@ -70,6 +70,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Derived task overlays without duplicated calendar rows.
 - [x] Mobile agenda, deterministic week overlap layout and month/week date edge-case tests.
 - [x] Add compact mobile item markers with overflow indication and profile-synced Event, Task and Habit visibility preferences across every Calendar view.
+- [x] Add pointer-based timed-event drag-and-drop across Day and Week grids, with durable date/time updates on drop.
 
 ## Phase 5 — Habits
 
@@ -102,6 +103,12 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Derived daily metrics with real loading/empty/error/success states.
 - [x] Add supplied monochrome Habit, Focus and Workout GIF artwork to the Today overview cards and explicit PWA precache entries.
 
+## Interaction and responsive polish â€” 2026-08-19
+
+- [x] Keep the full timed Day grid visible on mobile, with the desktop time-column model and mobile-safe sizing.
+- [x] Replace the mobile More destination with Workout and move Settings to a gear next to the profile photo.
+- [x] Remove mobile Rewards horizontal overflow and constrain store/conversion controls within the viewport.
+
 ## Phase 8 — Rewards
 
 - [x] Add the versioned reward-rule configuration, wallet, monthly counters, immutable ledger and redemption migrations with RLS.
@@ -132,6 +139,14 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 Apply migrations `202608180012`, `202608190001`, `202608190002` and `202608190003`; verify Habit award/reversal, Workout history deletion, Calendar preferences, profile-photo Storage policies, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the four listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed Calendar drag interaction and mobile navigation/Rewards repair on 2026-08-19:
+
+- added durable pointer drag-and-drop for timed events in the Day and Week grids; drops snap to 30-minute slots, preserve elapsed duration and can move a Week event across days;
+- kept the complete time-column Day grid visible on mobile with an internal schedule scroll area, rather than falling back to an agenda list;
+- made Workout the fifth mobile-nav destination and moved Settings to the gear beside the mobile profile photo;
+- removed Rewards store horizontal scrolling, bounded its responsive cards and ensured conversion fields can shrink inside the mobile viewport;
+- `npm run lint`, `npm run typecheck`, focused Calendar/Rewards tests, `npm run test -- --run` (142/142), `npm run test:db` (34/34), `npm run build` and `git diff --check` passed.
 
 Completed the Calendar marker, profile and mobile-dialog correction on 2026-08-19:
 

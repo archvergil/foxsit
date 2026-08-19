@@ -67,7 +67,7 @@
   .reward-progress-grid article:last-child { grid-column: 1 / -1; }
   .reward-conversion__form { grid-template-columns: 1fr 8rem; }
   .reward-conversion__result, .reward-conversion__form .button { grid-column: 1 / -1; }
-  .reward-store__grid { grid-template-columns: repeat(3, minmax(9rem, 1fr)); overflow-x: auto; padding-bottom: var(--space-2); }
+  .reward-store__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
   .auth-layout {
     grid-template-columns: 1fr;
     padding: 0;
@@ -113,6 +113,21 @@
     width: 2.35rem;
     height: 2.35rem;
   }
+
+  .mobile-header__account { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+  .mobile-header__settings {
+    width: 2.35rem;
+    height: 2.35rem;
+    display: grid;
+    color: var(--ink-soft);
+    background: var(--canvas-raised);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    place-items: center;
+  }
+
+  .mobile-header__settings svg { width: 1rem; }
 
   .app-content {
     min-height: auto;
@@ -287,7 +302,7 @@
   .reward-balances, .reward-progress-grid { grid-template-columns: 1fr; }
   .reward-progress-grid article:last-child { grid-column: auto; }
   .reward-balance { min-height: 10rem; }
-  .reward-store__grid { grid-template-columns: repeat(2, minmax(8.5rem, 1fr)); }
+  .reward-store__grid { grid-template-columns: 1fr; }
   .reward-conversion__form { grid-template-columns: 1fr; }
   .reward-conversion__result, .reward-conversion__form .button { grid-column: auto; }
   .today-module-grid {

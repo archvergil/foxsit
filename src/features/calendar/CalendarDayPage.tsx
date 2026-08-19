@@ -10,9 +10,10 @@ import { addLocalDays, isValidLocalDate, localDateKey, localDateTimeToTimestamp 
 import { CalendarDayAgenda } from './CalendarDayAgenda'
 import { CalendarDayGrid } from './CalendarDayGrid'
 import { CalendarEventEditor } from './CalendarEventEditor'
+import { moveTimedCalendarEvent, type CalendarEventDrop } from './calendarEventMove'
 import { CalendarViewSwitch } from './CalendarViewSwitch'
 import { eventOccursOnDate, formatCalendarDateLabel, taskOccursOnDate } from './calendarMonth'
-import { useCalendarDateContext, useCalendarEvents } from './queries'
+import { useCalendarDateContext, useCalendarEvents, useUpdateCalendarEvent } from './queries'
 import type { CalendarEvent, CalendarEventRange } from './types'
 import { projectHabitCalendarItems } from './habitCalendarAdapter'
 
@@ -22,6 +23,8 @@ function CalendarDayPageBody({ date, timeZone, showEvents, showTasks, showHabits
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | undefined>()
   const [initialStartHour, setInitialStartHour] = useState<number | undefined>()
+  const [moveError, setMoveError] = useState<string | null>(null)
+  const updateEvent = useUpdateCalendarEvent()
   const range = useMemo<CalendarEventRange>(() => {
     const rangeStart = localDateTimeToTimestamp(`${date}T00:00`, timeZone)
     const rangeEnd = localDateTimeToTimestamp(`${addLocalDays(date, 1)}T00:00`, timeZone)
@@ -51,6 +54,16 @@ function CalendarDayPageBody({ date, timeZone, showEvents, showTasks, showHabits
   const moveToDate = (nextDate: string) => {
     setEditorOpen(false)
     void navigate(`/calendar/day/${nextDate}`)
+  }
+  const moveEvent = async (event: CalendarEvent, drop: CalendarEventDrop) => {
+    const input = moveTimedCalendarEvent(event, drop, timeZone)
+    if (!input) return
+    setMoveError(null)
+    try {
+      await updateEvent.mutateAsync({ eventId: event.id, input })
+    } catch {
+      setMoveError('The event could not be moved. Its original time was kept.')
+    }
   }
 
   return (
@@ -88,6 +101,7 @@ function CalendarDayPageBody({ date, timeZone, showEvents, showTasks, showHabits
             habits={habitItems}
             onCreateAt={openCreate}
             onEditEvent={openEdit}
+            onMoveEvent={(event, drop) => void moveEvent(event, drop)}
           />
           {editorOpen ? (
             <CalendarEventEditor
@@ -117,6 +131,7 @@ function CalendarDayPageBody({ date, timeZone, showEvents, showTasks, showHabits
           )}
         </div>
       )}
+      {moveError ? <p className="calendar-move-error" role="alert">{moveError}</p> : null}
     </section>
   )
 }
