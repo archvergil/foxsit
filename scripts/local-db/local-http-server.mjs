@@ -98,6 +98,7 @@ export const createLocalHttpServer = ({
         const habitHistoryId = routeId(path, '/v1/habits', '/history')
 
         if (method === 'GET' && path === '/v1/profile') result = await data.profile(user.id)
+        else if (method === 'PATCH' && path === '/v1/profile/calendar') result = await data.updateCalendarPreferences(user.id, await readJson(request))
         else if (method === 'GET' && path === '/v1/projects') result = await data.listProjects(user.id, url.searchParams.get('includeArchived') === 'true')
         else if (method === 'POST' && path === '/v1/projects') result = await data.createProject(user.id, await readJson(request))
         else if (method === 'PATCH' && projectId) result = await data.updateProject(user.id, projectId, await readJson(request))

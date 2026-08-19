@@ -51,6 +51,11 @@ export function CalendarMonthGrid({
           const dayHabits = habits.filter((habit) => habit.date === day.date)
           const itemCount = dayEvents.length + dayTasks.length + dayHabits.length
           const habitSlots = Math.max(0, 3 - dayEvents.length - dayTasks.length)
+          const mobileMarkers = [
+            ...dayEvents.map((event) => ({ key: `event-${event.id}`, className: `calendar-marker--${event.colorToken}`, style: undefined })),
+            ...dayTasks.map((task) => ({ key: `task-${task.id}`, className: 'calendar-marker--task', style: undefined })),
+            ...dayHabits.map((habit) => ({ key: `habit-${habit.id}`, className: `calendar-marker--${habit.colorToken}`, style: habitAccentStyle(habit) })),
+          ]
           return (
             <article
               className={`calendar-day${day.inMonth ? '' : ' calendar-day--outside'}${day.date === selectedDate ? ' calendar-day--selected' : ''}`}
@@ -98,9 +103,8 @@ export function CalendarMonthGrid({
               </div>
               {itemCount ? (
                 <span className="calendar-day__mobile-markers" aria-hidden>
-                  {dayEvents.slice(0, 3).map((event) => <i className={`calendar-marker--${event.colorToken}`} key={event.id} />)}
-                  {dayTasks.slice(0, 3).map((task) => <i className="calendar-marker--task" key={task.id} />)}
-                  {dayHabits.slice(0, 3).map((habit) => <i className={`calendar-marker--${habit.colorToken}`} style={habitAccentStyle(habit)} key={habit.id} />)}
+                  {mobileMarkers.slice(0, 4).map((marker) => <i className={marker.className} style={marker.style} key={marker.key} />)}
+                  {mobileMarkers.length > 4 ? <b aria-label="More items">...</b> : null}
                 </span>
               ) : null}
             </article>

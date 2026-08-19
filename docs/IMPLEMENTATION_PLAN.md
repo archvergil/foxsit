@@ -1,6 +1,6 @@
 # Implementation plan
 
-Last updated: 2026-08-18
+Last updated: 2026-08-19
 
 Status legend: `[x]` complete, `[~]` in progress, `[ ]` pending, `[!]` blocked by an external input.
 
@@ -67,6 +67,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Profile-timezone conversions and local-day helpers for month and week slices.
 - [x] Derived task overlays without duplicated calendar rows.
 - [x] Mobile agenda, deterministic week overlap layout and month/week date edge-case tests.
+- [x] Add compact mobile item markers with overflow indication and profile-synced Event, Task and Habit visibility preferences across every Calendar view.
 
 ## Phase 5 — Habits
 
@@ -77,6 +78,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Rework the Habit workspace into compact routine rows and a responsive visual editor with icon, palette and custom-color selection in production.
 - [x] Add first-class Habit projects with project assignment, visual icons and customizable faded GIF banners in production.
 - [x] Add an explicit clear-history-only choice to Habit deletion and keep the habit itself intact.
+- [x] Make Habit project banners keyboard-accessible collapse controls on mobile and desktop.
 
 ## Phase 6 — Workout
 
@@ -86,6 +88,8 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add per-routine faded GIF banners with original-color/monochrome selection in production.
 - [x] Supabase-backed active workout with durable sets, timestamp-based rest timer and reload recovery.
 - [x] Transactional finish, completed history, volume, estimated 1RM and PRs.
+- [x] Add mobile-first collapsible exercise entry, active-session routine artwork and cascading set drafts that persist only through explicit set completion.
+- [x] Add owner-only completed-session deletion with a confirmed destructive action and cascading history cleanup.
 - [ ] Workout ↔ habit and calendar adapters.
 
 ## Phase 7 — Today integrations
@@ -93,6 +97,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Replace foundation states with real aggregated queries.
 - [x] Next event, agenda, tasks, habits, workout and current focus state.
 - [x] Derived daily metrics with real loading/empty/error/success states.
+- [x] Add supplied monochrome Habit, Focus and Workout GIF artwork to the Today overview cards and explicit PWA precache entries.
 
 ## Phase 8 — Rewards
 
@@ -111,6 +116,7 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 - [x] Standardize segmented navigation controls across Calendar, Habits, Focus and Workout with an elastic active-indicator transition and the compact production radius system.
 - [x] Redesign the Calendar month workspace with a compact grid, functional event search and real color/category/description-tag filters.
+- [x] Add an elastic active indicator to the mobile primary navigation and keep Calendar filter popovers anchored to their controls.
 - [ ] Full visual and accessibility audit.
 - [ ] Performance, lazy-loading and reduced-connection checks.
 - [ ] PWA install/update/offline verification.
@@ -120,9 +126,18 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migration `202608180012`, verify Habit award/reversal plus rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are applied; `202608180012` is pending production application.
+Apply migrations `202608180012`, `202608190001` and `202608190002`; verify Habit award/reversal, Workout history deletion, Calendar preferences, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the three listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the responsive Workout, Calendar and navigation interaction slice on 2026-08-19:
+
+- made Add exercise compact and collapsed by default on mobile, carried routine artwork into the Slate active-workout banner and cascaded KG/Reps/RIR drafts through subsequent incomplete sets;
+- added confirmed, owner-only deletion of completed Workout sessions through migration `202608190001`, with component and database regressions;
+- made Habit project banners collapsible, added capped mobile Calendar markers with overflow indication and persisted Calendar content preferences through migration `202608190002`;
+- fixed mobile Calendar filter anchoring, added the sliding bottom-navigation indicator and used the three supplied grayscale GIFs on Today overview cards;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (140/140), `npm run test:db` (34/34) and `npm run build` passed;
+- browser visual QA was unavailable because no integrated or extension browser was connected in this session.
 
 Completed the product-polish and daily Habit reward slice on 2026-08-18:
 

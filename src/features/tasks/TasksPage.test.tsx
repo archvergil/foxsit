@@ -207,6 +207,9 @@ const profile: UserProfile = {
   avatar_url: null,
   timezone: 'America/Sao_Paulo',
   week_starts_on: 1,
+  calendar_show_events: true,
+  calendar_show_tasks: true,
+  calendar_show_habits: true,
   theme: 'system',
   created_at: '2026-08-17T12:00:00.000Z',
   updated_at: '2026-08-17T12:00:00.000Z',
@@ -214,6 +217,7 @@ const profile: UserProfile = {
 
 const profileRepository: ProfileRepository = {
   getProfile: () => Promise.resolve(profile),
+  updateCalendarPreferences: (_userId, preferences) => Promise.resolve({ ...profile, ...preferences }),
 }
 
 const focusRepository: FocusRepository = {

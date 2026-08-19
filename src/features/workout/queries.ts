@@ -39,6 +39,20 @@ export const useWorkoutHistory = (enabled = true) => {
   })
 }
 
+export const useDeleteWorkoutSession = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'history', 'delete', userId],
+    mutationFn: (sessionId: string) => repository.deleteCompletedSession(userId, sessionId),
+    onSuccess: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: workoutQueryKeys.history(userId) }),
+      queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
+    ]),
+  })
+}
+
 const useInvalidateRoutines = () => {
   const queryClient = useQueryClient()
   const userId = useWorkoutIdentity()

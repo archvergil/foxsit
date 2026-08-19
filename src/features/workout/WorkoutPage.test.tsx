@@ -128,6 +128,10 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     return Promise.resolve()
   }
   listCompletedSessions(): Promise<WorkoutSession[]> { return Promise.resolve(this.history) }
+  deleteCompletedSession(_userId: string, sessionId: string): Promise<void> {
+    this.history = this.history.filter(({ id }) => id !== sessionId)
+    return Promise.resolve()
+  }
 }
 
 const authValue: AuthContextValue = {
@@ -143,7 +147,9 @@ const profileRepository: ProfileRepository = {
   getProfile: () => Promise.resolve({
     id: USER_ID, display_name: null, avatar_url: null, timezone: 'America/Sao_Paulo',
     week_starts_on: 1, theme: 'system', created_at: '2026-08-18T12:00:00.000Z', updated_at: '2026-08-18T12:00:00.000Z',
+    calendar_show_events: true, calendar_show_tasks: true, calendar_show_habits: true,
   }),
+  updateCalendarPreferences: (_userId, preferences) => profileRepository.getProfile('user-1').then((profile) => ({ ...profile, ...preferences })),
 }
 
 const renderPage = (repository: WorkoutRepository, initialEntry = '/workout/routines') => {
@@ -217,6 +223,9 @@ describe('Workout routine flow', () => {
     await user.type(weightInput, '40')
     await user.type(screen.getByRole('spinbutton', { name: 'Bench press set 1 repetitions' }), '10')
     await user.type(screen.getByRole('spinbutton', { name: 'Bench press set 1 reps in reserve' }), '2')
+    expect(screen.getByRole('spinbutton', { name: 'Bench press set 2 weight in kilograms' })).toHaveValue(40)
+    expect(screen.getByRole('spinbutton', { name: 'Bench press set 2 repetitions' })).toHaveValue(10)
+    expect(screen.getByRole('spinbutton', { name: 'Bench press set 3 reps in reserve' })).toHaveValue(2)
     await user.click(screen.getAllByRole('button', { name: 'Complete' })[0]!)
 
     await waitFor(() => expect(repository.activeSession?.exercises[0]?.sets[0]).toMatchObject({
@@ -232,5 +241,11 @@ describe('Workout routine flow', () => {
     expect((await screen.findAllByText('400 kg'))[0]).toBeVisible()
     expect(repository.history).toHaveLength(1)
     expect(repository.history[0]).toMatchObject({ completedSets: 1, totalVolumeKg: 400, personalRecords: 1 })
+
+    await user.click(screen.getByText('Upper body').closest('summary')!)
+    await user.click(screen.getByRole('button', { name: 'Delete session' }))
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete session' }))
+    await waitFor(() => expect(repository.history).toHaveLength(0))
+    expect(await screen.findByText('No completed workouts yet.')).toBeVisible()
   }, 10_000)
 })

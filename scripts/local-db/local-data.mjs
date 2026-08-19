@@ -10,6 +10,11 @@ const priority = z.enum(['none', 'low', 'medium', 'high'])
 const status = z.enum(['open', 'completed', 'archived'])
 const focusPhase = z.enum(['focus', 'short_break', 'long_break'])
 const calendarColor = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
+const calendarPreferences = z.object({
+  calendar_show_events: z.boolean(),
+  calendar_show_tasks: z.boolean(),
+  calendar_show_habits: z.boolean(),
+})
 
 const projectCreate = z.object({
   name: z.string().trim().min(1).max(120),
@@ -255,11 +260,33 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
       id: row.id,
       display_name: row.display_name,
       avatar_url: row.avatar_url,
+      calendar_show_events: row.calendar_show_events,
+      calendar_show_tasks: row.calendar_show_tasks,
+      calendar_show_habits: row.calendar_show_habits,
       timezone: row.timezone,
       week_starts_on: row.week_starts_on,
       theme: row.theme,
       created_at: iso(row.created_at),
       updated_at: iso(row.updated_at),
+    }
+  }),
+
+  updateCalendarPreferences: (userId, input) => withAuthenticatedUser(userId, async () => {
+    const preferences = calendarPreferences.parse(input)
+    await database.query(
+      `update public.profiles
+       set calendar_show_events = $2, calendar_show_tasks = $3, calendar_show_habits = $4, updated_at = now()
+       where id = $1`,
+      [userId, preferences.calendar_show_events, preferences.calendar_show_tasks, preferences.calendar_show_habits],
+    )
+    const result = await database.query('select * from public.profiles where id = $1', [userId])
+    const row = one(result, 'save Calendar preferences')
+    return {
+      id: row.id, display_name: row.display_name, avatar_url: row.avatar_url,
+      calendar_show_events: row.calendar_show_events, calendar_show_tasks: row.calendar_show_tasks,
+      calendar_show_habits: row.calendar_show_habits, timezone: row.timezone,
+      week_starts_on: row.week_starts_on, theme: row.theme,
+      created_at: iso(row.created_at), updated_at: iso(row.updated_at),
     }
   }),
 

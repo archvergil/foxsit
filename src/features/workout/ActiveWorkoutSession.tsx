@@ -4,27 +4,30 @@ import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { VisualBanner } from '@/components/visual/VisualBanner'
 import { useAuth } from '@/features/auth/authContext'
 import { useTimerClock } from '@/features/focus/useTimerClock'
 import { useCancelWorkoutSession, useFinishWorkoutSession, useSaveWorkoutSet } from './queries'
 import { formatWorkoutDuration, remainingWorkoutRestMs } from './restTimer'
 import type { WorkoutSession, WorkoutSessionExercise, WorkoutSet } from './types'
+import { cascadeWorkoutSetDraft, workoutSetDraftFromSet, type WorkoutSetDraft } from './workoutSetDrafts'
 import { useWorkoutRestStore } from './workoutRestStore'
 
 function WorkoutSetRow({
   session,
   exercise,
   set,
+  draft,
+  onDraftChange,
 }: {
   session: WorkoutSession
   exercise: WorkoutSessionExercise
   set: WorkoutSet
+  draft: WorkoutSetDraft
+  onDraftChange: (field: keyof WorkoutSetDraft, value: string) => void
 }) {
   const saveSet = useSaveWorkoutSet()
   const rest = useWorkoutRestStore()
-  const [weight, setWeight] = useState(set.weightKg === null ? '' : String(set.weightKg))
-  const [reps, setReps] = useState(set.reps === null ? '' : String(set.reps))
-  const [rir, setRir] = useState(set.rir === null ? '' : String(set.rir))
   const [validationError, setValidationError] = useState<string | null>(null)
 
   const save = async () => {
@@ -33,9 +36,9 @@ function WorkoutSetRow({
       await saveSet.mutateAsync({
         sessionId: session.id,
         setId: set.id,
-        weightKg: weight.trim() ? Number(weight) : null,
-        reps: reps.trim() ? Number(reps) : 0,
-        rir: rir.trim() ? Number(rir) : null,
+        weightKg: draft.weight.trim() ? Number(draft.weight) : null,
+        reps: draft.reps.trim() ? Number(draft.reps) : 0,
+        rir: draft.rir.trim() ? Number(draft.rir) : null,
       })
       if (exercise.restSeconds > 0) {
         rest.start({
@@ -55,15 +58,15 @@ function WorkoutSetRow({
       <span className="workout-set__number">{set.setNumber}</span>
       <label>
         <span>kg</span>
-        <input aria-label={`${exercise.exerciseName} set ${set.setNumber} weight in kilograms`} inputMode="decimal" min="0" max="10000" step="0.25" type="number" value={weight} onChange={(event) => setWeight(event.target.value)} />
+        <input aria-label={`${exercise.exerciseName} set ${set.setNumber} weight in kilograms`} inputMode="decimal" min="0" max="10000" step="0.25" type="number" value={draft.weight} onChange={(event) => onDraftChange('weight', event.target.value)} />
       </label>
       <label>
         <span>Reps</span>
-        <input aria-label={`${exercise.exerciseName} set ${set.setNumber} repetitions`} inputMode="numeric" min="1" max="1000" type="number" value={reps} onChange={(event) => setReps(event.target.value)} />
+        <input aria-label={`${exercise.exerciseName} set ${set.setNumber} repetitions`} inputMode="numeric" min="1" max="1000" type="number" value={draft.reps} onChange={(event) => onDraftChange('reps', event.target.value)} />
       </label>
       <label>
         <span>RIR</span>
-        <input aria-label={`${exercise.exerciseName} set ${set.setNumber} reps in reserve`} inputMode="numeric" min="0" max="10" type="number" value={rir} onChange={(event) => setRir(event.target.value)} />
+        <input aria-label={`${exercise.exerciseName} set ${set.setNumber} reps in reserve`} inputMode="numeric" min="0" max="10" type="number" value={draft.rir} onChange={(event) => onDraftChange('rir', event.target.value)} />
       </label>
       <Button variant={set.completedAt ? 'secondary' : 'primary'} isLoading={saveSet.isPending} onClick={() => void save()}>
         <Check aria-hidden />{set.completedAt ? 'Update' : 'Complete'}
@@ -94,18 +97,29 @@ function RestTimer({ session }: { session: WorkoutSession }) {
   )
 }
 
-export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
+export function ActiveWorkoutSession({ session, bannerAsset, bannerMonochrome = true }: {
+  session: WorkoutSession
+  bannerAsset?: string | null | undefined
+  bannerMonochrome?: boolean | undefined
+}) {
   const navigate = useNavigate()
   const { session: authSession } = useAuth()
   const cancelSession = useCancelWorkoutSession()
   const finishSession = useFinishWorkoutSession()
   const rest = useWorkoutRestStore()
   const [notes, setNotes] = useState('')
+  const [drafts, setDrafts] = useState<Record<string, WorkoutSetDraft>>(() => Object.fromEntries(
+    session.exercises.flatMap((exercise) => exercise.sets.map((set) => [set.id, workoutSetDraftFromSet(set)])),
+  ))
   const now = useTimerClock(true)
   const elapsed = Math.max(0, now - Date.parse(session.startedAt))
   const allSets = session.exercises.flatMap((exercise) => exercise.sets)
   const completedSets = allSets.filter((set) => set.completedAt).length
   const progress = allSets.length ? Math.round((completedSets / allSets.length) * 100) : 0
+
+  const updateDraft = (exercise: WorkoutSessionExercise, setIndex: number, field: keyof WorkoutSetDraft, value: string) => {
+    setDrafts((current) => cascadeWorkoutSetDraft(current, exercise.sets, setIndex, field, value))
+  }
 
   useEffect(() => {
     if (rest.ownerUserId && authSession && rest.ownerUserId !== authSession.user.id) rest.clear()
@@ -133,12 +147,12 @@ export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
 
   return (
     <div className="workout-active">
-      <section className="workout-active__summary">
+      <VisualBanner assetId={bannerAsset} monochrome={bannerMonochrome} className="workout-active__summary">
         <span className="workout-active__icon"><Dumbbell aria-hidden /></span>
         <span><span className="eyebrow">Active workout</span><h2>{session.routineName}</h2><p>Started {new Date(session.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p></span>
         <dl><div><dt>Elapsed</dt><dd>{formatWorkoutDuration(elapsed)}</dd></div><div><dt>Sets</dt><dd>{completedSets}/{allSets.length}</dd></div></dl>
         <div className="workout-active__progress" aria-label={`${progress}% of sets complete`}><span style={{ width: `${progress}%` }} /></div>
-      </section>
+      </VisualBanner>
 
       <RestTimer session={session} />
 
@@ -150,7 +164,7 @@ export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
               <div><h3>{exercise.exerciseName}</h3><p>{exercise.muscleGroup ?? 'Uncategorized'} · Target {exercise.targetRepsMin}–{exercise.targetRepsMax} reps · {exercise.restSeconds}s rest</p></div>
             </header>
             <div className="workout-set__labels" aria-hidden><span>Set</span><span>kg</span><span>Reps</span><span>RIR</span><span>Status</span></div>
-            <ol>{exercise.sets.map((set) => <WorkoutSetRow key={set.id} session={session} exercise={exercise} set={set} />)}</ol>
+            <ol>{exercise.sets.map((set, setIndex) => <WorkoutSetRow key={set.id} session={session} exercise={exercise} set={set} draft={drafts[set.id] ?? workoutSetDraftFromSet(set)} onDraftChange={(field, value) => updateDraft(exercise, setIndex, field, value)} />)}</ol>
             {exercise.notes ? <p className="workout-active__notes">{exercise.notes}</p> : null}
           </article>
         ))}

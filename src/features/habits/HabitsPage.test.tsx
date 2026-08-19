@@ -122,8 +122,9 @@ const authValue: AuthContextValue = {
 const profile: UserProfile = {
   id: USER_ID, display_name: 'Habit Tester', avatar_url: null, timezone: 'America/Sao_Paulo',
   week_starts_on: 1, theme: 'system', created_at: '2026-08-17T12:00:00.000Z', updated_at: '2026-08-17T12:00:00.000Z',
+  calendar_show_events: true, calendar_show_tasks: true, calendar_show_habits: true,
 }
-const profileRepository: ProfileRepository = { getProfile: () => Promise.resolve(profile) }
+const profileRepository: ProfileRepository = { getProfile: () => Promise.resolve(profile), updateCalendarPreferences: (_userId, preferences) => Promise.resolve({ ...profile, ...preferences }) }
 
 const renderPage = (repository: HabitsRepository, initialEntry = '/habits') => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -171,6 +172,13 @@ describe('Habits Today flow', () => {
 
     await waitFor(() => expect(repository.habits[0]?.projectId).toBe(repository.projects[0]?.id))
     expect(await screen.findByText('Morning workout')).toBeVisible()
+
+    const projectToggle = screen.getByRole('button', { name: 'Toggle habit project Fitness' })
+    await user.click(projectToggle)
+    expect(screen.getByText('Morning workout')).not.toBeVisible()
+    expect(projectToggle).toHaveAttribute('aria-expanded', 'false')
+    await user.click(projectToggle)
+    expect(screen.getByText('Morning workout')).toBeVisible()
   }, 15_000)
 
   it('reorders active habits with accessible controls and durable positions', async () => {

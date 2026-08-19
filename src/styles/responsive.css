@@ -55,6 +55,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .settings-card--calendar,
   .settings-card--account {
     grid-column: 1;
   }
@@ -135,7 +136,27 @@
     box-shadow: var(--shadow-float);
   }
 
+  .mobile-nav::before {
+    position: absolute;
+    z-index: 0;
+    top: var(--space-2);
+    bottom: var(--space-2);
+    left: var(--space-2);
+    width: calc(20% - 0.4rem);
+    background: #f4f2ea;
+    border-radius: var(--radius-md);
+    content: '';
+    transition: transform var(--duration-normal) var(--ease-out);
+  }
+
+  .mobile-nav[data-active-index='1']::before { transform: translateX(calc(100% + var(--space-1))); }
+  .mobile-nav[data-active-index='2']::before { transform: translateX(calc(200% + var(--space-1) + var(--space-1))); }
+  .mobile-nav[data-active-index='3']::before { transform: translateX(calc(300% + var(--space-1) + var(--space-1) + var(--space-1))); }
+  .mobile-nav[data-active-index='4']::before { transform: translateX(calc(400% + var(--space-1) + var(--space-1) + var(--space-1) + var(--space-1))); }
+
   .mobile-nav .nav-item {
+    position: relative;
+    z-index: 1;
     min-width: 0;
     min-height: 3.5rem;
     display: grid;
@@ -155,7 +176,7 @@
 
   .mobile-nav .nav-item--active {
     color: #171815;
-    background: #f4f2ea;
+    background: transparent;
   }
 
   .page-header {
@@ -230,6 +251,7 @@
     grid-template-columns: 1fr;
   }
 
+  .settings-card--calendar,
   .settings-card--account {
     grid-column: 1;
     grid-template-columns: 1fr;

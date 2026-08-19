@@ -113,7 +113,10 @@ export default function WorkoutPage() {
       {!activeView && activeSession.data ? <Link className="workout-active-banner" to="/workout/session/active"><span><span className="eyebrow">Workout in progress</span><strong>{activeSession.data.routineName}</strong></span><span>Continue<ChevronRight aria-hidden /></span></Link> : null}
       {activeView && activeSession.isLoading ? <div className="workout-state" role="status">Recovering your active workout…</div> : null}
       {activeView && activeSession.error ? <div className="workout-state workout-state--error"><strong>Active workout could not be loaded.</strong><p>{activeSession.error.message}</p><Button variant="secondary" onClick={() => void activeSession.refetch()}>Try again</Button></div> : null}
-      {activeView && !activeSession.isLoading && !activeSession.error && activeSession.data ? <ActiveWorkoutSession session={activeSession.data} /> : null}
+      {activeView && !activeSession.isLoading && !activeSession.error && activeSession.data ? (() => {
+        const activeRoutine = routines.data?.find((routine) => routine.id === activeSession.data?.routineId)
+        return <ActiveWorkoutSession session={activeSession.data} bannerAsset={activeRoutine?.bannerAsset} bannerMonochrome={activeRoutine?.bannerMonochrome ?? true} />
+      })() : null}
       {activeView && !activeSession.isLoading && !activeSession.error && !activeSession.data ? <div className="workout-state"><Dumbbell aria-hidden /><strong>No workout is active.</strong><p>Start one from a routine with at least one exercise.</p><Link to="/workout/routines">Choose a routine</Link></div> : null}
       {!activeView && !historyView && routines.isLoading ? <div className="workout-state" role="status">Loading workout routines…</div> : null}
       {!activeView && !historyView && routines.error ? <div className="workout-state workout-state--error"><strong>Workout routines could not be loaded.</strong><p>{routines.error.message}</p><Button variant="secondary" onClick={() => void routines.refetch()}>Try again</Button></div> : null}

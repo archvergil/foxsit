@@ -8,7 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['icons/app-icon.png', 'icons/brand-mark.png'],
+      includeAssets: [
+        'icons/app-icon.png',
+        'icons/brand-mark.png',
+        'gifs/focus_home_banner.gif',
+        'gifs/habit_home_banner.gif',
+        'gifs/workout_home_banner.gif',
+      ],
       manifest: {
         name: 'Foxsit',
         short_name: 'Foxsit',

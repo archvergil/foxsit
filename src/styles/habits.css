@@ -22,6 +22,9 @@
 .habit-project-banner { background: color-mix(in srgb, var(--mint) 40%, var(--surface)); }
 .habit-project-banner--coral { background: color-mix(in srgb, var(--coral) 40%, var(--surface)); }.habit-project-banner--blue { background: color-mix(in srgb, var(--blue) 40%, var(--surface)); }.habit-project-banner--sand { background: color-mix(in srgb, var(--sand) 40%, var(--surface)); }.habit-project-banner--slate { background: var(--surface-muted); }
 .habit-project-banner > .visual-banner__content { min-height: 7.5rem; display: flex; align-items: end; justify-content: space-between; gap: var(--space-3); padding: var(--space-4); }
+.habit-project-banner__toggle { min-width: 0; min-height: var(--touch-target); flex: 1; align-self: stretch; display: flex; align-items: end; justify-content: space-between; gap: var(--space-3); padding: 0; color: inherit; background: transparent; border: 0; cursor: pointer; text-align: left; }
+.habit-project-banner__toggle > svg { width: 1rem; transition: transform var(--duration-normal) var(--ease-out); }
+.habit-project-group:not(.is-collapsed) .habit-project-banner__toggle > svg { transform: rotate(180deg); }
 .habit-project-banner .visual-banner__content > span { min-width: 0; display: grid; gap: 0.15rem; }
 .habit-project-banner .habit-project-banner__identity { display: flex; align-items: center; gap: var(--space-3); }
 .habit-project-banner__identity > i { width: 2.25rem; height: 2.25rem; display: grid; flex: 0 0 auto; color: var(--ink); background: color-mix(in srgb, var(--surface) 78%, transparent); border: 1px solid var(--border); border-radius: var(--radius-sm); place-items: center; }
@@ -29,9 +32,11 @@
 .habit-project-banner__identity > span { min-width: 0; display: grid; gap: 0.15rem; }
 .habit-project-banner strong { overflow: hidden; font-size: var(--text-lg); text-overflow: ellipsis; white-space: nowrap; }
 .habit-project-banner small { color: var(--ink-soft); font-size: var(--text-xs); }
-.habit-project-banner button { width: 2rem; height: 2rem; display: grid; flex: 0 0 auto; padding: 0; color: var(--ink-soft); background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; place-items: center; }
-.habit-project-banner button svg { width: 0.9rem; }
+.habit-project-banner__edit { width: 2rem; height: 2rem; display: grid; flex: 0 0 auto; padding: 0; color: var(--ink-soft); background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; place-items: center; }
+.habit-project-banner__edit svg { width: 0.9rem; }
 .habit-project-group__list { display: grid; gap: var(--space-2); }
+.habit-project-group__list[hidden] { display: none; }
+.habit-project-group.is-collapsed { gap: 0; }
 .habit-project-group__empty { min-height: 4rem; display: grid; align-items: center; padding: var(--space-3); margin: 0; color: var(--ink-faint); border: 1px dashed var(--border); border-radius: var(--radius-sm); font-size: var(--text-xs); }
 .habit-project-group--unfiled { grid-column: 1 / -1; }.habit-project-group--unfiled > header { padding: var(--space-2) 0; }
 .habit-today-card { --habit-accent: var(--mint); --habit-accent-ink: var(--mint-ink); min-width: 0; display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: none; transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-fast); }

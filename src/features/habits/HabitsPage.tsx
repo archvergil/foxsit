@@ -1,6 +1,6 @@
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { FolderPlus, Leaf, Pencil, Plus } from 'lucide-react'
+import { ChevronDown, FolderPlus, Leaf, Pencil, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 
@@ -33,6 +33,7 @@ function HabitsTodayPage() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingHabit, setEditingHabit] = useState<Habit | undefined>()
   const [projectEditor, setProjectEditor] = useState<HabitProject | 'new' | null>(null)
+  const [collapsedProjectIds, setCollapsedProjectIds] = useState<Set<string>>(() => new Set())
   const habits = habitsQuery.data ?? []
   const projects = projectsQuery.data ?? []
   const scheduledHabits = habits.filter((habit) => isHabitScheduledOn(habit, today))
@@ -55,6 +56,12 @@ function HabitsTodayPage() {
     const to = projectHabits.findIndex(({ id }) => id === over.id)
     if (from >= 0 && to >= 0) persistVisibleOrder(arrayMove(projectHabits, from, to))
   }
+  const toggleProject = (projectId: string) => setCollapsedProjectIds((current) => {
+    const next = new Set(current)
+    if (next.has(projectId)) next.delete(projectId)
+    else next.add(projectId)
+    return next
+  })
 
   return (
     <section className="page-stack habits-page">
@@ -83,13 +90,14 @@ function HabitsTodayPage() {
                   <div className="habit-project-groups">
                     {projects.map((project) => {
                       const projectHabits = scheduledHabits.filter((habit) => habit.projectId === project.id)
+                      const collapsed = collapsedProjectIds.has(project.id)
                       return (
-                        <section className="habit-project-group" key={project.id}>
+                        <section className={`habit-project-group${collapsed ? ' is-collapsed' : ''}`} key={project.id}>
                           <VisualBanner assetId={project.bannerAsset} monochrome={project.bannerMonochrome} className={`habit-project-banner habit-project-banner--${project.colorToken}`}>
-                            <span className="habit-project-banner__identity"><i><HabitProjectGlyph icon={project.icon} /></i><span><span className="eyebrow">Habit project</span><strong>{project.name}</strong><small>{projectHabits.length} scheduled today</small></span></span>
-                            <button type="button" aria-label={`Edit habit project ${project.name}`} onClick={() => setProjectEditor(project)}><Pencil aria-hidden /></button>
+                            <button className="habit-project-banner__toggle" type="button" aria-label={`Toggle habit project ${project.name}`} aria-expanded={!collapsed} aria-controls={`habit-project-${project.id}`} onClick={() => toggleProject(project.id)}><span className="habit-project-banner__identity"><i><HabitProjectGlyph icon={project.icon} /></i><span><span className="eyebrow">Habit project</span><strong>{project.name}</strong><small>{projectHabits.length} scheduled today</small></span></span><ChevronDown aria-hidden /></button>
+                            <button className="habit-project-banner__edit" type="button" aria-label={`Edit habit project ${project.name}`} onClick={() => setProjectEditor(project)}><Pencil aria-hidden /></button>
                           </VisualBanner>
-                          <div className="habit-project-group__list">
+                          <div className="habit-project-group__list" id={`habit-project-${project.id}`} hidden={collapsed}>
                             {projectHabits.length ? projectHabits.map((habit) => {
                               const index = projectHabits.findIndex(({ id }) => id === habit.id)
                               return <HabitTodayCard key={habit.id} habit={habit} log={logsByHabit.get(habit.id)} date={today} pending={progressMutation.isPending && progressMutation.variables?.habitId === habit.id} index={index} habitCount={projectHabits.length} isReordering={reorderMutation.isPending} onMove={moveHabit} onProgress={(input) => progressMutation.mutateAsync(input).then(() => undefined)} onEdit={() => { setEditingHabit(habit); setEditorOpen(true) }} />

@@ -17,7 +17,7 @@ import type { CalendarEvent, CalendarEventRange } from './types'
 import { projectHabitCalendarItems } from './habitCalendarAdapter'
 
 export function CalendarWeekPage() {
-  const { timeZone, weekStartsOn } = useCalendarDateContext()
+  const { timeZone, weekStartsOn, showEvents, showTasks, showHabits } = useCalendarDateContext()
   const today = localDateKey(new Date(), timeZone)
   const [anchorDate, setAnchorDate] = useState(today)
   const [selectedDate, setSelectedDate] = useState(today)
@@ -36,9 +36,9 @@ export function CalendarWeekPage() {
   const tasksQuery = useTaskList({ status: 'open' })
   const habitsQuery = useHabits(true)
   const habitLogsQuery = useHabitLogs({ dateStart: week.startDate, dateEnd: week.endDate })
-  const events = eventsQuery.data ?? []
-  const tasks = tasksQuery.data ?? []
-  const habitItems = projectHabitCalendarItems(habitsQuery.data ?? [], habitLogsQuery.data ?? [], week.startDate, week.endDate, timeZone)
+  const events = showEvents ? (eventsQuery.data ?? []) : []
+  const tasks = showTasks ? (tasksQuery.data ?? []) : []
+  const habitItems = showHabits ? projectHabitCalendarItems(habitsQuery.data ?? [], habitLogsQuery.data ?? [], week.startDate, week.endDate, timeZone) : []
   const selectedEvents = events.filter((event) => eventOccursOnDate(event, selectedDate, timeZone))
   const selectedTasks = tasks.filter((task) => taskOccursOnDate(task, selectedDate, timeZone))
   const selectedHabits = habitItems.filter((habit) => habit.date === selectedDate)

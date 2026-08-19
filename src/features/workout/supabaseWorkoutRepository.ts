@@ -297,4 +297,9 @@ export const createSupabaseWorkoutRepository = (
     const rows = assertData(result.data, result.error, 'load workout history')
     return loadSessionRelations(client, userId, rows)
   },
+
+  deleteCompletedSession: async (_userId, sessionId) => {
+    const { data, error } = await client.rpc('delete_workout_session', { p_session_id: sessionId })
+    assertData(data, error, 'delete the workout session')
+  },
 })

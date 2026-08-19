@@ -21,6 +21,7 @@ export interface WorkoutRepository {
   cancelSession(userId: string, sessionId: string, endedAt: string): Promise<void>
   finishSession(userId: string, input: FinishWorkoutSessionInput): Promise<void>
   listCompletedSessions(userId: string): Promise<WorkoutSession[]>
+  deleteCompletedSession(userId: string, sessionId: string): Promise<void>
 }
 
 export const workoutQueryKeys = {

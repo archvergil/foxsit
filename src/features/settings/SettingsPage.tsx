@@ -1,9 +1,11 @@
-import { Database, Dumbbell, Gift, LogOut, Monitor, Moon, Sun, TimerReset } from 'lucide-react'
+import { CalendarDays, Database, Dumbbell, Gift, LogOut, Monitor, Moon, Sun, TimerReset } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/authContext'
+import { useProfile, useUpdateCalendarPreferences } from './profileQueries'
+import type { CalendarDisplayPreferences } from './profileRepository'
 import { useTheme, type ThemePreference } from './themeContext'
 
 const themeOptions: Array<{
@@ -21,7 +23,18 @@ export default function SettingsPage() {
   const { pathname } = useLocation()
   const { preference, setPreference } = useTheme()
   const { session, signOut } = useAuth()
+  const profileQuery = useProfile(session?.user.id ?? '')
+  const calendarPreferences = useUpdateCalendarPreferences()
   const page = pathname.endsWith('/appearance') ? 'Appearance' : pathname.endsWith('/data') ? 'Data' : 'Settings'
+  const profile = profileQuery.data
+  const updateCalendarPreference = (key: keyof CalendarDisplayPreferences, checked: boolean) => {
+    calendarPreferences.mutate({
+      calendar_show_events: profile?.calendar_show_events ?? true,
+      calendar_show_tasks: profile?.calendar_show_tasks ?? true,
+      calendar_show_habits: profile?.calendar_show_habits ?? true,
+      [key]: checked,
+    })
+  }
 
   return (
     <section className="page-stack settings-page">
@@ -61,6 +74,29 @@ export default function SettingsPage() {
               </label>
             ))}
           </fieldset>
+        </article>
+
+        <article className="settings-card settings-card--calendar">
+          <div>
+            <span className="eyebrow">Calendar</span>
+            <h2>Choose what appears</h2>
+            <p>These choices apply to Month, Week and Day views on every device.</p>
+          </div>
+          <fieldset className="calendar-preference-options" disabled={profileQuery.isPending || calendarPreferences.isPending}>
+            <legend className="visually-hidden">Calendar content</legend>
+            {([
+              ['calendar_show_events', 'Events', 'Appointments and scheduled blocks'],
+              ['calendar_show_tasks', 'Tasks', 'Open tasks with a scheduled date'],
+              ['calendar_show_habits', 'Habits', 'Habits planned for each day'],
+            ] as const).map(([key, label, description]) => (
+              <label className="calendar-preference-option" key={key}>
+                <input type="checkbox" checked={profile?.[key] ?? true} onChange={(event) => updateCalendarPreference(key, event.target.checked)} />
+                <CalendarDays aria-hidden />
+                <span><strong>{label}</strong><small>{description}</small></span>
+              </label>
+            ))}
+          </fieldset>
+          {calendarPreferences.error ? <p className="settings-error" role="alert">{calendarPreferences.error.message}</p> : null}
         </article>
 
         <article className="settings-card settings-card--account">

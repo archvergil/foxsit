@@ -280,6 +280,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          calendar_show_events: boolean
+          calendar_show_habits: boolean
+          calendar_show_tasks: boolean
           created_at: string
           display_name: string | null
           id: string
@@ -290,6 +293,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          calendar_show_events?: boolean
+          calendar_show_habits?: boolean
+          calendar_show_tasks?: boolean
           created_at?: string
           display_name?: string | null
           id: string
@@ -300,6 +306,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          calendar_show_events?: boolean
+          calendar_show_habits?: boolean
+          calendar_show_tasks?: boolean
           created_at?: string
           display_name?: string | null
           id?: string
@@ -804,6 +813,7 @@ export type Database = {
         Args: { p_notes?: string; p_session_id: string }
         Returns: string
       }
+      delete_workout_session: { Args: { p_session_id: string }; Returns: string }
       is_valid_weekdays: { Args: { value: number[] }; Returns: boolean }
       reorder_habits: {
         Args: { p_habit_ids: string[] }

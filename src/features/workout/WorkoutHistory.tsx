@@ -1,11 +1,12 @@
-import { CalendarDays, Dumbbell, Gauge, Trophy } from 'lucide-react'
+import { CalendarDays, Dumbbell, Gauge, Trash2, Trophy } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAuth } from '@/features/auth/authContext'
 import { useProfile } from '@/features/settings/profileQueries'
 import { resolveTimeZone } from '@/lib/dates'
 import { formatWeightKg } from './metrics'
-import { useWorkoutHistory } from './queries'
+import { useDeleteWorkoutSession, useWorkoutHistory } from './queries'
 import { formatWorkoutDuration } from './restTimer'
 import type { WorkoutSession } from './types'
 
@@ -17,7 +18,7 @@ const formatSessionDate = (timestamp: string, timeZone: string) => new Intl.Date
   year: 'numeric',
 }).format(new Date(timestamp))
 
-function WorkoutHistoryCard({ session, timeZone }: { session: WorkoutSession; timeZone: string }) {
+function WorkoutHistoryCard({ session, timeZone, onDelete, deleting }: { session: WorkoutSession; timeZone: string; onDelete: () => Promise<void>; deleting: boolean }) {
   const completedExercises = session.exercises.map((exercise) => ({
     ...exercise,
     sets: exercise.sets.filter((set) => set.completedAt),
@@ -49,6 +50,9 @@ function WorkoutHistoryCard({ session, timeZone }: { session: WorkoutSession; ti
           </section>
         ))}
         {session.notes ? <p className="workout-history-card__notes">{session.notes}</p> : null}
+        <footer className="workout-history-card__actions">
+          <ConfirmDialog actionLabel="Delete session" description="This completed session, its sets and calculated metrics will be permanently removed from workout history." onConfirm={onDelete} pending={deleting} title={`Delete “${session.routineName}” session?`} trigger={<Button variant="quiet" type="button" disabled={deleting}><Trash2 aria-hidden />Delete session</Button>} />
+        </footer>
       </div>
     </details>
   )
@@ -58,6 +62,7 @@ export function WorkoutHistory() {
   const { session } = useAuth()
   const profile = useProfile(session?.user.id ?? '')
   const history = useWorkoutHistory(true)
+  const deleteSession = useDeleteWorkoutSession()
   const timeZone = resolveTimeZone(profile.data?.timezone ?? session?.user.user_metadata.timezone)
 
   if (history.isLoading) return <div className="workout-state" role="status">Loading completed workouts…</div>
@@ -74,8 +79,9 @@ export function WorkoutHistory() {
         <div><Trophy aria-hidden /><span><small>Personal records</small><strong>{totalRecords}</strong></span></div>
       </section>
       <section className="workout-history__list" aria-label="Completed workout sessions">
-        {history.data.map((item) => <WorkoutHistoryCard key={item.id} session={item} timeZone={timeZone} />)}
+        {history.data.map((item) => <WorkoutHistoryCard key={item.id} session={item} timeZone={timeZone} deleting={deleteSession.isPending && deleteSession.variables === item.id} onDelete={() => deleteSession.mutateAsync(item.id).then(() => undefined)} />)}
       </section>
+      {deleteSession.error ? <p className="workout-write-error" role="alert">{deleteSession.error.message}</p> : null}
     </div>
   )
 }

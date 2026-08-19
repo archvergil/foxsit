@@ -16,7 +16,7 @@ import { useCalendarDateContext, useCalendarEvents } from './queries'
 import type { CalendarEvent, CalendarEventRange } from './types'
 import { projectHabitCalendarItems } from './habitCalendarAdapter'
 
-function CalendarDayPageBody({ date, timeZone }: { date: string; timeZone: string }) {
+function CalendarDayPageBody({ date, timeZone, showEvents, showTasks, showHabits }: { date: string; timeZone: string; showEvents: boolean; showTasks: boolean; showHabits: boolean }) {
   const navigate = useNavigate()
   const today = localDateKey(new Date(), timeZone)
   const [editorOpen, setEditorOpen] = useState(false)
@@ -32,11 +32,11 @@ function CalendarDayPageBody({ date, timeZone }: { date: string; timeZone: strin
   const tasksQuery = useTaskList({ status: 'open' })
   const habitsQuery = useHabits(true)
   const habitLogsQuery = useHabitLogs({ dateStart: date, dateEnd: date })
-  const events = eventsQuery.data ?? []
-  const tasks = tasksQuery.data ?? []
+  const events = showEvents ? (eventsQuery.data ?? []) : []
+  const tasks = showTasks ? (tasksQuery.data ?? []) : []
   const dayEvents = events.filter((event) => eventOccursOnDate(event, date, timeZone))
   const dayTasks = tasks.filter((task) => taskOccursOnDate(task, date, timeZone))
-  const habitItems = projectHabitCalendarItems(habitsQuery.data ?? [], habitLogsQuery.data ?? [], date, date, timeZone)
+  const habitItems = showHabits ? projectHabitCalendarItems(habitsQuery.data ?? [], habitLogsQuery.data ?? [], date, date, timeZone) : []
 
   const openCreate = (hour?: number) => {
     setEditingEvent(undefined)
@@ -123,8 +123,8 @@ function CalendarDayPageBody({ date, timeZone }: { date: string; timeZone: strin
 
 export function CalendarDayPage() {
   const { date: routeDate } = useParams()
-  const { timeZone } = useCalendarDateContext()
+  const { timeZone, showEvents, showTasks, showHabits } = useCalendarDateContext()
   const today = localDateKey(new Date(), timeZone)
   if (!routeDate || !isValidLocalDate(routeDate)) return <Navigate to={`/calendar/day/${today}`} replace />
-  return <CalendarDayPageBody key={routeDate} date={routeDate} timeZone={timeZone} />
+  return <CalendarDayPageBody key={routeDate} date={routeDate} timeZone={timeZone} showEvents={showEvents} showTasks={showTasks} showHabits={showHabits} />
 }

@@ -209,6 +209,7 @@
   .calendar-day__items { display: none; }
   .calendar-day__mobile-markers { min-height: 0.65rem; display: flex; justify-content: center; gap: 0.16rem; overflow: hidden; }
   .calendar-day__mobile-markers i { width: 0.32rem; height: 0.32rem; flex: 0 0 auto; background: var(--habit-accent, var(--blue)); border-radius: 50%; }
+  .calendar-day__mobile-markers b { margin-top: -0.38rem; color: var(--ink-faint); font-size: 0.7rem; font-weight: 800; letter-spacing: -0.08em; }
   .calendar-day__mobile-markers .calendar-marker--mint { background: var(--habit-accent, var(--mint)); }
   .calendar-day__mobile-markers .calendar-marker--coral { background: var(--habit-accent, var(--coral)); }
   .calendar-day__mobile-markers .calendar-marker--sand { background: var(--habit-accent, var(--sand)); }
@@ -236,7 +237,9 @@
   .calendar-view-switch a { min-width: 0; flex: 1; justify-items: center; }
   .calendar-filter-actions { flex-wrap: nowrap; padding-bottom: var(--space-1); overflow-x: auto; }
   .calendar-filter-menu { flex: 0 0 auto; }
-  .calendar-filter-menu__options { position: fixed; top: auto; bottom: var(--space-4); left: var(--space-4); max-width: calc(100vw - var(--space-8)); }
+  .calendar-filter-actions { flex-wrap: wrap; overflow: visible; }
+  .calendar-filter-menu__options { position: absolute; top: calc(100% + var(--space-2)); bottom: auto; left: 0; max-width: min(18rem, calc(100vw - var(--space-8))); }
+  .calendar-filter-menu:last-child .calendar-filter-menu__options { right: 0; left: auto; }
   .calendar-week-grid-shell { display: none; }
   .calendar-day-grid-shell { display: none; }
   .calendar-week-mobile { display: grid; gap: var(--space-4); }

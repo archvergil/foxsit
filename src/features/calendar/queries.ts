@@ -20,6 +20,9 @@ export const useCalendarDateContext = () => {
     userId,
     timeZone: resolveTimeZone(profile.data?.timezone ?? session.user.user_metadata.timezone),
     weekStartsOn: profile.data?.week_starts_on ?? 1,
+    showEvents: profile.data?.calendar_show_events ?? true,
+    showTasks: profile.data?.calendar_show_tasks ?? true,
+    showHabits: profile.data?.calendar_show_habits ?? true,
   }
 }
 

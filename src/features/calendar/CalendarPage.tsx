@@ -26,7 +26,7 @@ import type { CalendarEvent, CalendarEventRange } from './types'
 import { projectHabitCalendarItems } from './habitCalendarAdapter'
 
 function CalendarMonthPage() {
-  const { timeZone, weekStartsOn } = useCalendarDateContext()
+  const { timeZone, weekStartsOn, showEvents, showTasks, showHabits } = useCalendarDateContext()
   const today = localDateKey(new Date(), timeZone)
   const [monthKey, setMonthKey] = useState(() => monthKeyForDate(new Date(), timeZone))
   const [selectedDate, setSelectedDate] = useState(today)
@@ -47,10 +47,12 @@ function CalendarMonthPage() {
   const events = eventsQuery.data ?? []
   const tasks = tasksQuery.data ?? []
   const habitItems = projectHabitCalendarItems(habitsQuery.data ?? [], habitLogsQuery.data ?? [], month.gridStart, month.gridEnd, timeZone)
-  const filteredEvents = filterCalendarEvents(events, filters)
+  const filteredEvents = showEvents ? filterCalendarEvents(events, filters) : []
+  const visibleTasks = showTasks ? tasks : []
+  const visibleHabits = showHabits ? habitItems : []
   const selectedEvents = filteredEvents.filter((event) => eventOccursOnDate(event, selectedDate, timeZone))
-  const selectedTasks = tasks.filter((task) => taskOccursOnDate(task, selectedDate, timeZone))
-  const selectedHabits = habitItems.filter((habit) => habit.date === selectedDate)
+  const selectedTasks = visibleTasks.filter((task) => taskOccursOnDate(task, selectedDate, timeZone))
+  const selectedHabits = visibleHabits.filter((habit) => habit.date === selectedDate)
 
   const navigateMonth = (offset: number) => {
     const nextMonth = shiftMonthKey(monthKey, offset)
@@ -106,8 +108,8 @@ function CalendarMonthPage() {
             selectedDate={selectedDate}
             timeZone={timeZone}
             events={filteredEvents}
-            tasks={tasks}
-            habits={habitItems}
+            tasks={visibleTasks}
+            habits={visibleHabits}
             onSelectDate={(date) => { setSelectedDate(date); setEditorOpen(false) }}
             onEditEvent={editEvent}
           />

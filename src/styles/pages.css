@@ -188,8 +188,8 @@
 .today-metrics { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
 .today-metrics article { min-height: 6.5rem; display: grid; grid-template-columns: auto 1fr; grid-template-rows: 1fr auto; align-items: center; column-gap: var(--space-3); padding: var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }.today-metrics svg { width: 1.1rem; color: var(--ink-faint); }.today-metrics strong { font-family: var(--font-mono); font-size: var(--text-xl); }.today-metrics small { grid-column: 2; color: var(--ink-faint); font-size: var(--text-xs); }
 .today-overview-grid { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
-.today-overview-card { min-height: 7rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-4); color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); transition: transform var(--duration-fast), border-color var(--duration-fast); }.today-overview-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }.today-overview-card > svg { width: 1.2rem; color: var(--ink-faint); }.today-overview-card span { min-width: 0; display: grid; gap: var(--space-1); }.today-overview-card small { color: var(--ink-faint); font-size: var(--text-xs); }.today-overview-card strong { overflow: hidden; font-size: var(--text-sm); text-overflow: ellipsis; white-space: nowrap; }.today-overview-card > svg:last-child { width: 1rem; }
-.today-overview-card--habits { background: color-mix(in srgb, var(--mint) 18%, var(--surface)); }.today-overview-card--focus { background: color-mix(in srgb, var(--blue) 16%, var(--surface)); }.today-overview-card--workout { background: color-mix(in srgb, var(--coral) 16%, var(--surface)); }
+.today-overview-card { position: relative; min-height: 7rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; isolation: isolate; overflow: hidden; gap: var(--space-3); padding: var(--space-4); color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); transition: transform var(--duration-fast), border-color var(--duration-fast); }.today-overview-card::before { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--surface) 90%, transparent), color-mix(in srgb, var(--surface) 58%, transparent)), var(--today-overview-image) center / cover no-repeat; content: ''; filter: grayscale(1); opacity: 0.7; }.today-overview-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }.today-overview-card > svg { width: 1.2rem; color: var(--ink-faint); }.today-overview-card span { min-width: 0; display: grid; gap: var(--space-1); }.today-overview-card small { color: var(--ink-faint); font-size: var(--text-xs); }.today-overview-card strong { overflow: hidden; font-size: var(--text-sm); text-overflow: ellipsis; white-space: nowrap; }.today-overview-card > svg:last-child { width: 1rem; }
+.today-overview-card--habits { --today-overview-image: url('/gifs/habit_home_banner.gif'); background: color-mix(in srgb, var(--mint) 18%, var(--surface)); }.today-overview-card--focus { --today-overview-image: url('/gifs/focus_home_banner.gif'); background: color-mix(in srgb, var(--blue) 16%, var(--surface)); }.today-overview-card--workout { --today-overview-image: url('/gifs/workout_home_banner.gif'); background: color-mix(in srgb, var(--coral) 16%, var(--surface)); }
 .today-loading { min-height: 20rem; display: grid; place-items: center; color: var(--ink-faint); }.today-error { color: var(--danger); }.today-error p { margin: var(--space-2) 0; }.today-error button { min-height: var(--touch-target); padding: 0 var(--space-3); color: var(--ink); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); cursor: pointer; }
 
 .module-foundation-card {
@@ -316,6 +316,17 @@
 .theme-option__icon svg { width: 1rem; }
 .theme-option > span:last-child { display: grid; }
 .theme-option small { margin-top: var(--space-1); color: var(--ink-faint); }
+
+.calendar-preference-options { display: grid; gap: var(--space-2); padding: 0; margin: 0; border: 0; }
+.calendar-preference-option { min-height: var(--touch-target); display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: var(--space-3); padding: var(--space-3); background: var(--canvas-raised); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; }
+.calendar-preference-option:has(input:checked) { border-color: var(--border-strong); background: var(--surface-muted); }
+.calendar-preference-option input { width: 1rem; height: 1rem; accent-color: var(--ink); }
+.calendar-preference-option > svg { width: 1rem; color: var(--ink-faint); }
+.calendar-preference-option span { display: grid; }
+.calendar-preference-option small { color: var(--ink-faint); }
+.calendar-preference-options:disabled { opacity: 0.65; }
+.settings-error { color: var(--danger); }
+.settings-card--calendar { grid-column: 2; }
 
 .settings-card--account {
   grid-column: 2;

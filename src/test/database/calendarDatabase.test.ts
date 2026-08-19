@@ -19,6 +19,28 @@ describe('Calendar database migration', () => {
 
   afterAll(async () => database?.close())
 
+  it('stores per-user Calendar display preferences with safe defaults', async () => {
+    const defaults = await database!.query<{ calendar_show_events: boolean; calendar_show_tasks: boolean; calendar_show_habits: boolean }>(
+      'select calendar_show_events,calendar_show_tasks,calendar_show_habits from public.profiles where id=$1', [USER_A],
+    )
+    expect(defaults.rows[0]).toEqual({ calendar_show_events: true, calendar_show_tasks: true, calendar_show_habits: true })
+
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      await database!.query('update public.profiles set calendar_show_tasks=false where id=$1', [USER_A])
+      await database!.query('update public.profiles set calendar_show_tasks=false where id=$1', [USER_B])
+    } finally {
+      await resetLocalRole(database!)
+    }
+    const preferences = await database!.query<{ id: string; calendar_show_tasks: boolean }>(
+      'select id,calendar_show_tasks from public.profiles where id in ($1,$2) order by id', [USER_A, USER_B],
+    )
+    expect(preferences.rows).toEqual([
+      { id: USER_A, calendar_show_tasks: false },
+      { id: USER_B, calendar_show_tasks: true },
+    ])
+  })
+
   it('stores timed and all-day events with exclusive shapes', async () => {
     const timed = await database!.query<{ start_at: Date }>(
       `insert into public.calendar_events (user_id, title, start_at, end_at)
