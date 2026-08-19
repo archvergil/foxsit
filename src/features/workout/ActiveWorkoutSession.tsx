@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAuth } from '@/features/auth/authContext'
 import { useTimerClock } from '@/features/focus/useTimerClock'
 import { useCancelWorkoutSession, useFinishWorkoutSession, useSaveWorkoutSet } from './queries'
@@ -111,7 +112,6 @@ export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
   }, [authSession, rest])
 
   const discard = async () => {
-    if (!window.confirm('Discard this active workout? Saved sets will remain marked as a cancelled session.')) return
     try {
       await cancelSession.mutateAsync({ sessionId: session.id, endedAt: new Date().toISOString() })
       rest.clear()
@@ -159,7 +159,7 @@ export function ActiveWorkoutSession({ session }: { session: WorkoutSession }) {
       <section className="workout-active__footer">
         <label><span>Workout notes</span><textarea maxLength={5000} placeholder="How did the session feel?" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
         <div className="workout-active__footer-actions">
-          <Button variant="quiet" isLoading={cancelSession.isPending} onClick={() => void discard()}><CircleStop aria-hidden />Discard workout</Button>
+          <ConfirmDialog actionLabel="Discard workout" description="The active workout will end now. Saved sets will remain recorded in a cancelled session." onConfirm={discard} pending={cancelSession.isPending} title="Discard this active workout?" trigger={<Button variant="quiet" disabled={cancelSession.isPending}><CircleStop aria-hidden />Discard workout</Button>} />
           <Button disabled={completedSets === 0} isLoading={finishSession.isPending} onClick={() => void finish()}><CheckCircle2 aria-hidden />Finish workout</Button>
         </div>
       </section>

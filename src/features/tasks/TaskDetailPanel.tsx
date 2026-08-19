@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { focusedMinutesForTask } from '@/features/focus/focusSummary'
 import { useFocusSessions } from '@/features/focus/queries'
 import { formatTimestampForInput, localDateTimeToTimestamp } from '@/lib/dates'
@@ -131,7 +132,6 @@ export function TaskDetailPanel({
   }
 
   const removeTask = async () => {
-    if (!window.confirm(`Delete “${task.title}”? This cannot be undone.`)) return
     try {
       await deleteTask.mutateAsync(task.id)
       onDeleted()
@@ -223,13 +223,14 @@ export function TaskDetailPanel({
                 {item.completed ? <Check aria-hidden /> : <Circle aria-hidden />}
               </button>
               <span className={item.completed ? 'task-checklist__completed' : ''}>{item.title}</span>
-              <button
-                type="button"
-                aria-label={`Delete ${item.title}`}
-                onClick={() => deleteChecklist.mutate({ taskId: task.id, itemId: item.id })}
-              >
-                <Trash2 aria-hidden />
-              </button>
+              <ConfirmDialog
+                actionLabel="Delete step"
+                description="This checklist step will be permanently removed from the task."
+                onConfirm={() => deleteChecklist.mutate({ taskId: task.id, itemId: item.id })}
+                pending={deleteChecklist.isPending}
+                title={`Delete “${item.title}”?`}
+                trigger={<button type="button" aria-label={`Delete ${item.title}`}><Trash2 aria-hidden /></button>}
+              />
             </span>
           ))}
         </div>
@@ -239,7 +240,14 @@ export function TaskDetailPanel({
       <footer className="task-detail-panel__actions">
         <Link className="button button--secondary" to={`/focus?taskId=${task.id}`}><TimerReset aria-hidden /><span>Start focus</span></Link>
         <Button variant="quiet" type="button" onClick={() => void changeStatus()}>{task.status === 'completed' ? 'Reopen task' : 'Complete task'}</Button>
-        <Button variant="quiet" type="button" onClick={() => void removeTask()} disabled={deleteTask.isPending}><Trash2 aria-hidden />Delete</Button>
+        <ConfirmDialog
+          actionLabel="Delete task"
+          description="This task and its checklist will be permanently removed. This action cannot be undone."
+          onConfirm={removeTask}
+          pending={deleteTask.isPending}
+          title={`Delete “${task.title}”?`}
+          trigger={<Button variant="quiet" type="button" disabled={deleteTask.isPending}><Trash2 aria-hidden />Delete</Button>}
+        />
       </footer>
     </aside>
   )

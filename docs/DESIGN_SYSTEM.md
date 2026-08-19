@@ -60,7 +60,7 @@ Borders are one pixel and low contrast. Standard cards use a two-part soft shado
 
 ### Buttons
 
-Primary is inverse ink/ivory and pill-shaped. Secondary is a bordered surface. Quiet is text on transparent. Loading keeps the action label and adds a spinning progress icon.
+Primary is inverse ink/ivory and pill-shaped. Secondary is a bordered surface. Quiet is text on transparent. Loading keeps the action label and adds a spinning progress icon. Icon-and-label buttons always keep the icon to the left of a non-wrapping label; icon-only controls retain an accessible name.
 
 ### Inputs
 
@@ -76,7 +76,7 @@ Large cards have one purpose, a clear text hierarchy and optional single destina
 
 ### Sheets and dialogs
 
-Complex mobile flows become bottom sheets or dedicated pages. Destructive dialogs need explicit confirmation, focus containment and focus return. These headless interaction primitives will be introduced only with the first feature that needs them.
+Complex mobile flows become bottom sheets or dedicated pages. Destructive actions use the shared animated Radix alert dialog with explicit consequences, focus containment, focus return and reduced-motion support. Routine non-destructive actions must not introduce a confirmation step.
 
 ### Charts
 

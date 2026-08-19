@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { BannerPicker } from '@/components/visual/BannerPicker'
 import { collectionBannerAssets } from '@/lib/bannerAssets'
 import {
@@ -67,7 +68,7 @@ export function TaskProjectManager({ currentProject, projects }: { currentProjec
   })
 
   const remove = async () => {
-    if (!currentProject || !window.confirm(`Delete “${currentProject.name}”? Its tasks will move to Inbox.`)) return
+    if (!currentProject) return
     try {
       await deleteProject.mutateAsync(currentProject.id)
       await navigate('/tasks')
@@ -121,7 +122,14 @@ export function TaskProjectManager({ currentProject, projects }: { currentProjec
       {currentProject ? (
         <span>
           <button type="button" aria-label={`Edit ${currentProject.name}`} onClick={() => open('edit')}><Pencil aria-hidden /></button>
-          <button type="button" aria-label={`Delete ${currentProject.name}`} onClick={() => void remove()} disabled={deleteProject.isPending}><Trash2 aria-hidden /></button>
+          <ConfirmDialog
+            actionLabel="Delete project"
+            description="The project will be permanently removed. Its tasks will be kept and moved to Inbox."
+            onConfirm={remove}
+            pending={deleteProject.isPending}
+            title={`Delete “${currentProject.name}”?`}
+            trigger={<button type="button" aria-label={`Delete ${currentProject.name}`} disabled={deleteProject.isPending}><Trash2 aria-hidden /></button>}
+          />
         </span>
       ) : null}
       {deleteProject.error ? <small role="alert">{deleteProject.error.message}</small> : null}

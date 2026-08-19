@@ -3,6 +3,7 @@ import { Archive, Check, Trash2, X } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useCreateHabit, useDeleteHabit, useUpdateHabit } from './queries'
 import { habitFormSchema, habitToInput, resolveHabitForm, type HabitFormValues } from './schemas'
 import { HabitGlyph } from './HabitGlyph'
@@ -70,7 +71,7 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
   }
 
   const remove = async () => {
-    if (!habit || !window.confirm(`Delete “${habit.title}” and its history? This cannot be undone.`)) return
+    if (!habit) return
     try {
       await deleteHabit.mutateAsync(habit.id)
       onSaved()
@@ -122,7 +123,7 @@ export function HabitEditor({ habit, projects, newPosition = 1000, onClose, onSa
         <Button className="habit-editor__wide" type="submit" isLoading={createHabit.isPending || updateHabit.isPending}>{habit ? 'Save habit' : 'Create habit'}</Button>
       </form>
       {writeError ? <p className="habit-editor__error" role="alert">{writeError.message}</p> : null}
-      {habit ? <div className="habit-editor__danger-actions"><Button variant="quiet" type="button" disabled={pending} onClick={() => void archive()}><Archive aria-hidden />Archive</Button><Button variant="quiet" type="button" disabled={pending} onClick={() => void remove()}><Trash2 aria-hidden />Delete</Button></div> : null}
+      {habit ? <div className="habit-editor__danger-actions"><Button variant="quiet" type="button" disabled={pending} onClick={() => void archive()}><Archive aria-hidden />Archive</Button><ConfirmDialog actionLabel="Delete habit" description="This habit and its complete history will be permanently removed. This action cannot be undone." onConfirm={remove} pending={deleteHabit.isPending} title={`Delete “${habit.title}”?`} trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete</Button>} /></div> : null}
     </aside>
   )
 }

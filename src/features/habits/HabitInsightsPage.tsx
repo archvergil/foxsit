@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { addLocalDays, formatLocalDateLabel, localDateKey } from '@/lib/dates'
 import { HabitHeatmap } from './HabitHeatmap'
 import { HabitViewSwitch } from './HabitViewSwitch'
@@ -101,7 +102,7 @@ export function HabitInsightsPage() {
   }
 
   const remove = async () => {
-    if (!selected || !window.confirm(`Delete “${selected.title}” and its history? This cannot be undone.`)) return
+    if (!selected) return
     try {
       await deleteHabit.mutateAsync(selected.id)
       setSelectedId(undefined)
@@ -193,7 +194,7 @@ export function HabitInsightsPage() {
               <span><strong>{selected.title} is archived.</strong><small>Its history stays available and no later day affects its rates.</small></span>
               <span>
                 <Button variant="secondary" type="button" disabled={pending} onClick={() => void restore()}><ArchiveRestore aria-hidden />Restore</Button>
-                <Button variant="quiet" type="button" disabled={pending} onClick={() => void remove()}><Trash2 aria-hidden />Delete</Button>
+                <ConfirmDialog actionLabel="Delete habit" description="This archived habit and its complete history will be permanently removed. This action cannot be undone." onConfirm={remove} pending={deleteHabit.isPending} title={`Delete “${selected.title}”?`} trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete</Button>} />
               </span>
             </section>
           ) : null}

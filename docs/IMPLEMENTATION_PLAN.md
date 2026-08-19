@@ -54,11 +54,11 @@ Exit: local database is reproducible and no exposed table is open across users.
 ## Phase 3 — Tasks and Focus
 
 - [x] Projects, Inbox, Today, Upcoming and Completed queries with project create, rename and delete management.
-- [~] Add ownership-safe nested task projects and customizable faded GIF banners; migration and UI are implemented, production migration is pending.
+- [x] Add ownership-safe nested task projects and customizable faded GIF banners in production.
 - [x] Task CRUD, checklist, optimistic completion/reordering with rollback and durable manual ordering.
 - [x] Persisted timestamp-based Pomodoro store and mini player.
 - [x] Durable focus session history and task integration.
-- [~] Unit, component and E2E coverage for the daily flow (unit/component and local authenticated E2E complete; Supabase E2E pending).
+- [~] Unit, component and E2E coverage for the daily flow (unit/component complete; authenticated E2E needs the loopback Workout/Rewards repository gap and stale Habits assertions resolved before deployed Supabase E2E).
 
 ## Phase 4 — Calendar
 
@@ -74,15 +74,15 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Habit CRUD, daily/weekday schedules, count targets, skipped reasons, Today logs, archived management and durable accessible ordering.
 - [x] Tested daily history, current/longest streaks, weekly/monthly progress, 12-week heatmap and factual insights.
 - [x] Read-only Calendar adapter and ownership-safe Workout link contract.
-- [~] Rework the Habit workspace into compact routine rows and a responsive visual editor with icon, palette and custom-color selection; production migration is ready but awaits a reachable Postgres connection.
-- [~] Add first-class Habit projects with project assignment, visual icons and customizable faded GIF banners; migration and UI are implemented, production migration is pending.
+- [x] Rework the Habit workspace into compact routine rows and a responsive visual editor with icon, palette and custom-color selection in production.
+- [x] Add first-class Habit projects with project assignment, visual icons and customizable faded GIF banners in production.
 
 ## Phase 6 — Workout
 
 - [!] Import and validate the legacy exercise catalog when supplied.
 - [!] Confirm rights and credentials before migrating any legacy GIF.
 - [x] Routine builder and normalized persistence in production Supabase.
-- [~] Add per-routine faded GIF banners with original-color/monochrome selection; migration and UI are implemented, production migration is pending.
+- [x] Add per-routine faded GIF banners with original-color/monochrome selection in production.
 - [x] Supabase-backed active workout with durable sets, timestamp-based rest timer and reload recovery.
 - [x] Transactional finish, completed history, volume, estimated 1RM and PRs.
 - [ ] Workout ↔ habit and calendar adapters.
@@ -99,7 +99,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Extend durable Focus runs and Workout sessions with the facts needed to award eligible activity exactly once.
 - [x] Add transactional reward, conversion and redemption RPCs with profile-timezone monthly limits and idempotency constraints.
 - [x] Build the responsive Rewards area: balances, monthly progress, conversions, ledger and both credit stores.
-- [~] Cover the economy with unit, database/RLS, component and authenticated E2E tests; local coverage is complete and deployed Supabase E2E remains pending migration application.
+- [~] Cover the economy with unit, database/RLS, component and authenticated E2E tests; migration `202608180011` is applied and deployed authenticated E2E remains pending.
 
 Product override confirmed on 2026-08-18: every BRL credit keeps its nominal value, while its Silver or Gold redemption cost is 40% higher than the original master table. Fractional Silver results round up so no SKU is charged below the requested increase; this pricing lives in the versioned server rule set and is mirrored by tested display constants only.
 
@@ -118,9 +118,19 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migration `202608180011` to production, regenerate linked Supabase types, then verify rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E. Migrations `202608180009` and `202608180010` are already applied.
+Verify rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations `202608180009`, `202608180010` and `202608180011` are applied.
 
 ## Latest verification
+
+Completed the shared interaction correction on 2026-08-18:
+
+- preserved the elastic segmented-control transition across the route remounts used by Calendar and Habits, matching Focus and Workout;
+- fixed every shared icon-and-label button so icons stay to the left of non-wrapping labels;
+- replaced native confirmations with the animated, accessible Radix alert dialog for destructive Calendar, Task, Habit and Workout actions;
+- removed Workout routine color selection and standardized every routine banner surface on Slate;
+- recorded that production migration `202608180011` is applied; authenticated deployed Rewards E2E remains pending.
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (133/133), `npm run test:db` (30/30) and `npm run build` passed;
+- the local Playwright runner now receives its loopback URL explicitly, but its existing suite remains red because Today has no loopback Workout repository and several Habits assertions target the pre-redesign UI.
 
 Implemented the Rewards economy on 2026-08-18:
 
@@ -128,7 +138,7 @@ Implemented the Rewards economy on 2026-08-18:
 - applied the confirmed pricing override: BRL credit values remain unchanged while every Silver/Gold cost is 40% higher, with fractional Silver results rounded up;
 - added exact-once Focus-run and Workout awards, predominant-mode caps, five shared monthly conversions, authoritative catalog redemptions and RLS-protected RPCs;
 - added the responsive `/rewards` workspace with balances, monthly progress, confirmations, both stores, request statuses and incremental ledger history;
-- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (131/131), `npm run test:db` (30/30) and `npm run build` passed; production migration and authenticated deployed E2E remain pending.
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (131/131), `npm run test:db` (30/30) and `npm run build` passed; migration `202608180011` is applied and authenticated deployed E2E remains pending.
 
 Completed the Today integration slice on 2026-08-18:
 
@@ -142,7 +152,7 @@ Implemented the visual collection architecture on 2026-08-18:
 - moved the supplied GIF library into the Vite public asset tree and strictly separated `workout_*` from `habits_*` choices;
 - added reusable faded banner rendering plus original-color/monochrome selection;
 - added per-routine Workout banners, first-class Habit projects and nested Task projects with ownership-safe Supabase contracts and RLS;
-- added migration `202608180010_visual_collections.sql`; production application remains pending until the linked Postgres endpoint is reachable.
+- added migration `202608180010_visual_collections.sql`; it was subsequently applied to production.
 - `npm run lint`, `npm run typecheck`, `npm run test -- --run` (124/124), `npm run test:db` (25/25) and `npm run build` passed.
 
 Completed the Habit workspace visual rework on 2026-08-18:
@@ -151,7 +161,7 @@ Completed the Habit workspace visual rework on 2026-08-18:
 - replaced text-only icon/color selects with visual icon tiles, palette swatches, live preview and validated custom hexadecimal color input;
 - added migration `202608180009_habit_custom_colors.sql` and Calendar rendering support for custom habit colors;
 - `npm run lint`, `npm run typecheck`, `npm run test -- --run` (116/116) and `npm run build` passed;
-- Supabase CLI login/link succeeded through the portable Node wrapper, but this network timed out at `aws-0-us-west-2.pooler.supabase.com` and direct PostgreSQL requires unavailable IPv6, so the remote migration was deliberately not marked as applied.
+- the first application attempt timed out at the linked pooler; migration `202608180009` was subsequently applied to production.
 
 Completed the interaction and global radius correction on 2026-08-18:
 

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Session } from '@supabase/supabase-js'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -172,9 +172,9 @@ describe('Calendar month flow', () => {
     await user.click(screen.getByRole('button', { name: 'Save event' }))
     await waitFor(() => expect(repository.events[0]?.title).toBe('Updated planning'))
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     await user.click(await screen.findByRole('button', { name: 'Edit event Updated planning' }))
     await user.click(screen.getByRole('button', { name: 'Delete event' }))
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete event' }))
     await waitFor(() => expect(repository.events).toHaveLength(0))
   }, 15_000)
 })

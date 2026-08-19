@@ -29,7 +29,7 @@ export function WorkoutRoutineEditor({
     defaultValues: {
       name: routine?.name ?? '',
       description: routine?.description ?? '',
-      colorToken: routine?.colorToken ?? 'coral',
+      colorToken: 'slate',
       activityType: routine?.activityType ?? 'strength',
       bannerAsset: routine?.bannerAsset ?? '',
       bannerMonochrome: routine?.bannerMonochrome ?? false,
@@ -66,13 +66,7 @@ export function WorkoutRoutineEditor({
         <div className="workout-editor__wide">
           <BannerPicker assets={workoutBannerAssets} value={bannerAsset || null} monochrome={bannerMonochrome} onChange={(value) => form.setValue('bannerAsset', value ?? '', { shouldDirty: true, shouldValidate: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
         </div>
-        <label>
-          <span>Color</span>
-          <select {...form.register('colorToken')}>
-            <option value="coral">Coral</option><option value="mint">Mint</option>
-            <option value="blue">Blue</option><option value="sand">Sand</option><option value="slate">Slate</option>
-          </select>
-        </label>
+        <input type="hidden" {...form.register('colorToken')} />
         <label>
           <span>Activity</span>
           <select {...form.register('activityType')}>

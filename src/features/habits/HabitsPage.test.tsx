@@ -228,9 +228,9 @@ describe('Habits Today flow', () => {
     await user.click(screen.getByRole('button', { name: 'Save habit' }))
     await waitFor(() => expect(repository.habits[0]?.title).toBe('Hydrate'))
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     await user.click(await screen.findByRole('button', { name: 'Edit habit Hydrate' }))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await user.click(await screen.findByRole('button', { name: 'Delete habit' }))
     await waitFor(() => expect(repository.habits).toHaveLength(0))
     expect(await screen.findByText('Your first habit starts here.')).toBeVisible()
   }, 15_000)

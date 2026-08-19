@@ -176,12 +176,14 @@ describe('Workout routine flow', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Create routine' }))
     const editor = screen.getByLabelText('Create workout routine')
+    expect(within(editor).queryByRole('combobox', { name: 'Color' })).not.toBeInTheDocument()
     await user.type(within(editor).getByRole('textbox', { name: 'Name' }), 'Upper body')
     await user.type(within(editor).getByRole('textbox', { name: 'Description' }), 'Strength day')
     await user.click(within(editor).getByRole('button', { name: 'Create routine' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Upper body' })).toBeVisible()
     expect(repository.routines).toHaveLength(1)
+    expect(repository.routines[0]?.colorToken).toBe('slate')
 
     await user.type(screen.getByRole('textbox', { name: 'Exercise' }), 'Bench press')
     await user.type(screen.getByRole('textbox', { name: 'Muscle group' }), 'Chest')

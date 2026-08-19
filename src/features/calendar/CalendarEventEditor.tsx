@@ -3,6 +3,7 @@ import { Trash2, X } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { formatTimestampForInput } from '@/lib/dates'
 import {
   useCreateCalendarEvent,
@@ -82,7 +83,7 @@ export function CalendarEventEditor({
   })
 
   const remove = async () => {
-    if (!event || !window.confirm(`Delete “${event.title}”? This cannot be undone.`)) return
+    if (!event) return
     try {
       await deleteEvent.mutateAsync(event.id)
       onDeleted()
@@ -124,7 +125,16 @@ export function CalendarEventEditor({
         <Button className="calendar-editor__wide" type="submit" isLoading={createEvent.isPending || updateEvent.isPending}>{event ? 'Save event' : 'Create event'}</Button>
       </form>
       {writeError ? <p className="calendar-editor__error" role="alert">{writeError.message}</p> : null}
-      {event ? <Button variant="quiet" type="button" disabled={pending} onClick={() => void remove()}><Trash2 aria-hidden />Delete event</Button> : null}
+      {event ? (
+        <ConfirmDialog
+          actionLabel="Delete event"
+          description="This event will be permanently removed from your calendar. This action cannot be undone."
+          onConfirm={remove}
+          pending={deleteEvent.isPending}
+          title={`Delete “${event.title}”?`}
+          trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete event</Button>}
+        />
+      ) : null}
     </aside>
   )
 }

@@ -7,6 +7,7 @@ import { z } from 'zod'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useAuth } from '@/features/auth/authContext'
 import { useTaskDateContext, useTaskList } from '@/features/tasks/queries'
 import { FocusHistory } from './FocusHistory'
@@ -129,7 +130,7 @@ export default function FocusPage() {
 
       <div className="focus-layout">
         <section className={`focus-timer-card focus-timer-card--${timer.phase}`} aria-label="Pomodoro timer">
-          <div className="segmented-control segmented-control--three focus-phase-tabs" aria-label="Timer phase" data-active-index={activePhaseIndex}>
+          <SegmentedControl activeIndex={activePhaseIndex} className="focus-phase-tabs" label="Timer phase" name="focus-phase" options={3}>
             {(Object.keys(phaseCopy) as FocusPhase[]).map((phase) => (
               <button
                 type="button"
@@ -141,7 +142,7 @@ export default function FocusPage() {
                 {phaseCopy[phase].label}
               </button>
             ))}
-          </div>
+          </SegmentedControl>
 
           <div className="focus-timer-card__clock">
             <span>{phaseCopy[timer.phase].label}</span>

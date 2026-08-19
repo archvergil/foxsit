@@ -3,6 +3,7 @@ import { Trash2, X } from 'lucide-react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { BannerPicker } from '@/components/visual/BannerPicker'
 import { collectionBannerAssets } from '@/lib/bannerAssets'
 import { HabitProjectGlyph } from './HabitProjectGlyph'
@@ -48,7 +49,7 @@ export function HabitProjectEditor({ project, projects, onClose }: {
     } catch { /* Keep the durable error and form available for retry. */ }
   })
   const remove = async () => {
-    if (!project || !window.confirm(`Delete “${project.name}”? Its habits will become unfiled.`)) return
+    if (!project) return
     try { await deleteProject.mutateAsync(project.id); onClose() } catch { /* Error stays visible. */ }
   }
 
@@ -63,7 +64,16 @@ export function HabitProjectEditor({ project, projects, onClose }: {
         <Button type="submit" isLoading={createProject.isPending || updateProject.isPending}>{project ? 'Save project' : 'Create project'}</Button>
       </form>
       {error ? <p className="habit-editor__error" role="alert">{error.message}</p> : null}
-      {project ? <Button variant="quiet" type="button" disabled={pending} onClick={() => void remove()}><Trash2 aria-hidden />Delete project</Button> : null}
+      {project ? (
+        <ConfirmDialog
+          actionLabel="Delete project"
+          description="The project will be permanently removed. Its habits will be kept and become unfiled."
+          onConfirm={remove}
+          pending={deleteProject.isPending}
+          title={`Delete “${project.name}”?`}
+          trigger={<Button variant="quiet" type="button" disabled={pending}><Trash2 aria-hidden />Delete project</Button>}
+        />
+      ) : null}
     </aside>
   )
 }

@@ -4,6 +4,8 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { VisualBanner } from '@/components/visual/VisualBanner'
 import { ActiveWorkoutSession } from './ActiveWorkoutSession'
 import { useActiveWorkoutSession, useDeleteWorkoutExercise, useDeleteWorkoutRoutine, useStartWorkoutSession, useWorkoutRoutines } from './queries'
@@ -13,7 +15,7 @@ import { WorkoutHistory } from './WorkoutHistory'
 import { WorkoutRoutineEditor } from './WorkoutRoutineEditor'
 
 const RoutineCard = ({ routine }: { routine: WorkoutRoutine }) => (
-  <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className={`workout-routine-card workout-routine-card--${routine.colorToken}`}>
+  <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className="workout-routine-card workout-routine-card--slate">
     <Link className="workout-routine-card__link" to={`/workout/routine/${routine.id}`}>
       <span className="workout-routine-card__icon"><Dumbbell aria-hidden /></span>
       <span><span className="eyebrow">{routine.exercises.length} exercises</span><strong>{routine.name}</strong><small>{routine.description ?? 'Ready for exercise planning.'}</small></span>
@@ -29,7 +31,6 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
   const startSession = useStartWorkoutSession()
 
   const removeRoutine = async () => {
-    if (!window.confirm(`Delete “${routine.name}” and all of its exercises?`)) return
     try {
       await deleteRoutine.mutateAsync(routine.id)
       await navigate('/workout/routines')
@@ -54,10 +55,17 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
         <span>
           <Button disabled={routine.exercises.length === 0} isLoading={startSession.isPending} onClick={() => void startWorkout()}><Play aria-hidden />Start workout</Button>
           <Button variant="secondary" onClick={onEdit}><Pencil aria-hidden />Edit</Button>
-          <Button variant="quiet" isLoading={deleteRoutine.isPending} onClick={() => void removeRoutine()}><Trash2 aria-hidden />Delete</Button>
+          <ConfirmDialog
+            actionLabel="Delete routine"
+            description="This routine and its planned exercises will be permanently removed. Completed workout history will remain available."
+            onConfirm={removeRoutine}
+            pending={deleteRoutine.isPending}
+            title={`Delete “${routine.name}”?`}
+            trigger={<Button variant="quiet" disabled={deleteRoutine.isPending}><Trash2 aria-hidden />Delete</Button>}
+          />
         </span>
       </div>
-      <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className={`workout-detail__hero workout-detail__hero--${routine.colorToken}`}>
+      <VisualBanner assetId={routine.bannerAsset} monochrome={routine.bannerMonochrome} className="workout-detail__hero workout-detail__hero--slate">
         <span className="eyebrow">Workout routine</span><h2>{routine.name}</h2>
         <p>{routine.description ?? 'Add exercises below to turn this routine into a repeatable plan.'}</p>
         <dl><div><dt>Exercises</dt><dd>{routine.exercises.length}</dd></div><div><dt>Planned sets</dt><dd>{routine.exercises.reduce((total, exercise) => total + exercise.targetSets, 0)}</dd></div></dl>
@@ -70,7 +78,14 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
               <span className="workout-exercise-list__position">{String(index + 1).padStart(2, '0')}</span>
               <span><strong>{exercise.exerciseName}</strong><small>{exercise.muscleGroup ?? 'Uncategorized'} · {exercise.targetSets} × {exercise.targetRepsMin}–{exercise.targetRepsMax}</small>{exercise.notes ? <p>{exercise.notes}</p> : null}</span>
               <span className="workout-exercise-list__rest"><Timer aria-hidden />{exercise.restSeconds}s</span>
-              <button type="button" aria-label={`Remove ${exercise.exerciseName}`} disabled={deleteExercise.isPending} onClick={() => deleteExercise.mutate(exercise.id)}><Trash2 aria-hidden /></button>
+              <ConfirmDialog
+                actionLabel="Remove exercise"
+                description="This exercise and its planned sets will be permanently removed from the routine."
+                onConfirm={() => deleteExercise.mutate(exercise.id)}
+                pending={deleteExercise.isPending}
+                title={`Remove “${exercise.exerciseName}”?`}
+                trigger={<button type="button" aria-label={`Remove ${exercise.exerciseName}`} disabled={deleteExercise.isPending}><Trash2 aria-hidden /></button>}
+              />
             </li>
           ))}</ol>
         )}
@@ -98,7 +113,7 @@ export default function WorkoutPage() {
   return (
     <div className="workout-page">
       <PageHeader eyebrow="Workout · production" title={activeView ? (activeSession.data?.routineName ?? 'Active workout') : selectedRoutine?.name ?? (historyView ? 'Workout history' : 'Train with context.')} description={activeView ? 'Sets are saved to Supabase as you complete them.' : historyView ? 'Completed sessions, volume, estimated strength and personal records.' : selectedRoutine ? 'Build the repeatable plan, then start a durable workout session.' : 'Routines and active training are stored in Supabase and isolated by your account.'} actions={!routineId && !historyView && !activeView ? <Button onClick={() => setEditorRoutine('new')}><Plus aria-hidden />New routine</Button> : undefined} />
-      <nav className={`segmented-control segmented-control--${activeSession.data ? 'three' : 'two'} workout-view-switch`} aria-label="Workout views" data-active-index={workoutViewIndex}><Link className={!historyView && !activeView ? 'is-active' : ''} to="/workout/routines">Routines</Link>{activeSession.data ? <Link className={activeView ? 'is-active' : ''} to="/workout/session/active">Active</Link> : null}<Link className={historyView ? 'is-active' : ''} to="/workout/history">History</Link></nav>
+      <SegmentedControl activeIndex={workoutViewIndex} className="workout-view-switch" label="Workout views" name={activeSession.data ? 'workout-view-three' : 'workout-view-two'} options={activeSession.data ? 3 : 2}><Link className={!historyView && !activeView ? 'is-active' : ''} to="/workout/routines">Routines</Link>{activeSession.data ? <Link className={activeView ? 'is-active' : ''} to="/workout/session/active">Active</Link> : null}<Link className={historyView ? 'is-active' : ''} to="/workout/history">History</Link></SegmentedControl>
       {!activeView && activeSession.data ? <Link className="workout-active-banner" to="/workout/session/active"><span><span className="eyebrow">Workout in progress</span><strong>{activeSession.data.routineName}</strong></span><span>Continue<ChevronRight aria-hidden /></span></Link> : null}
       {activeView && activeSession.isLoading ? <div className="workout-state" role="status">Recovering your active workout…</div> : null}
       {activeView && activeSession.error ? <div className="workout-state workout-state--error"><strong>Active workout could not be loaded.</strong><p>{activeSession.error.message}</p><Button variant="secondary" onClick={() => void activeSession.refetch()}>Try again</Button></div> : null}
