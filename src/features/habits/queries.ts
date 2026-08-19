@@ -5,7 +5,7 @@ import { useProfile } from '@/features/settings/profileQueries'
 import { resolveTimeZone } from '@/lib/dates'
 import { useHabitsRepository } from './habitsRepositoryContext'
 import { habitQueryKeys, type HabitLogRange } from './repository'
-import type { Habit, HabitInput, HabitLogInput, HabitProjectInput } from './types'
+import type { Habit, HabitInput, HabitLog, HabitLogInput, HabitProjectInput } from './types'
 
 const useHabitIdentity = () => {
   const { session } = useAuth()
@@ -173,12 +173,47 @@ export const useUpsertHabitLog = () => {
   const repository = useHabitsRepository()
   const queryClient = useQueryClient()
   const { userId } = useHabitIdentity()
-  return useMutation({
+  return useMutation<HabitLog, Error, HabitLogInput, { snapshots: Array<[QueryKey, HabitLog[] | undefined]> }>({
     mutationKey: ['habits', 'progress', userId],
     mutationFn: (input: HabitLogInput) => repository.upsertLog(userId, input),
-    onSuccess: () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
-      queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
-    ]),
+    onMutate: async (input) => {
+      const logsKey = habitQueryKeys.logs(userId)
+      await queryClient.cancelQueries({ queryKey: logsKey })
+      const snapshots = queryClient.getQueriesData<HabitLog[]>({ queryKey: logsKey })
+      const timestamp = new Date().toISOString()
+      for (const [queryKey, logs] of snapshots) {
+        const range = queryKey[3] as HabitLogRange | undefined
+        if (!range || input.localDate < range.dateStart || input.localDate > range.dateEnd) continue
+        if (range.habitId && range.habitId !== input.habitId) continue
+        const current = logs?.find((log) => log.habitId === input.habitId && log.localDate === input.localDate)
+        const optimistic: HabitLog = {
+          id: current?.id ?? `optimistic-${input.habitId}-${input.localDate}`,
+          userId,
+          ...input,
+          source: 'manual',
+          sourceId: null,
+          createdAt: current?.createdAt ?? timestamp,
+          updatedAt: timestamp,
+        }
+        queryClient.setQueryData<HabitLog[]>(queryKey, [
+          ...(logs ?? []).filter((log) => log.habitId !== input.habitId || log.localDate !== input.localDate),
+          optimistic,
+        ])
+      }
+      return { snapshots }
+    },
+    onError: (_error, _input, context) => {
+      for (const [queryKey, logs] of context?.snapshots ?? []) queryClient.setQueryData(queryKey, logs)
+    },
+    onSuccess: (saved) => {
+      for (const [queryKey, logs] of queryClient.getQueriesData<HabitLog[]>({ queryKey: habitQueryKeys.logs(userId) })) {
+        if (!logs?.some((log) => log.habitId === saved.habitId && log.localDate === saved.localDate)) continue
+        queryClient.setQueryData<HabitLog[]>(queryKey, logs.map((log) => (
+          log.habitId === saved.habitId && log.localDate === saved.localDate ? saved : log
+        )))
+      }
+      void queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] })
+    },
+    onSettled: () => { void queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }) },
   })
 }

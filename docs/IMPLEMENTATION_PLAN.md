@@ -128,7 +128,7 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 - [x] Redesign the Calendar month workspace with a compact grid, functional event search and real color/category/description-tag filters.
 - [x] Add an elastic active indicator to the mobile primary navigation and keep Calendar filter popovers anchored to their controls.
 - [ ] Full visual and accessibility audit.
-- [ ] Performance, lazy-loading and reduced-connection checks.
+- [~] Performance, lazy-loading and reduced-connection checks (route intent/idle preloading, cache retention and non-blocking mutation reconciliation implemented; network throttling audit pending).
 - [ ] PWA install/update/offline verification.
 - [ ] Supabase Security/Performance Advisor review.
 - [ ] Complete E2E suite and production documentation.
@@ -139,6 +139,14 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 Apply migrations `202608180012`, `202608190001`, `202608190002` and `202608190003`; verify Habit award/reversal, Workout history deletion, Calendar preferences, profile-photo Storage policies, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the four listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the first data-flow and perceived-performance upgrade on 2026-08-19:
+
+- fixed Rewards store cards at narrow widths with a strict two-column mobile grid, contained multi-line actions and a clearer send/receive conversion preview;
+- centralized lazy route imports, warmed feature chunks after the initial route and preloaded destinations from navigation intent;
+- increased safe query reuse, retained Calendar data during range transitions and added a subtle global refresh/save indicator;
+- made Task writes reconcile cached lists immediately, made Habit progress optimistic with rollback, and moved Task/Habit/Calendar refetches into the background after durable writes;
+- direct browser QA was unavailable because no browser instance was connected; automated component, type and production checks remain required before handoff.
 
 Completed Calendar drag interaction and mobile navigation/Rewards repair on 2026-08-19:
 

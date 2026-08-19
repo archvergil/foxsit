@@ -2,6 +2,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query'
 
@@ -41,6 +42,12 @@ const updateCachedList = (tasks: Task[] | undefined, nextTask: Task, queryKey: Q
   return [...withoutTask, nextTask].sort(
     (left, right) => left.position - right.position || left.createdAt.localeCompare(right.createdAt),
   )
+}
+
+const syncTaskToCachedLists = (queryClient: QueryClient, userId: string, task: Task) => {
+  for (const [queryKey, tasks] of queryClient.getQueriesData<Task[]>({ queryKey: taskQueryKeys.lists(userId) })) {
+    queryClient.setQueryData<Task[]>(queryKey, updateCachedList(tasks, task, queryKey))
+  }
 }
 
 export const useTaskDateContext = () => {
@@ -117,7 +124,10 @@ export const useCreateTask = () => {
   return useMutation({
     mutationKey: ['tasks', 'create', userId],
     mutationFn: (input: CreateTaskInput) => repository.createTask(userId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }),
+    onSuccess: (task) => {
+      syncTaskToCachedLists(queryClient, userId, task)
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) })
+    },
   })
 }
 
@@ -129,7 +139,10 @@ export const useUpdateTask = () => {
     mutationKey: ['tasks', 'update', userId],
     mutationFn: ({ taskId, input }: { taskId: string; input: UpdateTaskInput }) =>
       repository.updateTask(userId, taskId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }),
+    onSuccess: (task) => {
+      syncTaskToCachedLists(queryClient, userId, task)
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) })
+    },
   })
 }
 
@@ -140,11 +153,12 @@ export const useDeleteTask = () => {
   return useMutation({
     mutationKey: ['tasks', 'delete', userId],
     mutationFn: (taskId: string) => repository.deleteTask(userId, taskId),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }),
-        queryClient.invalidateQueries({ queryKey: ['focus'] }),
-      ])
+    onSuccess: (_data, taskId) => {
+      for (const [queryKey, tasks] of queryClient.getQueriesData<Task[]>({ queryKey: taskQueryKeys.lists(userId) })) {
+        queryClient.setQueryData<Task[]>(queryKey, tasks?.filter((task) => task.id !== taskId))
+      }
+      void queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) })
+      void queryClient.invalidateQueries({ queryKey: ['focus'] })
     },
   })
 }
@@ -183,7 +197,7 @@ export const useReorderTasks = () => {
     onError: (_error, _variables, context) => {
       for (const [queryKey, tasks] of context?.snapshots ?? []) queryClient.setQueryData(queryKey, tasks)
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }),
+    onSettled: () => { void queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }) },
   })
 }
 
@@ -297,13 +311,7 @@ export const useSetTaskStatus = () => {
         queryClient.setQueryData(queryKey, tasks)
       }
     },
-    onSuccess: (task) => {
-      for (const [queryKey, tasks] of queryClient.getQueriesData<Task[]>({
-        queryKey: taskQueryKeys.lists(userId),
-      })) {
-        queryClient.setQueryData<Task[]>(queryKey, updateCachedList(tasks, task, queryKey))
-      }
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }),
+    onSuccess: (task) => syncTaskToCachedLists(queryClient, userId, task),
+    onSettled: () => { void queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }) },
   })
 }

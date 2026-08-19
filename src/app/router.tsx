@@ -5,19 +5,20 @@ import { AppLoading } from '@/components/feedback/AppLoading'
 import { RouteErrorPage } from '@/components/feedback/RouteErrorPage'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/features/auth/authContext'
+import { routeModules } from './routeModules'
 
-const LoginPage = lazy(() => import('@/features/auth/LoginPage'))
-const SignupPage = lazy(() => import('@/features/auth/SignupPage'))
-const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage'))
-const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'))
-const TodayPage = lazy(() => import('@/features/home/TodayPage'))
-const CalendarPage = lazy(() => import('@/features/calendar/CalendarPage'))
-const TasksPage = lazy(() => import('@/features/tasks/TasksPage'))
-const FocusPage = lazy(() => import('@/features/focus/FocusPage'))
-const HabitsPage = lazy(() => import('@/features/habits/HabitsPage'))
-const WorkoutPage = lazy(() => import('@/features/workout/WorkoutPage'))
-const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'))
-const RewardsPage = lazy(() => import('@/features/rewards/RewardsPage'))
+const LoginPage = lazy(routeModules.LoginPage)
+const SignupPage = lazy(routeModules.SignupPage)
+const ForgotPasswordPage = lazy(routeModules.ForgotPasswordPage)
+const ResetPasswordPage = lazy(routeModules.ResetPasswordPage)
+const TodayPage = lazy(routeModules.TodayPage)
+const CalendarPage = lazy(routeModules.CalendarPage)
+const TasksPage = lazy(routeModules.TasksPage)
+const FocusPage = lazy(routeModules.FocusPage)
+const HabitsPage = lazy(routeModules.HabitsPage)
+const WorkoutPage = lazy(routeModules.WorkoutPage)
+const SettingsPage = lazy(routeModules.SettingsPage)
+const RewardsPage = lazy(routeModules.RewardsPage)
 
 function SuspenseLayout() {
   return <Suspense fallback={<AppLoading />}><Outlet /></Suspense>

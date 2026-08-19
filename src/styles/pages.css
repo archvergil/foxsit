@@ -386,16 +386,20 @@
 .reward-conversion__form > *, .reward-store__grid > * { min-width: 0; }
 .reward-conversion__form label { display: grid; gap: var(--space-2); font-size: var(--text-sm); font-weight: 600; }
 .reward-conversion__form select, .reward-conversion__form input { width: 100%; min-width: 0; min-height: var(--touch-target); padding: 0 var(--space-3); color: var(--ink); background: var(--canvas-raised); border: 1px solid var(--border-strong); border-radius: var(--radius-md); }
-.reward-conversion__result { min-height: var(--touch-target); display: grid; grid-template-columns: max-content minmax(5rem, 1fr); gap: .35rem var(--space-4); align-content: center; padding: var(--space-3) var(--space-4); background: var(--canvas-raised); border: 1px solid var(--border); border-radius: var(--radius-md); }
-.reward-conversion__result strong { text-align: right; font-family: var(--font-mono); }
-.reward-conversion__result small { color: var(--ink-faint); }
+.reward-conversion__result { min-height: 4.75rem; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--space-2); padding: var(--space-2); background: var(--canvas-raised); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.reward-conversion__result > span { min-width: 0; display: grid; gap: .2rem; padding: var(--space-2) var(--space-3); }
+.reward-conversion__result > svg { width: 1rem; color: var(--ink-faint); }
+.reward-conversion__result strong { overflow: hidden; font-family: var(--font-mono); font-size: var(--text-sm); text-overflow: ellipsis; white-space: nowrap; }
+.reward-conversion__result small { color: var(--ink-faint); font-size: .68rem; }
+.reward-conversion__result-receive { background: color-mix(in srgb, var(--sand) 24%, transparent); border-radius: var(--radius-sm); }
 .reward-store__notice { margin: calc(var(--space-3) * -1) 0 0; color: var(--ink-soft); font-size: var(--text-sm); }
 .reward-store__grid { display: grid; grid-template-columns: repeat(5, minmax(9rem, 1fr)); gap: var(--space-3); }
 .reward-store__grid article { min-height: 11rem; display: grid; align-content: start; padding: var(--space-4); background: var(--canvas-raised); border: 1px solid var(--border); border-radius: var(--radius-lg); }
 .reward-store__grid article > span { color: var(--ink-faint); font-size: var(--text-xs); }
 .reward-store__grid article > strong { margin-top: var(--space-2); font: 600 var(--text-xl)/1.1 var(--font-mono); }
 .reward-store__grid article > p { margin: var(--space-2) 0 var(--space-4); color: var(--ink-soft); }
-.reward-store__grid article .button { margin-top: auto; width: 100%; font-size: var(--text-xs); }
+.reward-store__grid article .button { min-width: 0; margin-top: auto; width: 100%; padding-inline: var(--space-2); overflow: hidden; font-size: .68rem; line-height: 1.15; }
+.reward-store__grid article .button__label { max-width: 100%; white-space: normal; }
 .reward-store--gold { border-color: color-mix(in srgb, var(--sand) 55%, var(--border)); }
 .reward-history__list { display: grid; }
 .reward-history__list article { min-height: 4.25rem; display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-3); border-top: 1px solid var(--border); }

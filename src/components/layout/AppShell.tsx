@@ -1,10 +1,13 @@
 import { LogOut, Settings2 } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 
 import { OnlineStatus } from '@/components/feedback/OnlineStatus'
+import { DataActivityIndicator } from '@/components/feedback/DataActivityIndicator'
 import { BrandMark } from '@/components/ui/BrandMark'
 import { APP_NAME } from '@/config/product'
 import { backendEnvironment } from '@/config/backend'
+import { preloadAuthenticatedRoutes, preloadRoute } from '@/app/routeModules'
 import { useAuth } from '@/features/auth/authContext'
 import { ActiveFocusPlayer } from '@/features/focus/ActiveFocusPlayer'
 import { useProfile } from '@/features/settings/profileQueries'
@@ -21,6 +24,11 @@ export function AppShell() {
   const label = userLabel(session?.user.email, profile.data?.display_name ?? session?.user.user_metadata.display_name)
   const initial = label.charAt(0).toUpperCase()
   const avatarUrl = profile.data?.avatar_url
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void preloadAuthenticatedRoutes(), 1_500)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   return (
     <div className="app-shell">
@@ -51,6 +59,7 @@ export function AppShell() {
       </aside>
 
       <div className="app-shell__body">
+        <DataActivityIndicator />
         <header className="mobile-header">
           <div className="brand-lockup">
             <span className="brand-lockup__mark">
@@ -60,7 +69,7 @@ export function AppShell() {
           </div>
           <span className="mobile-header__account">
             <span className="mobile-header__avatar" aria-label={`Signed in as ${label}`}>{avatarUrl ? <img src={avatarUrl} alt="" /> : initial}</span>
-            <Link className="mobile-header__settings" to="/settings" aria-label="Open settings"><Settings2 aria-hidden /></Link>
+            <Link className="mobile-header__settings" to="/settings" aria-label="Open settings" onPointerDown={() => preloadRoute('/settings')}><Settings2 aria-hidden /></Link>
           </span>
         </header>
         <OnlineStatus />

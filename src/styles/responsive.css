@@ -67,7 +67,7 @@
   .reward-progress-grid article:last-child { grid-column: 1 / -1; }
   .reward-conversion__form { grid-template-columns: 1fr 8rem; }
   .reward-conversion__result, .reward-conversion__form .button { grid-column: 1 / -1; }
-  .reward-store__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .reward-store__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
   .auth-layout {
     grid-template-columns: 1fr;
     padding: 0;
@@ -91,6 +91,8 @@
   .app-shell {
     display: block;
   }
+
+  .data-activity { left: 0; }
 
   .sidebar {
     display: none;
@@ -302,7 +304,8 @@
   .reward-balances, .reward-progress-grid { grid-template-columns: 1fr; }
   .reward-progress-grid article:last-child { grid-column: auto; }
   .reward-balance { min-height: 10rem; }
-  .reward-store__grid { grid-template-columns: 1fr; }
+  .reward-store__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  .reward-store__grid article { min-height: 10.25rem; padding: var(--space-3); }
   .reward-conversion__form { grid-template-columns: 1fr; }
   .reward-conversion__result, .reward-conversion__form .button { grid-column: auto; }
   .today-module-grid {

@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Check, CircleDollarSign, Coins, History, ShoppingBag, X } from 'lucide-react'
+import { ArrowRight, ArrowRightLeft, Check, CircleDollarSign, Coins, History, ShoppingBag, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -120,9 +120,10 @@ export default function RewardsPage() {
             <option value="gold_to_silver">1 Gold → {data.goldToSilver} Silver</option>
           </select></label>
           <label><span>Units</span><input type="number" min="1" step="1" value={units} onChange={(event) => setUnits(Math.max(1, Math.floor(Number(event.target.value) || 1)))} /></label>
-          <div className="reward-conversion__result">
-            <small>You send</small><strong>{direction === 'silver_to_gold' ? `${units * data.silverPerGold} Silver` : `${units} Gold`}</strong>
-            <small>You receive</small><strong>{direction === 'silver_to_gold' ? `${units} Gold` : `${units * data.goldToSilver} Silver`}</strong>
+          <div className="reward-conversion__result" aria-label="Conversion preview">
+            <span><small>You send</small><strong>{direction === 'silver_to_gold' ? `${units * data.silverPerGold} Silver` : `${units} Gold`}</strong></span>
+            <ArrowRight aria-hidden />
+            <span className="reward-conversion__result-receive"><small>You receive</small><strong>{direction === 'silver_to_gold' ? `${units} Gold` : `${units * data.goldToSilver} Silver`}</strong></span>
           </div>
           <Button disabled={!conversion?.valid || conversionsRemaining === 0} onClick={() => setConfirmation({ kind: 'convert', direction, units })}>Review conversion</Button>
         </div>
@@ -138,7 +139,7 @@ export default function RewardsPage() {
               return <article key={item.sku}>
                 <span>Credit request</span><strong>{brl.format(item.creditCents / 100)}</strong>
                 <p>{item.coins.toLocaleString('en')} {currency === 'silver' ? 'Silver' : 'Gold'}</p>
-                <Button variant="secondary" disabled={balance < item.coins} onClick={() => setConfirmation({ kind: 'redeem', item })}>{balance < item.coins ? 'Insufficient balance' : 'Review request'}</Button>
+                <Button className="reward-store__action" variant="secondary" disabled={balance < item.coins} onClick={() => setConfirmation({ kind: 'redeem', item })}>{balance < item.coins ? 'Not enough coins' : 'Review request'}</Button>
               </article>
             })}
           </div>
