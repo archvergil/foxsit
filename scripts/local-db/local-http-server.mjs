@@ -94,6 +94,7 @@ export const createLocalHttpServer = ({
         const taskChecklistId = routeId(path, '/v1/tasks', '/checklist')
         const checklistId = routeId(path, '/v1/checklist')
         const calendarEventId = routeId(path, '/v1/calendar-events')
+        const habitProjectId = routeId(path, '/v1/habit-projects')
         const habitId = routeId(path, '/v1/habits')
         const habitHistoryId = routeId(path, '/v1/habits', '/history')
 
@@ -134,6 +135,18 @@ export const createLocalHttpServer = ({
         }
         else if (method === 'GET' && path === '/v1/habits') {
           result = await data.listHabits(user.id, url.searchParams.get('includeInactive') === 'true')
+        }
+        else if (method === 'GET' && path === '/v1/habit-projects') {
+          result = await data.listHabitProjects(user.id)
+        }
+        else if (method === 'POST' && path === '/v1/habit-projects') {
+          result = await data.createHabitProject(user.id, await readJson(request))
+        }
+        else if (method === 'PATCH' && habitProjectId) {
+          result = await data.updateHabitProject(user.id, habitProjectId, await readJson(request))
+        }
+        else if (method === 'DELETE' && habitProjectId) {
+          result = await data.deleteHabitProject(user.id, habitProjectId)
         }
         else if (method === 'POST' && path === '/v1/habits') {
           result = await data.createHabit(user.id, await readJson(request))

@@ -60,7 +60,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Default every new task's scheduled date to the user's local today.
 - [x] Persisted timestamp-based Pomodoro store and mini player.
 - [x] Durable focus session history and task integration.
-- [~] Unit, component and E2E coverage for the daily flow (unit/component complete; authenticated E2E needs the loopback Workout/Rewards repository gap and stale Habits assertions resolved before deployed Supabase E2E).
+- [~] Unit, component and E2E coverage for the daily flow (the local mobile/tablet/desktop matrix is current; authenticated Supabase Workout/Rewards E2E remains pending).
 
 ## Phase 4 — Calendar
 
@@ -137,9 +137,20 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003` and `202608190004`; verify Habit award/reversal, Workout history/routine deletion, Calendar preferences, profile-photo Storage policies, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the five listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005` and `202608190006`; verify Habit award/reversal and expanded-icon creation, Workout history/routine deletion, Calendar preferences, profile-photo Storage policies, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the seven listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the Habit creation and cross-site reliability audit on 2026-08-19:
+
+- traced intermittent Habit creation failures to schema drift: the editor exposed 25 Lucide icons while PostgreSQL accepted only the original six;
+- added migration `202608190005` with a bounded Lucide-slug contract, a safe renderer fallback for unknown stored icons and a database regression that inserts every editor-supported icon;
+- made Habit and Habit-project writes reconcile cached lists immediately after durable persistence, with background refresh and actionable database/network/session errors;
+- completed local Habit-project parity, including project routes plus `project_id`, custom color and banner persistence;
+- made Today tolerate an intentionally unavailable local Workout repository without crashing the authenticated shell;
+- added migration `202608190006` so the immutable Rewards ledger still rejects ordinary changes while permitting an authorized full-account cascade;
+- restored accessible mobile Habit move controls and added a dedicated iPad Playwright project;
+- `npm audit --omit=dev` reported zero vulnerabilities; focused component/database tests and the complete six-flow iPad E2E suite passed.
 
 Completed the iPad visual-banner and Workout deletion repair on 2026-08-19:
 

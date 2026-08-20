@@ -104,6 +104,8 @@ const habitInput = z.object({
   description: z.string().trim().max(10_000).nullable(),
   icon: z.string().trim().min(1).max(80),
   colorToken: color,
+  customColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
+  projectId: uuid.nullable().optional(),
   scheduleType: z.enum(['daily', 'weekdays']),
   weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).nullable(),
   targetCount: z.number().int().min(1).max(10_000),
@@ -117,6 +119,15 @@ const habitInput = z.object({
   if (habit.scheduleType === 'weekdays' && (!habit.weekdays || new Set(habit.weekdays).size !== habit.weekdays.length)) {
     context.addIssue({ code: 'custom', message: 'Choose unique weekdays.' })
   }
+})
+const habitProjectInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  icon: z.string().trim().min(1).max(80).nullable(),
+  colorToken: color,
+  customColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable(),
+  bannerAsset: z.string().regex(/^habits_([1-9]|1[01])[.]gif$/).nullable(),
+  bannerMonochrome: z.boolean(),
+  position: z.number().nonnegative(),
 })
 const habitLogInput = z.object({
   habitId: uuid,
@@ -213,6 +224,8 @@ const mapHabit = (row) => ({
   description: row.description,
   icon: row.icon,
   colorToken: row.color_token,
+  customColor: row.custom_color,
+  projectId: row.project_id,
   scheduleType: row.schedule_type,
   weekdays: row.weekdays,
   targetCount: row.target_count,
@@ -220,6 +233,20 @@ const mapHabit = (row) => ({
   position: number(row.position),
   isActive: row.is_active,
   archivedAt: iso(row.archived_at),
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
+})
+
+const mapHabitProject = (row) => ({
+  id: row.id,
+  userId: row.user_id,
+  name: row.name,
+  icon: row.icon,
+  colorToken: row.color_token,
+  customColor: row.custom_color,
+  bannerAsset: row.banner_asset,
+  bannerMonochrome: row.banner_monochrome,
+  position: number(row.position),
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
 })
@@ -578,14 +605,56 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
     return result.rows.map(mapHabit)
   }),
 
+  listHabitProjects: (userId) => withAuthenticatedUser(userId, async () => {
+    const result = await database.query(
+      'select * from public.habit_projects where user_id = $1 order by position, created_at',
+      [userId],
+    )
+    return result.rows.map(mapHabitProject)
+  }),
+
+  createHabitProject: (userId, input) => withAuthenticatedUser(userId, async () => {
+    const project = habitProjectInput.parse(input)
+    const result = await database.query(
+      `insert into public.habit_projects
+        (user_id, name, icon, color_token, custom_color, banner_asset, banner_monochrome, position)
+       values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
+      [userId, project.name, project.icon, project.colorToken, project.customColor,
+        project.bannerAsset, project.bannerMonochrome, project.position],
+    )
+    return mapHabitProject(one(result, 'create the habit project'))
+  }),
+
+  updateHabitProject: (userId, projectId, input) => withAuthenticatedUser(userId, async () => {
+    const project = habitProjectInput.parse(input)
+    const result = await database.query(
+      `update public.habit_projects
+       set name = $1, icon = $2, color_token = $3, custom_color = $4,
+           banner_asset = $5, banner_monochrome = $6, position = $7
+       where id = $8 and user_id = $9 returning *`,
+      [project.name, project.icon, project.colorToken, project.customColor, project.bannerAsset,
+        project.bannerMonochrome, project.position, projectId, userId],
+    )
+    return mapHabitProject(one(result, 'update the habit project'))
+  }),
+
+  deleteHabitProject: (userId, projectId) => withAuthenticatedUser(userId, async () => {
+    one(await database.query(
+      'delete from public.habit_projects where id = $1 and user_id = $2 returning id',
+      [projectId, userId],
+    ), 'delete the habit project')
+  }),
+
   createHabit: (userId, input) => withAuthenticatedUser(userId, async () => {
     const habit = habitInput.parse(input)
     const result = await database.query(
       `insert into public.habits
-        (user_id, title, description, icon, color_token, schedule_type, weekdays, target_count, unit, position, is_active)
-       values ($1, $2, $3, $4, $5, $6, $7::smallint[], $8, $9, $10, $11) returning *`,
-      [userId, habit.title, habit.description, habit.icon, habit.colorToken, habit.scheduleType,
-        habit.weekdays, habit.targetCount, habit.unit, habit.position, habit.isActive],
+        (user_id, title, description, icon, color_token, custom_color, project_id,
+         schedule_type, weekdays, target_count, unit, position, is_active)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9::smallint[], $10, $11, $12, $13) returning *`,
+      [userId, habit.title, habit.description, habit.icon, habit.colorToken, habit.customColor ?? null,
+        habit.projectId ?? null, habit.scheduleType, habit.weekdays, habit.targetCount, habit.unit,
+        habit.position, habit.isActive],
     )
     return mapHabit(one(result, 'create the habit'))
   }),
@@ -594,11 +663,13 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
     const habit = habitInput.parse(input)
     const result = await database.query(
       `update public.habits
-       set title = $1, description = $2, icon = $3, color_token = $4, schedule_type = $5,
-           weekdays = $6::smallint[], target_count = $7, unit = $8, position = $9, is_active = $10
-       where id = $11 and user_id = $12 returning *`,
-      [habit.title, habit.description, habit.icon, habit.colorToken, habit.scheduleType,
-        habit.weekdays, habit.targetCount, habit.unit, habit.position, habit.isActive, habitId, userId],
+       set title = $1, description = $2, icon = $3, color_token = $4, custom_color = $5,
+           project_id = $6, schedule_type = $7, weekdays = $8::smallint[], target_count = $9,
+           unit = $10, position = $11, is_active = $12
+       where id = $13 and user_id = $14 returning *`,
+      [habit.title, habit.description, habit.icon, habit.colorToken, habit.customColor ?? null,
+        habit.projectId ?? null, habit.scheduleType, habit.weekdays, habit.targetCount, habit.unit,
+        habit.position, habit.isActive, habitId, userId],
     )
     return mapHabit(one(result, 'update the habit'))
   }),

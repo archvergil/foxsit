@@ -48,7 +48,7 @@ export const useCreateHabitProject = () => {
     onSuccess: (project) => {
       queryClient.setQueryData<HabitProject[]>(habitQueryKeys.projects(userId), (projects) =>
         [...(projects ?? []), project].sort((left, right) => left.position - right.position || left.createdAt.localeCompare(right.createdAt)))
-      return queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) })
+      void queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) })
     },
   })
 }
@@ -63,7 +63,7 @@ export const useUpdateHabitProject = () => {
     onSuccess: (project) => {
       queryClient.setQueryData<HabitProject[]>(habitQueryKeys.projects(userId), (projects) =>
         projects?.map((item) => item.id === project.id ? project : item))
-      return queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) })
+      void queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) })
     },
   })
 }
@@ -75,8 +75,14 @@ export const useDeleteHabitProject = () => {
   return useMutation({
     mutationKey: ['habits', 'projects', 'delete', userId],
     mutationFn: (projectId: string) => repository.deleteProject(userId, projectId),
-    onSuccess: async () => {
-      await Promise.all([
+    onSuccess: (_result, projectId) => {
+      queryClient.setQueryData<HabitProject[]>(habitQueryKeys.projects(userId), (projects) =>
+        projects?.filter(({ id }) => id !== projectId))
+      for (const [queryKey, habits] of queryClient.getQueriesData<Habit[]>({ queryKey: habitQueryKeys.lists(userId) })) {
+        queryClient.setQueryData<Habit[]>(queryKey, habits?.map((habit) =>
+          habit.projectId === projectId ? { ...habit, projectId: null } : habit))
+      }
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: habitQueryKeys.projects(userId) }),
         queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) }),
       ])
@@ -101,7 +107,15 @@ export const useCreateHabit = () => {
   return useMutation({
     mutationKey: ['habits', 'create', userId],
     mutationFn: (input: HabitInput) => repository.createHabit(userId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) }),
+    onSuccess: (created) => {
+      for (const [queryKey, habits] of queryClient.getQueriesData<Habit[]>({ queryKey: habitQueryKeys.lists(userId) })) {
+        const includeInactive = queryKey[3] === true
+        if (!created.isActive && !includeInactive) continue
+        queryClient.setQueryData<Habit[]>(queryKey, [...(habits ?? []).filter(({ id }) => id !== created.id), created]
+          .sort((left, right) => left.position - right.position || left.createdAt.localeCompare(right.createdAt)))
+      }
+      void queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) })
+    },
   })
 }
 
@@ -113,7 +127,16 @@ export const useUpdateHabit = () => {
     mutationKey: ['habits', 'update', userId],
     mutationFn: ({ habitId, input }: { habitId: string; input: HabitInput }) =>
       repository.updateHabit(userId, habitId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) }),
+    onSuccess: (updated) => {
+      for (const [queryKey, habits] of queryClient.getQueriesData<Habit[]>({ queryKey: habitQueryKeys.lists(userId) })) {
+        const includeInactive = queryKey[3] === true
+        const next = (habits ?? []).filter(({ id }) => id !== updated.id)
+        if (updated.isActive || includeInactive) next.push(updated)
+        queryClient.setQueryData<Habit[]>(queryKey, next.sort((left, right) =>
+          left.position - right.position || left.createdAt.localeCompare(right.createdAt)))
+      }
+      void queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) })
+    },
   })
 }
 
@@ -124,11 +147,16 @@ export const useDeleteHabit = () => {
   return useMutation({
     mutationKey: ['habits', 'delete', userId],
     mutationFn: (habitId: string) => repository.deleteHabit(userId, habitId),
-    onSuccess: () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) }),
-      queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
-      queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
-    ]),
+    onSuccess: (_result, habitId) => {
+      for (const [queryKey, habits] of queryClient.getQueriesData<Habit[]>({ queryKey: habitQueryKeys.lists(userId) })) {
+        queryClient.setQueryData<Habit[]>(queryKey, habits?.filter(({ id }) => id !== habitId))
+      }
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: habitQueryKeys.lists(userId) }),
+        queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
+        queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
+      ])
+    },
   })
 }
 
@@ -139,10 +167,12 @@ export const useClearHabitHistory = () => {
   return useMutation({
     mutationKey: ['habits', 'history', 'clear', userId],
     mutationFn: (habitId: string) => repository.clearHabitHistory(userId, habitId),
-    onSuccess: () => Promise.all([
-      queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
-      queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
-    ]),
+    onSuccess: () => {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: habitQueryKeys.logs(userId) }),
+        queryClient.invalidateQueries({ queryKey: ['rewards', 'dashboard', userId] }),
+      ])
+    },
   })
 }
 

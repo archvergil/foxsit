@@ -24,7 +24,7 @@ Local API: http://127.0.0.1:8787
 Database:  127.0.0.1:55432
 ```
 
-Create an account through `/signup`. The account, hashed password, session, profile, Calendar events, Tasks, Focus history, habits, archive boundaries and daily habit logs persist under `.local-data/pglite` across browser and server restarts. Habit Insights is derived from those local rows rather than seeded metrics. The active Pomodoro itself is timestamp-based local UI state, so it also survives a page reload without writing to the database every second. The interface labels the session as `Local data` so it cannot be confused with Supabase production data.
+Create an account through `/signup`. The account, hashed password, session, profile, Calendar events, Tasks, Focus history, Habit projects, habits, archive boundaries and daily habit logs persist under `.local-data/pglite` across browser and server restarts. Habit project assignment, custom colors and banner choices use the same production columns. Habit Insights is derived from those local rows rather than seeded metrics. The active Pomodoro itself is timestamp-based local UI state, so it also survives a page reload without writing to the database every second. The interface labels the session as `Local data` so it cannot be confused with Supabase production data.
 
 Local passwords are hashed with Node scrypt using a per-account random salt. Session tokens are random, stored hashed in the local database and accepted only by an HTTP server bound to `127.0.0.1`. This is still development infrastructure: do not reuse an important password.
 

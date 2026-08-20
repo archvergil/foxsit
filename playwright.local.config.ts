@@ -11,6 +11,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'local-mobile', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
+    { name: 'local-tablet', use: { ...devices['iPad Pro 11'], browserName: 'chromium' } },
     { name: 'local-desktop', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: [

@@ -24,7 +24,12 @@ test('creates Calendar events in month, week and day and restores their details'
     await page.getByRole('button', { name: 'New habit' }).click()
     const habitEditor = page.locator('.habit-editor')
     await habitEditor.getByRole('textbox', { name: 'Title' }).fill('Calendar overlay habit')
+    const habitResponsePromise = page.waitForResponse((response) => (
+      response.url().endsWith('/v1/habits') && response.request().method() === 'POST'
+    ))
     await habitEditor.getByRole('button', { name: 'Create habit' }).click()
+    const habitResponse = await habitResponsePromise
+    expect(habitResponse.ok(), await habitResponse.text()).toBeTruthy()
 
     await page.goto('/calendar')
     await page.locator('.calendar-day__number--today').click()
@@ -75,14 +80,10 @@ test('creates Calendar events in month, week and day and restores their details'
     await page.goto('/calendar/day/2026-08-17')
     await expect(page).toHaveURL(/\/calendar\/day\/2026-08-17$/)
     await expect(page.getByRole('heading', { name: 'Protect the day.' })).toBeVisible()
-    if (mobile) {
-      await page.locator('.calendar-agenda').getByRole('button', { name: 'Event' }).click()
-    } else {
-      await page.getByRole('button', { name: 'Create event on Monday, August 17, 2026 at 3 PM' }).click()
-    }
+    await page.getByRole('button', { name: 'Create event on Monday, August 17, 2026 at 3 PM' }).click()
     await page.getByRole('textbox', { name: 'Title' }).fill('Day block')
     await page.getByRole('button', { name: 'Create event', exact: true }).click()
-    const dayEvent = page.locator('.calendar-agenda-item').filter({ hasText: 'Day block' })
+    const dayEvent = page.getByRole('button', { name: 'Edit event Day block' })
     await expect(dayEvent).toBeVisible()
     await page.reload()
     await expect(dayEvent).toBeVisible()

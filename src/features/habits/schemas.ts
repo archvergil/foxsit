@@ -38,6 +38,7 @@ export const habitIconSchema = z.enum([
   'utensils',
   'wallet-cards',
 ])
+export const storedHabitIconSchema = habitIconSchema.catch('circle-check-big')
 const weekdaySchema = z.number().int().min(0).max(6)
 
 export const habitInputSchema = z.object({

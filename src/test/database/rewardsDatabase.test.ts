@@ -7,6 +7,7 @@ import { authenticateLocalUser, createLocalTestDatabase, createLocalUser, resetL
 
 const USER_A = 'a0000000-0000-4000-8000-000000000001'
 const USER_B = 'b0000000-0000-4000-8000-000000000002'
+const USER_DELETE = 'b0000000-0000-4000-8000-000000000003'
 
 describe('Rewards economy on local PGlite', () => {
   let database: PGlite | undefined
@@ -15,6 +16,7 @@ describe('Rewards economy on local PGlite', () => {
     database = await createLocalTestDatabase()
     await createLocalUser(database, { id: USER_A, email: 'rewards-a@local.test' })
     await createLocalUser(database, { id: USER_B, email: 'rewards-b@local.test' })
+    await createLocalUser(database, { id: USER_DELETE, email: 'rewards-delete@local.test' })
   }, 30_000)
 
   afterAll(async () => database?.close())
@@ -173,5 +175,28 @@ describe('Rewards economy on local PGlite', () => {
     } finally {
       await resetLocalRole(database!)
     }
+  })
+
+  it('keeps the ledger immutable while allowing full account deletion to cascade', async () => {
+    await database!.query(
+      'insert into public.reward_wallets(user_id,silver_balance) values($1,1)',
+      [USER_DELETE],
+    )
+    await database!.query(`
+      insert into public.reward_transactions(
+        user_id,reason,silver_delta,gold_delta,silver_balance_after,gold_balance_after,
+        source_type,source_key,rule_version
+      ) values($1,'admin_adjustment',1,0,1,0,'test','account-delete','2026-08-18.2')
+    `, [USER_DELETE])
+
+    await expect(database!.query(
+      'delete from public.reward_transactions where user_id=$1', [USER_DELETE],
+    )).rejects.toThrow(/immutable/i)
+
+    await database!.query('delete from auth.users where id=$1', [USER_DELETE])
+    const remaining = await database!.query<{ count: number }>(
+      'select count(*)::integer as count from public.reward_transactions where user_id=$1', [USER_DELETE],
+    )
+    expect(remaining.rows[0]?.count).toBe(0)
   })
 })

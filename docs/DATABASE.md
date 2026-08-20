@@ -22,6 +22,13 @@ supabase/migrations/202608180008_workout_completion_history.sql
 supabase/migrations/202608180009_habit_custom_colors.sql
 supabase/migrations/202608180010_visual_collections.sql
 supabase/migrations/202608180011_rewards.sql
+supabase/migrations/202608180012_habit_daily_rewards_and_workout_defaults.sql
+supabase/migrations/202608190001_workout_history_delete.sql
+supabase/migrations/202608190002_calendar_display_preferences.sql
+supabase/migrations/202608190003_profile_avatars.sql
+supabase/migrations/202608190004_workout_routine_delete_and_banner_defaults.sql
+supabase/migrations/202608190005_habit_icon_contract.sql
+supabase/migrations/202608190006_reward_ledger_account_delete.sql
 ```
 
 It creates `public.profiles`, strict theme/week/timezone checks, automatic `updated_at`, own-row RLS and an `auth.users` trigger. Sign-up metadata supplies `display_name` and the browser's IANA timezone; defaults remain safe if metadata is absent.
@@ -50,7 +57,7 @@ The fourth migration adds the `reorder_tasks(uuid[])` RPC. It accepts the authen
 
 The fifth migration adds `calendar_events`. Timed events require an exclusive `start_at`/`end_at` range in `timestamptz`; all-day events require an inclusive `start_date`/`end_date` range and cannot also carry timestamps. Title, color and optional metadata constraints are enforced in PostgreSQL. Partial indexes support timed and all-day range queries, and per-operation own-row RLS protects every write and read. Tasks remain owned by `tasks` and are projected into Calendar queries rather than copied into this table.
 
-The sixth migration adds `habits` and `habit_logs`. Habits enforce a supported Lucide icon, accent, daily or unique-weekday schedule, positive count target and stable position. One log per habit/local date stores absolute count progress or a distinct skipped state; a trigger verifies that only progress at the target is completed and progress below it remains in progress. Composite owner foreign keys, per-operation RLS and user/date indexes prevent cross-user links and support history ranges.
+The sixth migration adds `habits` and `habit_logs`. Habits enforce a bounded Lucide-compatible icon slug, accent, daily or unique-weekday schedule, positive count target and stable position. The editor retains a strict supported-icon enum, while stored unknown slugs render with a safe fallback so one stale row cannot break the whole list. One log per habit/local date stores absolute count progress or a distinct skipped state; a trigger verifies that only progress at the target is completed and progress below it remains in progress. Composite owner foreign keys, per-operation RLS and user/date indexes prevent cross-user links and support history ranges.
 
 The seventh migration adds `habits.archived_at` and keeps it synchronized with `is_active`. Historical calculations stop at that durable profile-timezone boundary, so an archived habit does not accumulate false misses; restoring it clears the boundary without removing prior logs.
 
@@ -63,6 +70,8 @@ Workout routine planning is live through `workout_routines` and `workout_routine
 ## Rewards contracts
 
 Migration `202608180011` adds one active versioned rule document, private wallets, profile-timezone monthly counters, an immutable ledger and frozen credit requests. The BRL catalog keeps each credit's nominal value while charging 40% more coins than the original product table; fractional Silver prices round up. Authenticated clients can read only their own economy rows and cannot write balances, counters, transactions or redemptions directly.
+
+The ledger mutation trigger rejects every direct update/delete, but migration `202608190006` permits the foreign-key cascade after its owning `auth.users` row is removed. This preserves normal immutability without blocking the product's full-account deletion flow.
 
 Durable `focus_runs` link timer phases through `focus_sessions.focus_run_id`. Rewarded phases pass through `record_focus_session`, which validates the owned active run, configured duration, elapsed timestamps and retry idempotency. Completion requires every focus stack and intervening break. Workout routines and sessions snapshot immutable `activity_type` (`strength` or `cardio`); the existing finish transaction invokes the exact-once award. Conversions, redemptions and all Gold caps are enforced by narrow server RPCs using the active rule version.
 

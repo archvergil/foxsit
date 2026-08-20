@@ -3,12 +3,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database.generated'
 import {
   habitColorTokenSchema,
-  habitIconSchema,
   habitInputSchema,
   habitLogInputSchema,
   habitLogStatusSchema,
   habitProjectInputSchema,
   habitScheduleTypeSchema,
+  storedHabitIconSchema,
 } from './schemas'
 import type { HabitLogRange, HabitsRepository } from './repository'
 import type { Habit, HabitInput, HabitLog, HabitProject } from './types'
@@ -25,7 +25,24 @@ export class HabitsRepositoryError extends Error {
 }
 
 const assertData = <T>(data: T | null, error: unknown, action: string): T => {
-  if (error || data === null) throw new HabitsRepositoryError(`Could not ${action}.`, { cause: error })
+  if (error) {
+    const databaseError = error as { code?: string; message?: string }
+    const detail = databaseError.message?.toLowerCase() ?? ''
+    if (databaseError.code === '23503' && detail.includes('habits_project_owner_fk')) {
+      throw new HabitsRepositoryError('The selected habit project no longer exists. Refresh and try again.', { cause: error })
+    }
+    if (databaseError.code === '23514' && detail.includes('habits_icon_valid')) {
+      throw new HabitsRepositoryError('This habit icon is not supported by the current database version. Refresh the app and try again.', { cause: error })
+    }
+    if (databaseError.code === '42501') {
+      throw new HabitsRepositoryError('Your session cannot save Habits right now. Sign in again and retry.', { cause: error })
+    }
+    if (/failed to fetch|network|load failed/.test(detail)) {
+      throw new HabitsRepositoryError(`Could not ${action}. Check your connection and try again.`, { cause: error })
+    }
+    throw new HabitsRepositoryError(`Could not ${action}. Please try again.`, { cause: error })
+  }
+  if (data === null) throw new HabitsRepositoryError(`Could not ${action}: the record was not found.`)
   return data
 }
 
@@ -34,7 +51,7 @@ const mapHabit = (row: HabitRow): Habit => ({
   userId: row.user_id,
   title: row.title,
   description: row.description,
-  icon: habitIconSchema.parse(row.icon),
+  icon: storedHabitIconSchema.parse(row.icon),
   colorToken: habitColorTokenSchema.parse(row.color_token),
   customColor: row.custom_color,
   projectId: row.project_id,

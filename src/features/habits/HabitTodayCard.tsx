@@ -35,7 +35,13 @@ export function HabitTodayCard({ habit, log, date, pending, index, habitCount, i
   const progress = Math.min(100, count / habit.targetCount * 100)
   const [skipEditorOpen, setSkipEditorOpen] = useState(false)
   const [skipReason, setSkipReason] = useState(log?.note ?? '')
-  const apply = (action: HabitProgressAction) => onProgress(nextHabitLog(habit, log, date, action))
+  const apply = async (action: HabitProgressAction) => {
+    try {
+      await onProgress(nextHabitLog(habit, log, date, action))
+    } catch {
+      // The parent keeps the rolled-back durable mutation error visible.
+    }
+  }
 
   const confirmSkip = async (event: React.FormEvent) => {
     event.preventDefault()

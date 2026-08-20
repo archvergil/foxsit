@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { habitFormSchema, habitLogInputSchema, habitProjectFormSchema, resolveHabitForm, resolveHabitProjectForm } from './schemas'
+import { habitFormSchema, habitLogInputSchema, habitProjectFormSchema, resolveHabitForm, resolveHabitProjectForm, storedHabitIconSchema } from './schemas'
 
 describe('habit schemas', () => {
   it('normalizes a weekday count habit', () => {
@@ -32,6 +32,14 @@ describe('habit schemas', () => {
     expect(resolveHabitForm(form).customColor).toBe('#3A7D78')
     expect(habitFormSchema.safeParse({
       ...form, customColor: 'not-a-color',
+    }).success).toBe(false)
+  })
+
+  it('renders a safe fallback for an unknown stored icon without accepting it as form input', () => {
+    expect(storedHabitIconSchema.parse('future-icon')).toBe('circle-check-big')
+    expect(habitFormSchema.safeParse({
+      title: 'Future', description: '', icon: 'future-icon', colorToken: 'mint',
+      projectId: '', scheduleType: 'daily', weekdays: [], targetCount: 1, unit: '',
     }).success).toBe(false)
   })
 

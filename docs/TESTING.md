@@ -12,7 +12,7 @@
 
 The suite covers backend selection, environment validation, theme preference parsing, auth form validation, task schemas/status/filtering, timezone-aware local-day/deadline conversion and pure Pomodoro timestamp calculations. Calendar tests cover month/week/day boundaries, profile week starts, invalid DST wall times, overnight splitting, deterministic overlap columns, temporal/all-day database constraints and own-row RLS. Habits tests cover daily/weekday recurrence, count transitions, skipped reasons, daily history states, archived activity windows, current/longest streaks, profile-week/month rates, schema constraints and owner isolation. Component tests exercise Calendar CRUD plus the durable Habits Today and Insights lifecycles alongside the Tasks workflows. Database/API tests create isolated local accounts, persist Calendar events, projects/tasks/checklists, Focus sessions and habits/logs, verify the archive timestamp trigger and browser CORS write methods, reject stale/duplicate/cross-user links and enforce session-level RLS isolation.
 
-The Focus unit matrix verifies pause accumulation, reload restoration from persisted timestamps, short/long-break cycling, completion/interruption records, the zero-time pause edge and profile-timezone/task statistics. The authenticated browser matrix covers both 390 px mobile and desktop layouts.
+The Focus unit matrix verifies pause accumulation, reload restoration from persisted timestamps, short/long-break cycling, completion/interruption records, the zero-time pause edge and profile-timezone/task statistics. The authenticated local browser matrix covers 390 px mobile, iPad Pro 11 and desktop layouts.
 
 Run on Windows without global Node:
 
@@ -31,7 +31,7 @@ Install the Playwright Chromium binary once:
 .\scripts\npm.cmd exec playwright install chromium
 ```
 
-Public production-build smoke tests require no credentials. `test:e2e:local` creates disposable local accounts on mobile and desktop, covers Calendar month/week/day CRUD, direct-route reload and task overlays, project create/rename, full task details, checklist restoration and task ordering after reload, then exercises a linked Focus timer and the Habits count/skip-reason/Insights/archive/restore flow across reloads. Every test account is removed afterward. Supabase-fidelity E2E still requires a dedicated local stack or isolated test project; do not embed credentials in code or commit `.env` files.
+Public production-build smoke tests require no credentials. `test:e2e:local` creates disposable local accounts on mobile, iPad and desktop, covers Calendar month/week/day CRUD, direct-route reload and task overlays, project create/rename, full task details, checklist restoration and task ordering after reload, then exercises a linked Focus timer and the Habits count/skip-reason/Insights/archive/restore flow across reloads. It also creates three projected Habits with expanded icons and confirms persistence after reload. Every test account is removed afterward. Supabase-fidelity E2E still requires a dedicated local stack or isolated test project; do not embed credentials in code or commit `.env` files.
 
 See `LOCAL_DEVELOPMENT.md` for the persistent PGlite socket server and the full local Supabase tier. PGlite passing is fast evidence, not a substitute for the Supabase boundary check.
 

@@ -3,6 +3,7 @@
 import type { PGlite } from '@electric-sql/pglite'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import { habitIconSchema } from '@/features/habits/schemas'
 import { authenticateLocalUser, createLocalTestDatabase, createLocalUser, resetLocalRole } from './localDatabase'
 
 const USER_A = '93000000-0000-4000-8000-000000000001'
@@ -48,6 +49,27 @@ describe('Habits database migration', () => {
       [USER_A, habitA],
     )
     expect(result.rows[0]).toMatchObject({ count: 5 })
+  })
+
+  it('accepts every icon exposed by the Habit editor and rejects malformed icon slugs', async () => {
+    try {
+      for (const [index, icon] of habitIconSchema.options.entries()) {
+        const created = await database!.query<{ icon: string }>(
+          `insert into public.habits (user_id, title, icon, position)
+           values ($1, $2, $3, $4) returning icon`,
+          [USER_A, `Icon contract ${index}`, icon, 10_000 + index],
+        )
+        expect(created.rows[0]?.icon).toBe(icon)
+      }
+
+      await expect(database!.query(
+        `insert into public.habits (user_id, title, icon)
+         values ($1, 'Invalid icon', 'not a valid icon')`,
+        [USER_A],
+      )).rejects.toThrow(/habits_icon_valid/i)
+    } finally {
+      await database!.query("delete from public.habits where user_id = $1 and title like 'Icon contract %'", [USER_A])
+    }
   })
 
   it('isolates habits/logs and rejects cross-owner relationships', async () => {

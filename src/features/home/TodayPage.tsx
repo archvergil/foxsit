@@ -12,7 +12,7 @@ import { useTimerClock } from '@/features/focus/useTimerClock'
 import { useHabitLogs, useHabits } from '@/features/habits/queries'
 import { TodayTasksCard } from '@/features/tasks/TodayTasksCard'
 import { useTaskDateContext, useTaskList } from '@/features/tasks/queries'
-import { useActiveWorkoutSession, useWorkoutHistory, useWorkoutRoutines } from '@/features/workout/queries'
+import { useOptionalActiveWorkoutSession, useOptionalWorkoutHistory, useOptionalWorkoutRoutines } from '@/features/workout/queries'
 import { addLocalDays, formatDayHeading, localDateKey, localDateTimeToTimestamp } from '@/lib/dates'
 import { todayAgenda, todayHabitProgress, todayMetrics } from './todayOverview'
 
@@ -37,9 +37,9 @@ export default function TodayPage() {
   const habitsQuery = useHabits()
   const habitLogsQuery = useHabitLogs({ dateStart: today, dateEnd: today })
   const focusQuery = useFocusSessions({ startedAfter: rangeStart, startedBefore: rangeEnd, limit: 100 })
-  const activeWorkoutQuery = useActiveWorkoutSession()
-  const workoutHistoryQuery = useWorkoutHistory()
-  const routinesQuery = useWorkoutRoutines()
+  const activeWorkoutQuery = useOptionalActiveWorkoutSession()
+  const workoutHistoryQuery = useOptionalWorkoutHistory()
+  const routinesQuery = useOptionalWorkoutRoutines()
   const events = todayAgenda(eventsQuery.data ?? [], today, timeZone)
   const habits = todayHabitProgress(habitsQuery.data ?? [], habitLogsQuery.data ?? [], today)
   const metrics = todayMetrics({ tasks: tasksQuery.data ?? [], habitsCompleted: habits.completed, habitsScheduled: habits.scheduled.length, focusSessions: focusQuery.data ?? [], workouts: workoutHistoryQuery.data ?? [], timeZone })
