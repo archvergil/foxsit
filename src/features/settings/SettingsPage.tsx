@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/authContext'
 import { useProfile, useUpdateCalendarPreferences, useUpdateProfile, useUploadProfileAvatar } from './profileQueries'
 import type { CalendarDisplayPreferences } from './profileRepository'
 import { useTheme, type ThemePreference } from './themeContext'
+import { AvatarCropDialog } from './AvatarCropDialog'
 
 const themeOptions: Array<{
   value: ThemePreference
@@ -29,6 +30,8 @@ export default function SettingsPage() {
   const updateProfile = useUpdateProfile()
   const uploadAvatar = useUploadProfileAvatar()
   const [editedDisplayName, setEditedDisplayName] = useState<string | null>(null)
+  const [avatarSource, setAvatarSource] = useState<File | null>(null)
+  const [avatarValidationError, setAvatarValidationError] = useState<string | null>(null)
   const page = pathname.endsWith('/appearance') ? 'Appearance' : pathname.endsWith('/data') ? 'Data' : 'Settings'
   const profile = profileQuery.data
   const displayName = editedDisplayName ?? profile?.display_name ?? ''
@@ -50,17 +53,23 @@ export default function SettingsPage() {
       // The durable error stays visible below the form.
     }
   }
-  const selectAvatar = async (event: ChangeEvent<HTMLInputElement>) => {
+  const selectAvatar = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 1_048_576) {
+      setAvatarValidationError('Choose a PNG, JPG or WebP image up to 1 MB.')
       return
     }
+    setAvatarValidationError(null)
+    setAvatarSource(file)
+  }
+  const saveAvatar = async (file: File) => {
     try {
       const avatarUrl = await uploadAvatar.mutateAsync(file)
       await updateProfile.mutateAsync({ display_name: displayName.trim() || null, avatar_url: avatarUrl })
       setEditedDisplayName(null)
+      setAvatarSource(null)
     } catch {
       // The durable error stays visible below the form.
     }
@@ -118,13 +127,13 @@ export default function SettingsPage() {
             </span>
             <label className="profile-settings-form__photo button button--secondary">
               <Camera aria-hidden /><span>Choose photo</span>
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void selectAvatar(event)} disabled={uploadAvatar.isPending || updateProfile.isPending} />
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={selectAvatar} disabled={uploadAvatar.isPending || updateProfile.isPending} />
             </label>
             <small>PNG, JPG or WebP, up to 1 MB.</small>
             <label className="profile-settings-form__name"><span>Name</span><input value={displayName} minLength={2} maxLength={60} onChange={(event) => setEditedDisplayName(event.target.value)} disabled={profileQuery.isPending || updateProfile.isPending} /></label>
             <Button type="submit" disabled={displayName.trim().length < 2} isLoading={updateProfile.isPending}>Save profile</Button>
           </form>
-          {uploadAvatar.error || updateProfile.error ? <p className="settings-error" role="alert">{(uploadAvatar.error ?? updateProfile.error)?.message}</p> : null}
+          {avatarValidationError || uploadAvatar.error || updateProfile.error ? <p className="settings-error" role="alert">{avatarValidationError ?? (uploadAvatar.error ?? updateProfile.error)?.message}</p> : null}
         </article>
 
         <article className="settings-card settings-card--calendar">
@@ -161,6 +170,14 @@ export default function SettingsPage() {
           </Button>
         </article>
       </div>
+      {avatarSource ? (
+        <AvatarCropDialog
+          file={avatarSource}
+          pending={uploadAvatar.isPending || updateProfile.isPending}
+          onCancel={() => setAvatarSource(null)}
+          onConfirm={saveAvatar}
+        />
+      ) : null}
     </section>
   )
 }

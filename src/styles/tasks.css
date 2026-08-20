@@ -128,6 +128,7 @@
 .tasks-workspace {
   min-width: 0;
   overflow: hidden;
+  container-type: inline-size;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -187,6 +188,7 @@
 }
 
 .task-quick-add__field {
+  overflow: hidden;
   display: grid;
   gap: var(--space-1);
 }
@@ -605,6 +607,36 @@ span.task-row__content { cursor: default; }
     grid-column: 1 / -1;
     width: 100%;
     min-width: 7.5rem;
+  }
+}
+
+@container (max-width: 42rem) {
+  .task-quick-add {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .task-quick-add__title,
+  .task-quick-add > .button {
+    grid-column: 1 / -1;
+  }
+
+  .task-quick-add__field input,
+  .task-quick-add__field select,
+  .task-quick-add > .button {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@container (max-width: 27rem) {
+  .task-quick-add {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .task-quick-add__title,
+  .task-quick-add__field,
+  .task-quick-add > .button {
+    grid-column: 1;
   }
 }
 

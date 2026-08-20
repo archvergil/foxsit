@@ -3,13 +3,13 @@ import { NavLink } from 'react-router-dom'
 import { preloadRoute } from '@/app/routeModules'
 import type { NavigationItem } from './navigation'
 
-export function NavItem({ item, compact = false, activeOverride = false }: { item: NavigationItem; compact?: boolean; activeOverride?: boolean }) {
+export function NavItem({ item, activeOverride = false }: { item: NavigationItem; compact?: boolean; activeOverride?: boolean }) {
   const Icon = item.icon
   return (
     <NavLink
       className={({ isActive }) => `nav-item${isActive || activeOverride ? ' nav-item--active' : ''}`}
       to={item.to}
-      aria-label={compact ? item.label : undefined}
+      aria-label={item.label}
       onFocus={() => preloadRoute(item.to)}
       onPointerEnter={() => preloadRoute(item.to)}
       onPointerDown={() => preloadRoute(item.to)}

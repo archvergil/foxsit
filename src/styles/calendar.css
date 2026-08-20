@@ -106,7 +106,7 @@
 .calendar-agenda-item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-agenda-item small { margin-top: 0.2rem; overflow: hidden; color: var(--ink-faint); font-size: var(--text-xs); text-overflow: ellipsis; white-space: nowrap; }
 .calendar-agenda-item > svg { width: 1rem; color: var(--ink-faint); }
-.calendar-editor form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-5); }
+.calendar-editor form { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); margin-top: var(--space-5); }
 .calendar-editor form label { min-width: 0; display: grid; gap: var(--space-2); color: var(--ink-soft); font-size: var(--text-xs); font-weight: 680; }
 .calendar-editor input,
 .calendar-editor select,

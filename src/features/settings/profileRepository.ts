@@ -50,7 +50,8 @@ export const createSupabaseProfileRepository = (
     const path = `${userId}/avatar.${extension}`
     const { error } = await client.storage.from('profile-avatars').upload(path, file, { upsert: true, contentType: file.type })
     if (error) throw new Error('Could not upload profile photo.', { cause: error })
-    return client.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl
+    const publicUrl = client.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl
+    return `${publicUrl}?v=${Date.now()}`
   },
 })
 

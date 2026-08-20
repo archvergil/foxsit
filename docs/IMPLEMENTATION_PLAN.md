@@ -48,7 +48,7 @@ Exit criteria: login and authenticated shell work at 390 px, 768 px and 1280+ px
 - [x] Add PGlite in-memory tests and a persistent local PostgreSQL-compatible server.
 - [x] Add project-scoped Supabase CLI commands for the Docker fidelity tier.
 - [x] Add a loopback-only PGlite account/data API for end-to-end local development without Docker.
-- [x] Add profile name and avatar management with user-scoped Supabase Storage policies and local-data parity.
+- [x] Add profile name and avatar management with user-scoped Supabase Storage policies, local-data parity and a touch-safe crop/zoom/position editor.
 
 Exit: local database is reproducible and no exposed table is open across users.
 
@@ -143,6 +143,15 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006` and `202608200001`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion, Calendar preferences, profile-photo Storage policies, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the eight listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the profile-photo framing and cross-form containment repair on 2026-08-20:
+
+- added a dependency-free profile-photo editor with pointer/keyboard repositioning, 1x-3x zoom and a true square 512 px WebP/PNG export before durable upload;
+- forced profile images to remain clipped inside circular shell frames and cache-busted replaced Supabase Storage objects so a newly saved photo appears immediately;
+- added shared intrinsic-width guards for Safari date, datetime, time, select and text controls, plus container-driven Task composer wrapping and a safe single-column Calendar editor whenever it occupies a narrow side panel;
+- restored accessible names for icon-only tablet navigation links and added iPad regressions for avatar persistence, circular containment and Task/Calendar field containment;
+- no database migration is required for this slice; it uses the existing `profile-avatars` bucket and `profiles.avatar_url` contract;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (165/165), `npm run build`, `git diff --check` and the complete local Playwright matrix (25 passed, 5 intentional breakpoint-specific skips) passed; integrated-browser QA remained unavailable because no browser instance was connected.
 
 Completed the mobile interaction, Workout latency and bounded-history repair on 2026-08-20:
 

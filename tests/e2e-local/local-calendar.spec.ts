@@ -1,6 +1,15 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 
-test('creates Calendar events in month, week and day and restores their details', async ({ page }) => {
+const expectInside = async (container: Locator, child: Locator) => {
+  const [containerBox, childBox] = await Promise.all([container.boundingBox(), child.boundingBox()])
+  expect(containerBox).not.toBeNull()
+  expect(childBox).not.toBeNull()
+  if (!containerBox || !childBox) return
+  expect(childBox.x).toBeGreaterThanOrEqual(containerBox.x - 1)
+  expect(childBox.x + childBox.width).toBeLessThanOrEqual(containerBox.x + containerBox.width + 1)
+}
+
+test('creates Calendar events in month, week and day and restores their details', async ({ page }, testInfo) => {
   const email = `calendar-${crypto.randomUUID()}@local.test`
   const password = 'LocalTest!2026'
   let token: string | null = null
@@ -37,6 +46,19 @@ test('creates Calendar events in month, week and day and restores their details'
     await page.getByRole('button', { name: 'Select Monday, August 17, 2026, 1 items' }).click()
     await expect(page.locator('.calendar-agenda-item').filter({ hasText: 'Calendar overlay task' })).toBeVisible()
     await page.getByRole('button', { name: 'New event' }).click()
+    if (testInfo.project.name === 'local-tablet') {
+      const editor = page.locator('.calendar-editor')
+      const startField = page.getByLabel(/Starts/)
+      const endField = page.getByLabel(/Ends/)
+      await expectInside(editor, startField)
+      await expectInside(editor, endField)
+      const [startBox, endBox] = await Promise.all([startField.boundingBox(), endField.boundingBox()])
+      expect(startBox).not.toBeNull()
+      expect(endBox).not.toBeNull()
+      if (startBox && endBox && Math.abs(startBox.y - endBox.y) < 2) {
+        expect(startBox.x + startBox.width).toBeLessThanOrEqual(endBox.x + 1)
+      }
+    }
     await page.getByRole('textbox', { name: 'Title' }).fill('Local appointment')
     await page.getByRole('textbox', { name: 'Location' }).fill('Studio')
     await page.getByRole('button', { name: 'Create event', exact: true }).click()
