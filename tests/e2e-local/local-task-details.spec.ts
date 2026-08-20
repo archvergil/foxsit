@@ -1,4 +1,13 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
+
+const expectInside = async (container: Locator, child: Locator) => {
+  const [containerBox, childBox] = await Promise.all([container.boundingBox(), child.boundingBox()])
+  expect(containerBox).not.toBeNull()
+  expect(childBox).not.toBeNull()
+  if (!containerBox || !childBox) return
+  expect(childBox.x).toBeGreaterThanOrEqual(containerBox.x - 1)
+  expect(childBox.x + childBox.width).toBeLessThanOrEqual(containerBox.x + containerBox.width + 1)
+}
 
 test('manages a project and restores task details with checklist', async ({ page }) => {
   const email = `task-details-${crypto.randomUUID()}@local.test`
@@ -60,6 +69,81 @@ test('manages a project and restores task details with checklist', async ({ page
     await projectName.fill('Launch archive')
     await page.getByRole('button', { name: 'Save project' }).click()
     await expect(page.getByRole('heading', { name: 'Launch archive' })).toBeVisible()
+
+    token = await page.evaluate(() => localStorage.getItem('app.local-session-token'))
+  } finally {
+    if (!token) token = await page.evaluate(() => localStorage.getItem('app.local-session-token')).catch(() => null)
+    if (token) {
+      await fetch('http://127.0.0.1:8787/v1/auth/account', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    }
+  }
+})
+
+test('keeps the task composer and navigation stable on iPad', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'local-tablet', 'Tablet-specific layout regression.')
+
+  const email = `task-tablet-${crypto.randomUUID()}@local.test`
+  const password = 'LocalTest!2026'
+  let token: string | null = null
+
+  try {
+    await page.goto('/signup')
+    await page.locator('input[name="displayName"]').fill('Tablet Task Tester')
+    await page.locator('input[name="email"]').fill(email)
+    await page.locator('input[name="password"]').fill(password)
+    await page.locator('input[name="confirmPassword"]').fill(password)
+    await page.getByRole('button', { name: 'Create account' }).click()
+    await expect(page).toHaveURL(/\/today$/)
+
+    await page.getByRole('link', { name: 'Tasks' }).first().click()
+    await page.getByRole('button', { name: 'New project' }).click()
+    await page.getByRole('textbox', { name: 'Name' }).fill('Tablet project')
+    await page.getByRole('button', { name: 'Save project' }).click()
+    await expect(page.getByRole('heading', { name: 'Tablet project' })).toBeVisible()
+
+    const workspace = page.locator('.tasks-workspace')
+    const composer = page.locator('.task-quick-add')
+    const dateField = page.getByLabel('Scheduled date')
+    const projectField = page.getByLabel('Project', { exact: true })
+    const addButton = page.getByRole('button', { name: 'Add task' })
+
+    await expect(composer).toBeVisible()
+    await expectInside(workspace, dateField)
+    await expectInside(workspace, projectField)
+    await expectInside(workspace, addButton)
+
+    const [dateBox, projectBox, buttonBox] = await Promise.all([
+      dateField.boundingBox(),
+      projectField.boundingBox(),
+      addButton.boundingBox(),
+    ])
+    expect(dateBox).not.toBeNull()
+    expect(projectBox).not.toBeNull()
+    expect(buttonBox).not.toBeNull()
+    if (dateBox && projectBox && buttonBox) {
+      expect(dateBox.x + dateBox.width).toBeLessThanOrEqual(projectBox.x + 1)
+      expect(buttonBox.y).toBeGreaterThanOrEqual(Math.max(dateBox.y + dateBox.height, projectBox.y + projectBox.height))
+    }
+
+    await page.setViewportSize({ width: 1194, height: 834 })
+    await expectInside(workspace, dateField)
+    await expectInside(workspace, projectField)
+    await expectInside(workspace, addButton)
+
+    const navigation = page.locator('.tasks-navigation')
+    const inboxBox = await navigation.boundingBox()
+    await page.getByRole('link', { name: 'Completed' }).click()
+    await expect(page).toHaveURL(/\/tasks\/completed$/)
+    const completedBox = await navigation.boundingBox()
+    expect(inboxBox).not.toBeNull()
+    expect(completedBox).not.toBeNull()
+    if (inboxBox && completedBox) {
+      expect(completedBox.height).toBeLessThanOrEqual(inboxBox.height + 1)
+      expect(completedBox.height).toBeLessThanOrEqual(64)
+    }
 
     token = await page.evaluate(() => localStorage.getItem('app.local-session-token'))
   } finally {

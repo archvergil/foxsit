@@ -140,6 +140,8 @@
 .task-project-hero--mint { background: color-mix(in srgb, var(--mint) 42%, var(--surface)); }.task-project-hero--coral { background: color-mix(in srgb, var(--coral) 42%, var(--surface)); }.task-project-hero--blue { background: color-mix(in srgb, var(--blue) 42%, var(--surface)); }.task-project-hero--sand { background: color-mix(in srgb, var(--sand) 42%, var(--surface)); }
 
 .task-quick-add {
+  min-width: 0;
+  max-width: 100%;
   display: grid;
   grid-template-columns: minmax(13rem, 1fr) auto auto auto;
   align-items: end;
@@ -147,6 +149,10 @@
   padding: var(--space-4);
   background: var(--canvas-raised);
   border-bottom: 1px solid var(--border);
+}
+
+.task-quick-add > * {
+  min-width: 0;
 }
 
 .task-quick-add__title {
@@ -193,6 +199,8 @@
 
 .task-quick-add__field input,
 .task-quick-add__field select {
+  display: block;
+  min-width: 0;
   min-height: var(--touch-target);
   max-width: 10rem;
   padding: 0 var(--space-3);
@@ -528,9 +536,10 @@ span.task-row__content { cursor: default; }
   font-size: var(--text-xs);
 }
 
-@media (max-width: 68rem) {
+@media (max-width: 80rem) {
   .tasks-layout {
     grid-template-columns: 1fr;
+    align-content: start;
   }
 
   .tasks-navigation {
@@ -593,6 +602,8 @@ span.task-row__content { cursor: default; }
   }
 
   .task-quick-add > .button {
+    grid-column: 1 / -1;
+    width: 100%;
     min-width: 7.5rem;
   }
 }

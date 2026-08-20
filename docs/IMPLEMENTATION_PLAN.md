@@ -141,6 +141,14 @@ Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`,
 
 ## Latest verification
 
+Completed the iPad Task-layout regression repair on 2026-08-19:
+
+- stopped the single-column Task grid from distributing its minimum height into the navigation row, which made empty views such as Completed expand vertically;
+- moved the tablet Add task action onto a full-width row and removed intrinsic control widths so localized Date and Project fields cannot overlap or push the action outside the workspace;
+- extended the Task tablet composition through 1280 px so portrait and landscape iPads use the contained layout before the desktop workspace has enough room;
+- added a project-banner regression that measures control containment, field separation and navigation-height stability at iPad portrait and 1194 x 834 landscape sizes;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (152/152), `npm run build` and the complete local Playwright matrix (19 passed, 2 intentionally skipped outside iPad) passed.
+
 Completed the Habit creation and cross-site reliability audit on 2026-08-19:
 
 - traced intermittent Habit creation failures to schema drift: the editor exposed 25 Lucide icons while PostgreSQL accepted only the original six;
