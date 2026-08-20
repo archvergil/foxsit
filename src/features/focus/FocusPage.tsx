@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Bell, BellOff, CirclePause, CirclePlay, SkipForward, Square, TimerReset } from 'lucide-react'
+import { Bell, BellOff, CirclePause, CirclePlay, RotateCcw, SkipForward, Square, TimerReset } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router-dom'
@@ -15,6 +15,7 @@ import { focusSummary } from './focusSummary'
 import { notificationAvailability, requestFocusNotifications } from './notifications'
 import { usePomodoroStore } from './pomodoroStore'
 import { useAbandonRewardFocusRun, useCreateFocusSession, useFocusSessions, useStartRewardFocusRun } from './queries'
+import { matchingRewardFocusMode, presetDurations, rewardFocusPresets } from './rewardFocusModes'
 import { formatTimer, remainingTimerMs, sessionFromTimer } from './timer'
 import type { FocusPhase, RewardFocusMode } from './types'
 import { useTimerClock } from './useTimerClock'
@@ -31,12 +32,6 @@ const phaseCopy = {
   short_break: { label: 'Short break', helper: 'Step away briefly and reset.' },
   long_break: { label: 'Long break', helper: 'A longer reset after four focus blocks.' },
 } as const
-
-const presets: Array<{ label: string; mode: RewardFocusMode; stacks: number; focusMs: number; shortBreakMs: number; longBreakMs: number }> = [
-  { label: '25 / 5', mode: '25_5', stacks: 3, focusMs: 25 * 60_000, shortBreakMs: 5 * 60_000, longBreakMs: 5 * 60_000 },
-  { label: '30 / 5', mode: '30_5', stacks: 4, focusMs: 30 * 60_000, shortBreakMs: 5 * 60_000, longBreakMs: 5 * 60_000 },
-  { label: '40 / 5', mode: '40_5', stacks: 5, focusMs: 40 * 60_000, shortBreakMs: 5 * 60_000, longBreakMs: 5 * 60_000 },
-] as const
 
 export default function FocusPage() {
   const { session } = useAuth()
@@ -56,7 +51,11 @@ export default function FocusPage() {
   const remaining = remainingTimerMs(timer, now)
   const [selectedTaskId, setSelectedTaskId] = useState(() => searchParams.get('taskId') ?? '')
   const [notificationState, setNotificationState] = useState(notificationAvailability)
-  const [rewardMode, setRewardMode] = useState<RewardFocusMode | null>('25_5')
+  const [rewardMode, setRewardMode] = useState<RewardFocusMode | null>(() => (
+    timer.rewardRunId
+      ? timer.rewardMode
+      : matchingRewardFocusMode(timer)
+  ))
   const [rewardDescription, setRewardDescription] = useState('')
   const summary = focusSummary(historyQuery.data ?? [], timeZone)
   const form = useForm<DurationForm>({
@@ -82,6 +81,18 @@ export default function FocusPage() {
     }
   }
 
+  const discardExpired = async (finish: 'skip' | 'stop') => {
+    try {
+      if (timer.rewardRunId) {
+        await abandonRewardRun.mutateAsync(timer.rewardRunId)
+        timer.clear()
+      } else if (finish === 'skip') timer.finishPhase()
+      else timer.clear()
+    } catch {
+      // Keep the expired timer available until the rewarded run is durably abandoned.
+    }
+  }
+
   const configureCustom = form.handleSubmit((values) => {
     setRewardMode(null)
     timer.configure({
@@ -98,9 +109,18 @@ export default function FocusPage() {
       : null
     try {
       if (timer.phase === 'focus' && rewardMode) {
-        const preset = presets.find(({ mode }) => mode === rewardMode)!
-        const runId = await startRewardRun.mutateAsync({ mode: rewardMode, description: rewardDescription.trim() || null })
-        timer.start({ userId: session.user.id, taskId, rewardRunId: runId, rewardMode, rewardRequiredStacks: preset.stacks })
+        const runMode = timer.rewardRunId ? timer.rewardMode ?? rewardMode : rewardMode
+        const preset = rewardFocusPresets.find(({ mode }) => mode === runMode)!
+        const runId = timer.rewardRunId
+          ?? await startRewardRun.mutateAsync({ mode: runMode, description: rewardDescription.trim() || null })
+        timer.start({
+          userId: session.user.id,
+          taskId,
+          durations: presetDurations(preset),
+          rewardRunId: runId,
+          rewardMode: runMode,
+          rewardRequiredStacks: timer.rewardRunId ? timer.rewardRequiredStacks : preset.stacks,
+        })
       } else {
         timer.start({ userId: session.user.id, taskId })
       }
@@ -159,33 +179,51 @@ export default function FocusPage() {
               >
                 <CirclePlay aria-hidden />Start timer
               </Button>
+            ) : remaining === 0 ? (
+              timer.completionStatus === 'error' ? (
+                <>
+                  <Button type="button" onClick={timer.retryCompletion}>
+                    <RotateCcw aria-hidden />Retry save
+                  </Button>
+                  <Button variant="secondary" type="button" disabled={abandonRewardRun.isPending} onClick={() => void discardExpired('skip')}>
+                    <SkipForward aria-hidden />Discard and continue
+                  </Button>
+                  <Button variant="quiet" type="button" disabled={abandonRewardRun.isPending} onClick={() => void discardExpired('stop')}>
+                    <Square aria-hidden />Stop
+                  </Button>
+                </>
+              ) : (
+                <Button type="button" isLoading disabled>
+                  Saving completed phase
+                </Button>
+              )
             ) : (
               <>
                 <Button
                   type="button"
-                  disabled={remaining === 0 || saveSession.isPending}
+                  disabled={saveSession.isPending}
                   onClick={() => timer.status === 'paused' ? timer.resume() : timer.pause()}
                 >
                   {timer.status === 'paused' ? <CirclePlay aria-hidden /> : <CirclePause aria-hidden />}
                   {timer.status === 'paused' ? 'Resume' : 'Pause'}
                 </Button>
-                <Button variant="secondary" type="button" disabled={remaining === 0 || saveSession.isPending} onClick={() => void saveInterrupted('skip')}>
+                <Button variant="secondary" type="button" disabled={saveSession.isPending} onClick={() => void saveInterrupted('skip')}>
                   <SkipForward aria-hidden />Skip
                 </Button>
-                <Button variant="quiet" type="button" disabled={remaining === 0 || saveSession.isPending} onClick={() => void saveInterrupted('stop')}>
+                <Button variant="quiet" type="button" disabled={saveSession.isPending} onClick={() => void saveInterrupted('stop')}>
                   <Square aria-hidden />Stop
                 </Button>
               </>
             )}
           </div>
-          {saveSession.error || startRewardRun.error || abandonRewardRun.error ? <p className="focus-timer-card__error" role="alert">The Focus run was not saved. Your timer state is still available; try again.</p> : null}
+          {timer.completionStatus === 'error' || saveSession.error || startRewardRun.error || abandonRewardRun.error ? <p className="focus-timer-card__error" role="alert">The Focus phase was not saved. Retry the transition, or discard the expired timer to recover the controls.</p> : null}
         </section>
 
         <aside className="focus-setup-card">
           <header><TimerReset aria-hidden /><span><strong>Session setup</strong><small>Changes apply before starting.</small></span></header>
 
           <div className="focus-presets" aria-label="Timer presets">
-            {presets.map((preset) => (
+            {rewardFocusPresets.map((preset) => (
               <button
                 type="button"
                 key={preset.label}

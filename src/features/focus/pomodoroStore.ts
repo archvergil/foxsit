@@ -11,12 +11,14 @@ import {
 import type { FocusPhase, RewardFocusMode } from './types'
 
 export type PomodoroStatus = 'idle' | 'running' | 'paused'
+export type PomodoroCompletionStatus = 'idle' | 'saving' | 'error'
 
 interface StartPomodoroInput {
   userId: string
   phase?: FocusPhase
   taskId?: string | null
   now?: number
+  durations?: PomodoroDurations
   rewardRunId?: string | null
   rewardMode?: RewardFocusMode | null
   rewardRequiredStacks?: number
@@ -36,11 +38,16 @@ export interface PomodoroStore extends PomodoroDurations {
   rewardMode: RewardFocusMode | null
   rewardRequiredStacks: number
   rewardCompletedStacks: number
+  completionStatus: PomodoroCompletionStatus
+  completionAttempt: number
   configure: (durations: PomodoroDurations) => void
   selectPhase: (phase: FocusPhase) => void
   start: (input: StartPomodoroInput) => void
   pause: (now?: number) => void
   resume: (now?: number) => void
+  claimCompletion: (startedAt: number) => boolean
+  failCompletion: (startedAt: number) => void
+  retryCompletion: () => void
   finishPhase: (completedRewardStack?: boolean) => void
   clear: () => void
 }
@@ -56,6 +63,8 @@ const activeReset = {
   rewardMode: null,
   rewardRequiredStacks: 0,
   rewardCompletedStacks: 0,
+  completionStatus: 'idle' as const,
+  completionAttempt: 0,
 }
 
 const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroStore => ({
@@ -76,21 +85,25 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
     taskId: phase === 'focus' ? state.taskId : null,
   } : state),
 
-  start: ({ userId, phase, taskId = null, rewardRunId = null, rewardMode = null, rewardRequiredStacks = 0, now = Date.now() }) => set((state) => {
+  start: ({ userId, phase, taskId = null, durations, rewardRunId = null, rewardMode = null, rewardRequiredStacks = 0, now = Date.now() }) => set((state) => {
     const nextPhase = phase ?? state.phase
+    const nextDurations = durations ?? state
     return {
+      ...(durations ?? {}),
       ownerUserId: userId,
       status: 'running',
       phase: nextPhase,
       startedAt: now,
       pausedAt: null,
       accumulatedPausedMs: 0,
-      durationMs: durationForPhase(nextPhase, state),
+      durationMs: durationForPhase(nextPhase, nextDurations),
       taskId: nextPhase === 'focus' ? taskId : null,
       rewardRunId: rewardRunId ?? state.rewardRunId,
       rewardMode: rewardMode ?? state.rewardMode,
       rewardRequiredStacks: rewardRequiredStacks || state.rewardRequiredStacks,
       rewardCompletedStacks: rewardRunId && rewardRunId !== state.rewardRunId ? 0 : state.rewardCompletedStacks,
+      completionStatus: 'idle',
+      completionAttempt: 0,
     }
   }),
 
@@ -107,6 +120,28 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
           accumulatedPausedMs: state.accumulatedPausedMs + Math.max(0, now - state.pausedAt),
           pausedAt: null,
         }
+      : state
+  )),
+
+  claimCompletion: (startedAt) => {
+    let claimed = false
+    set((state) => {
+      if (state.startedAt !== startedAt || state.status !== 'running' || state.completionStatus !== 'idle') return state
+      claimed = true
+      return { completionStatus: 'saving' }
+    })
+    return claimed
+  },
+
+  failCompletion: (startedAt) => set((state) => (
+    state.startedAt === startedAt && state.status === 'running'
+      ? { completionStatus: 'error' }
+      : state
+  )),
+
+  retryCompletion: () => set((state) => (
+    state.status === 'running' && state.startedAt !== null && state.completionStatus === 'error'
+      ? { completionStatus: 'idle', completionAttempt: state.completionAttempt + 1 }
       : state
   )),
 
@@ -128,6 +163,8 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
       phase: next.phase,
       cycleIndex: next.cycleIndex,
       durationMs: durationForPhase(next.phase, state),
+      completionStatus: 'idle',
+      completionAttempt: 0,
     }
   }),
 

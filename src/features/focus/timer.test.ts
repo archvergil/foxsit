@@ -78,4 +78,55 @@ describe('timestamp-based Pomodoro timer', () => {
     store.getState().pause(6_000)
     expect(store.getState().status).toBe('running')
   })
+
+  it('atomically applies the rewarded preset when a stale custom duration starts', () => {
+    const store = createPomodoroStore(window.localStorage)
+    store.getState().configure({ focusMs: 30_000, shortBreakMs: 7_000, longBreakMs: 9_000 })
+
+    store.getState().start({
+      userId: 'user-a',
+      now: 5_000,
+      durations: { focusMs: 25_000, shortBreakMs: 5_000, longBreakMs: 5_000 },
+      rewardRunId: 'run-a',
+      rewardMode: '25_5',
+      rewardRequiredStacks: 3,
+    })
+
+    expect(store.getState()).toMatchObject({
+      focusMs: 25_000,
+      shortBreakMs: 5_000,
+      longBreakMs: 5_000,
+      durationMs: 25_000,
+      rewardRunId: 'run-a',
+    })
+  })
+
+  it('serializes completion attempts and exposes an explicit retry after failure', () => {
+    const store = createPomodoroStore(window.localStorage)
+    store.getState().start({ userId: 'user-a', now: 5_000 })
+
+    expect(store.getState().claimCompletion(5_000)).toBe(true)
+    expect(store.getState().claimCompletion(5_000)).toBe(false)
+    store.getState().failCompletion(5_000)
+    expect(store.getState().completionStatus).toBe('error')
+
+    store.getState().retryCompletion()
+    expect(store.getState()).toMatchObject({ completionStatus: 'idle', completionAttempt: 1 })
+    expect(store.getState().claimCompletion(5_000)).toBe(true)
+  })
+
+  it('advances through focus, break and the next focus without losing the rewarded run', () => {
+    const store = createPomodoroStore(window.localStorage)
+    const durations = { focusMs: 25_000, shortBreakMs: 5_000, longBreakMs: 5_000 }
+    store.getState().start({ userId: 'user-a', now: 1_000, durations, rewardRunId: 'run-a', rewardMode: '25_5', rewardRequiredStacks: 3 })
+    store.getState().finishPhase(true)
+    expect(store.getState()).toMatchObject({ phase: 'short_break', rewardRunId: 'run-a', rewardCompletedStacks: 1 })
+
+    store.getState().start({ userId: 'user-a', now: 30_000 })
+    store.getState().finishPhase()
+    expect(store.getState()).toMatchObject({ phase: 'focus', rewardRunId: 'run-a', rewardCompletedStacks: 1 })
+
+    store.getState().start({ userId: 'user-a', now: 40_000, durations, rewardRunId: 'run-a', rewardMode: '25_5', rewardRequiredStacks: 3 })
+    expect(store.getState()).toMatchObject({ status: 'running', phase: 'focus', durationMs: 25_000, rewardRunId: 'run-a' })
+  })
 })

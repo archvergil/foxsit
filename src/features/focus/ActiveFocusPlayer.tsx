@@ -1,12 +1,13 @@
 import { CirclePause, CirclePlay, RotateCcw, TimerReset } from 'lucide-react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/authContext'
+import { persistCompletedTimerPhase } from './completeTimerPhase'
 import { notifyPhaseComplete } from './notifications'
 import { usePomodoroStore } from './pomodoroStore'
 import { useCompleteRewardFocusRun, useCreateFocusSession } from './queries'
-import { formatTimer, remainingTimerMs, sessionFromTimer } from './timer'
+import { formatTimer, remainingTimerMs } from './timer'
 import { useTimerClock } from './useTimerClock'
 
 const phaseLabel = {
@@ -21,7 +22,6 @@ export function ActiveFocusPlayer() {
   const timer = usePomodoroStore()
   const createSession = useCreateFocusSession()
   const completeRewardRun = useCompleteRewardFocusRun()
-  const attemptedStartRef = useRef<number | null>(null)
   const owned = Boolean(session && timer.ownerUserId === session.user.id)
   const active = owned && timer.status !== 'idle'
   const now = useTimerClock(active && timer.status === 'running')
@@ -33,22 +33,18 @@ export function ActiveFocusPlayer() {
 
   const persistCompletion = useCallback(async () => {
     if (!owned || timer.startedAt === null) return
-    attemptedStartRef.current = timer.startedAt
-    const input = sessionFromTimer(timer, Date.now(), true)
-    if (!input) {
-      timer.finishPhase()
-      return
-    }
+    const startedAt = timer.startedAt
+    if (!timer.claimCompletion(startedAt)) return
     try {
-      await createSession.mutateAsync(input)
-      const completedRewardStack = timer.phase === 'focus' && Boolean(timer.rewardRunId)
-      if (completedRewardStack && timer.rewardRunId && timer.rewardCompletedStacks + 1 >= timer.rewardRequiredStacks) {
-        await completeRewardRun.mutateAsync(timer.rewardRunId)
-      }
+      const completedRewardStack = await persistCompletedTimerPhase({
+        timer,
+        saveSession: createSession.mutateAsync,
+        completeRewardRun: completeRewardRun.mutateAsync,
+      })
       notifyPhaseComplete(timer.phase)
       timer.finishPhase(completedRewardStack)
     } catch {
-      // Keep the expired timer available for an explicit retry.
+      timer.failCompletion(startedAt)
     }
   }, [completeRewardRun, createSession, owned, timer])
 
@@ -58,11 +54,11 @@ export function ActiveFocusPlayer() {
       timer.status === 'running' &&
       remaining === 0 &&
       timer.startedAt !== null &&
-      attemptedStartRef.current !== timer.startedAt
+      timer.completionStatus === 'idle'
     ) {
       void persistCompletion()
     }
-  }, [active, persistCompletion, remaining, timer.startedAt, timer.status])
+  }, [active, persistCompletion, remaining, timer.completionAttempt, timer.completionStatus, timer.startedAt, timer.status])
 
   if (!active) return null
 
@@ -75,15 +71,12 @@ export function ActiveFocusPlayer() {
           <strong aria-live="off">{formatTimer(remaining)}</strong>
         </span>
       </Link>
-      {createSession.error || completeRewardRun.error ? (
+      {timer.completionStatus === 'error' ? (
         <button
           className="focus-mini-player__control"
           type="button"
           aria-label="Retry saving completed timer"
-          onClick={() => {
-            attemptedStartRef.current = null
-            void persistCompletion()
-          }}
+          onClick={timer.retryCompletion}
         >
           <RotateCcw aria-hidden />
         </button>

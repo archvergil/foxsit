@@ -141,6 +141,15 @@ Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`,
 
 ## Latest verification
 
+Completed the expired Focus-cycle recovery repair on 2026-08-20:
+
+- traced the locked `00:00` state to a reload mismatch that visually selected `25 / 5` while retaining custom durations, causing the durable rewarded run to reject the completed phase;
+- restored the reward preset from exact persisted durations and atomically applied its durations when starting, so frontend and Supabase run contracts cannot diverge;
+- reused an in-progress rewarded run for subsequent Focus stacks instead of attempting to create a second active run;
+- serialized automatic completion writes in the persisted timer controller and exposed Retry, Discard and Stop recovery actions after a durable save failure;
+- added unit/component regressions plus an accelerated Playwright cycle covering Focus, break, reload, second Focus and automatic transition away from zero;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (159/159), `npm run build` and the complete local Playwright matrix (22 passed, 2 intentionally skipped outside iPad) passed.
+
 Completed the iPad Task-layout regression repair on 2026-08-19:
 
 - stopped the single-column Task grid from distributing its minimum height into the navigation row, which made empty views such as Completed expand vertically;
