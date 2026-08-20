@@ -91,4 +91,30 @@ describe('Focus session database migration on local PGlite', () => {
     )
     expect(result.rows[0]?.task_id).toBeNull()
   })
+
+  it('deletes only the authenticated owner Focus history', async () => {
+    const ownId = (await database!.query<{ id: string }>(
+      `insert into public.focus_sessions
+        (user_id, started_at, ended_at, planned_seconds, focused_seconds, session_type, completed)
+       values ($1, now() - interval '5 minutes', now(), 300, 300, 'focus', true) returning id`,
+      [USER_A],
+    )).rows[0]!.id
+    const otherId = (await database!.query<{ id: string }>(
+      `insert into public.focus_sessions
+        (user_id, started_at, ended_at, planned_seconds, focused_seconds, session_type, completed)
+       values ($1, now() - interval '5 minutes', now(), 300, 300, 'focus', true) returning id`,
+      [USER_B],
+    )).rows[0]!.id
+
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      await expect(database!.query('select public.delete_focus_session($1)', [otherId])).rejects.toThrow(/not found/i)
+      await database!.query('select public.delete_focus_session($1)', [ownId])
+    } finally {
+      await resetLocalRole(database!)
+    }
+
+    const remaining = await database!.query<{ id: string }>('select id from public.focus_sessions where id = any($1::uuid[])', [[ownId, otherId]])
+    expect(remaining.rows).toEqual([{ id: otherId }])
+  })
 })

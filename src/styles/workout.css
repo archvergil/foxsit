@@ -194,10 +194,19 @@
 .workout-rest-timer button { width: var(--touch-target); height: var(--touch-target); display: grid; color: currentColor; background: color-mix(in srgb, currentColor 9%, transparent); border: 0; border-radius: 50%; cursor: pointer; place-items: center; }
 .workout-rest-timer button svg { width: 1rem; }
 
-.workout-active__exercises { display: grid; gap: var(--space-4); }
+.workout-active__exercises { max-height: min(70vh, 56rem); display: grid; gap: var(--space-4); padding-right: var(--space-1); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .workout-active__exercises article { padding: var(--space-5); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); }
 .workout-active__exercises article > header { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--space-3); }
 .workout-active__exercises article > header > span { color: var(--ink-faint); font-family: var(--font-mono); }
+.workout-active__exercise-heading { min-width: 0; }
+.workout-active__exercise-title { display: flex; align-items: center; gap: var(--space-2); }
+.workout-active__exercise-title button { width: 2rem; height: 2rem; display: grid; flex: 0 0 auto; padding: 0; color: var(--ink-faint); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; place-items: center; }
+.workout-active__exercise-title button:hover { color: var(--ink); background: var(--surface-muted); border-color: var(--border); }
+.workout-active__exercise-title svg { width: 0.9rem; }
+.workout-active__exercise-heading form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--space-2); }
+.workout-active__exercise-heading form input { min-width: 0; min-height: var(--touch-target); padding: var(--space-2) var(--space-3); background: var(--canvas-raised); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
+.workout-active__exercise-heading form .button { min-height: var(--touch-target); }
+.workout-active__exercise-heading > small { display: block; margin-top: var(--space-2); color: var(--danger); }
 .workout-active__exercises h3 { margin: 0; font-size: var(--text-lg); }
 .workout-active__exercises header p { margin: var(--space-1) 0 0; color: var(--ink-faint); font-size: var(--text-sm); }
 .workout-active__exercises ol { display: grid; gap: var(--space-2); padding: 0; margin: var(--space-4) 0 0; list-style: none; }
@@ -227,7 +236,7 @@
 .workout-history__summary span { min-width: 0; display: grid; gap: var(--space-1); }
 .workout-history__summary small { color: var(--ink-faint); }
 .workout-history__summary strong { overflow: hidden; font-family: var(--font-mono); font-size: var(--text-lg); text-overflow: ellipsis; white-space: nowrap; }
-.workout-history__list { display: grid; gap: var(--space-3); }
+.workout-history__list { max-height: min(72vh, 62rem); display: grid; gap: var(--space-3); padding-right: var(--space-1); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .workout-history-card { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); }
 .workout-history-card summary { min-height: 8rem; display: grid; grid-template-columns: auto minmax(10rem, 1fr) auto; align-items: center; gap: var(--space-4); padding: var(--space-5); cursor: pointer; list-style: none; }
 .workout-history-card summary::-webkit-details-marker { display: none; }
@@ -280,6 +289,9 @@
   .workout-active__summary dl { grid-column: 1 / -1; justify-content: space-between; }
   .workout-set__labels { display: none; }
   .workout-active__exercises article { padding: var(--space-4); }
+  .workout-active__exercises { max-height: 68vh; padding-right: 0; }
+  .workout-active__exercise-heading form { grid-template-columns: 1fr 1fr; }
+  .workout-active__exercise-heading form input { grid-column: 1 / -1; }
   .workout-active__exercises li { grid-template-columns: 2.25rem repeat(3, minmax(0, 1fr)); }
   .workout-active__exercises li label > span { display: block; }
   .workout-active__exercises li .button { grid-column: 2 / -1; }

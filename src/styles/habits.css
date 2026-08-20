@@ -34,7 +34,7 @@
 .habit-project-banner small { color: var(--ink-soft); font-size: var(--text-xs); }
 .habit-project-banner__edit { width: 2rem; height: 2rem; display: grid; flex: 0 0 auto; padding: 0; color: var(--ink-soft); background: color-mix(in srgb, var(--surface) 76%, transparent); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; place-items: center; }
 .habit-project-banner__edit svg { width: 0.9rem; }
-.habit-project-group__list { display: grid; gap: var(--space-2); }
+.habit-project-group__list { max-height: min(60vh, 38rem); display: grid; gap: var(--space-2); padding-right: var(--space-1); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .habit-project-group__list[hidden] { display: none; }
 .habit-project-group.is-collapsed { gap: 0; }
 .habit-project-group__empty { min-height: 4rem; display: grid; align-items: center; padding: var(--space-3); margin: 0; color: var(--ink-faint); border: 1px dashed var(--border); border-radius: var(--radius-sm); font-size: var(--text-xs); }
@@ -66,8 +66,8 @@
 .habit-today-card__body > header button:disabled { cursor: not-allowed; opacity: 0.35; }
 .habit-today-card__body > header button svg { width: 0.9rem; }
 .habit-today-card__progress { display: grid; grid-template-columns: minmax(3rem, 1fr) auto; align-items: center; gap: var(--space-2); }
-.habit-today-card__progress > span { height: 0.28rem; overflow: hidden; background: var(--surface-muted); border-radius: var(--radius-pill); }
-.habit-today-card__progress i { height: 100%; display: block; background: var(--habit-accent); border-radius: inherit; transition: width var(--duration-normal); }
+.habit-today-card__progress > span { height: 0.38rem; overflow: hidden; background: color-mix(in srgb, var(--ink-faint) 16%, var(--surface-muted)); border-radius: var(--radius-pill); }
+.habit-today-card__progress i { min-width: 0; height: 100%; display: block; background: color-mix(in srgb, var(--habit-accent-ink) 72%, var(--habit-accent)); border-radius: inherit; box-shadow: 0 0 0 1px color-mix(in srgb, var(--habit-accent-ink) 15%, transparent); transition: width var(--duration-normal); }
 .habit-today-card__progress strong { color: var(--ink-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 600; white-space: nowrap; }
 .habit-today-card__actions { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-1); }
 .habit-today-card__actions button { min-height: 1.85rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0 0.45rem; color: var(--ink-soft); background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.68rem; font-weight: 720; }
@@ -175,7 +175,7 @@
 .habit-heatmap__day--skipped { background: repeating-linear-gradient(135deg, var(--sand), var(--sand) 3px, var(--surface) 3px, var(--surface) 6px); border-color: color-mix(in srgb, var(--sand) 70%, var(--border)); }
 .habit-heatmap__legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-3); color: var(--ink-faint); font-size: var(--text-xs); }
 .habit-heatmap__legend span { display: inline-flex; align-items: center; gap: var(--space-1); }
-.habit-history-card ol { display: grid; gap: 0; margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.habit-history-card ol { max-height: 28rem; display: grid; gap: 0; margin: var(--space-3) 0 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; list-style: none; }
 .habit-history-card__day { min-height: 2.75rem; display: grid; grid-template-columns: 4.3rem minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); border-top: 1px solid var(--border); }
 .habit-history-card__day time, .habit-history-card__day > small { color: var(--ink-faint); font-family: var(--font-mono); font-size: 0.65rem; }
 .habit-history-card__day > span { min-width: 0; display: grid; }

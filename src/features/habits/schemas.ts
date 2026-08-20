@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
 import { isValidLocalDate } from '@/lib/dates'
-import { collectionBannerAssetIds } from '@/lib/bannerAssets'
+import { habitProjectBannerAssetIds } from '@/lib/bannerAssets'
 import type { HabitInput, HabitLogInput, HabitProjectInput } from './types'
 
 export const habitColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
 export const habitCustomColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Enter a valid six-digit hex color.')
 export const habitBannerAssetSchema = z.string().refine(
-  (value) => collectionBannerAssetIds.includes(value),
+  (value) => habitProjectBannerAssetIds.includes(value),
   'Choose a valid collection banner.',
 )
 export const habitScheduleTypeSchema = z.enum(['daily', 'weekdays'])

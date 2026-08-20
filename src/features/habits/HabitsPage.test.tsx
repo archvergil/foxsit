@@ -156,15 +156,15 @@ describe('Habits Today flow', () => {
     await user.click(await screen.findByRole('button', { name: 'New project' }))
     await user.type(within(screen.getByLabelText('Create habit project')).getByRole('textbox', { name: 'Name' }), 'Fitness')
     await user.click(screen.getByRole('button', { name: 'Fitness' }))
-    await user.click(screen.getByRole('button', { name: 'Collection 2' }))
+    await user.click(screen.getByRole('button', { name: 'Workout 13' }))
     await user.click(screen.getByRole('checkbox', { name: 'Black & white' }))
     await user.click(within(screen.getByLabelText('Create habit project')).getByRole('button', { name: 'Create project' }))
 
     await waitFor(() => expect(repository.projects[0]).toMatchObject({
-      name: 'Fitness', icon: 'dumbbell', bannerAsset: 'habits_2.gif', bannerMonochrome: true,
+      name: 'Fitness', icon: 'dumbbell', bannerAsset: 'workout_13.gif', bannerMonochrome: true,
     }))
     expect(await screen.findByText('Fitness')).toBeVisible()
-    expect(document.querySelector('.habit-project-banner .visual-banner__media')).toHaveAttribute('src', '/gifs/habits_2.gif')
+    expect(document.querySelector('.habit-project-banner .visual-banner__media')).toHaveAttribute('src', '/gifs/workout_13.gif')
 
     await user.click(screen.getByRole('button', { name: 'New habit' }))
     await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Morning workout')
@@ -223,6 +223,9 @@ describe('Habits Today flow', () => {
     await user.click(screen.getByRole('button', { name: 'Increment Drink water' }))
     await waitFor(() => expect(repository.logs[0]).toMatchObject({ count: 1, status: 'in_progress' }))
     expect(await screen.findByText('1/2 glasses')).toBeVisible()
+    const progress = screen.getByRole('progressbar', { name: '1 of 2 glasses' })
+    expect(progress).toHaveAttribute('aria-valuenow', '1')
+    expect(progress.querySelector('i')).toHaveStyle({ width: '50%' })
     await user.click(screen.getByRole('button', { name: 'Increment Drink water' }))
     await waitFor(() => expect(repository.logs[0]).toMatchObject({ count: 2, status: 'completed' }))
     expect(await screen.findByText('2/2 glasses')).toBeVisible()

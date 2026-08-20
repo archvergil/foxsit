@@ -83,7 +83,7 @@ test('completes focus, break and a second focus after reload without locking at 
     await page.getByRole('button', { name: 'Start timer' }).click()
     await page.clock.fastForward(61_000)
     await expect(page.getByRole('button', { name: 'Start timer' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Short break' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Short break', exact: true })).toHaveAttribute('aria-pressed', 'true')
 
     await page.getByRole('button', { name: 'Start timer' }).click()
     await page.clock.fastForward(61_000)
@@ -96,7 +96,7 @@ test('completes focus, break and a second focus after reload without locking at 
     await page.clock.fastForward(61_000)
 
     await expect(page.getByRole('button', { name: 'Start timer' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Short break' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Short break', exact: true })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.locator('.focus-history__row')).toHaveCount(3)
     await expect(page.getByText('00:00', { exact: true })).toHaveCount(0)
 

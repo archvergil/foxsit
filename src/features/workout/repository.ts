@@ -1,11 +1,14 @@
 import type {
   FinishWorkoutSessionInput,
+  RenameWorkoutSessionExerciseInput,
   SaveWorkoutSetInput,
   WorkoutRoutine,
   WorkoutRoutineExercise,
   WorkoutRoutineExerciseInput,
   WorkoutRoutineInput,
   WorkoutSession,
+  WorkoutSessionExercise,
+  WorkoutSet,
 } from './types'
 
 export interface WorkoutRepository {
@@ -17,7 +20,8 @@ export interface WorkoutRepository {
   deleteExercise(userId: string, exerciseId: string): Promise<void>
   getActiveSession(userId: string): Promise<WorkoutSession | null>
   startSession(userId: string, routineId: string): Promise<WorkoutSession>
-  saveSet(userId: string, input: SaveWorkoutSetInput): Promise<void>
+  saveSet(userId: string, input: SaveWorkoutSetInput): Promise<WorkoutSet>
+  renameSessionExercise(userId: string, input: RenameWorkoutSessionExerciseInput): Promise<WorkoutSessionExercise>
   cancelSession(userId: string, sessionId: string, endedAt: string): Promise<void>
   finishSession(userId: string, input: FinishWorkoutSessionInput): Promise<void>
   listCompletedSessions(userId: string): Promise<WorkoutSession[]>

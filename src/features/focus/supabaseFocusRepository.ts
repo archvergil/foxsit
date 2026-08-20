@@ -68,6 +68,11 @@ export const createSupabaseFocusRepository = (
     return mapSession(assertData(data, error, 'save the focus session'))
   },
 
+  deleteSession: async (_userId, sessionId) => {
+    const { error } = await client.rpc('delete_focus_session', { p_session_id: sessionId })
+    if (error) throw new FocusRepositoryError('Could not delete the Focus session.', { cause: error })
+  },
+
   startRewardRun: async (_userId, mode, description) => {
     const { data, error } = await client.rpc('start_focus_run', { p_mode: mode, p_description: description ?? '' })
     return assertData(data, error, 'start the rewarded Focus run')

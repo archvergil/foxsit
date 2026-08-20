@@ -94,6 +94,7 @@ export const createLocalHttpServer = ({
         const taskChecklistId = routeId(path, '/v1/tasks', '/checklist')
         const checklistId = routeId(path, '/v1/checklist')
         const calendarEventId = routeId(path, '/v1/calendar-events')
+        const focusSessionId = routeId(path, '/v1/focus-sessions')
         const habitProjectId = routeId(path, '/v1/habit-projects')
         const habitId = routeId(path, '/v1/habits')
         const habitHistoryId = routeId(path, '/v1/habits', '/history')
@@ -120,6 +121,9 @@ export const createLocalHttpServer = ({
         }
         else if (method === 'POST' && path === '/v1/focus-sessions') {
           result = await data.createFocusSession(user.id, await readJson(request))
+        }
+        else if (method === 'DELETE' && focusSessionId) {
+          result = await data.deleteFocusSession(user.id, focusSessionId)
         }
         else if (method === 'GET' && path === '/v1/calendar-events') {
           result = await data.listCalendarEvents(user.id, Object.fromEntries(url.searchParams))

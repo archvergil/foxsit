@@ -119,6 +119,11 @@ export interface SaveWorkoutSetInput {
   rir: number | null
 }
 
+export interface RenameWorkoutSessionExerciseInput {
+  sessionExerciseId: string
+  exerciseName: string
+}
+
 export interface FinishWorkoutSessionInput {
   sessionId: string
   notes: string | null

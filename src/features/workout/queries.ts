@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/features/auth/authContext'
 import { workoutQueryKeys } from './repository'
-import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutine, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import type { FinishWorkoutSessionInput, RenameWorkoutSessionExerciseInput, SaveWorkoutSetInput, WorkoutRoutine, WorkoutRoutineExerciseInput, WorkoutRoutineInput, WorkoutSession, WorkoutSet } from './types'
 import { useOptionalWorkoutRepository, useWorkoutRepository } from './workoutRepositoryContext'
 
 const useWorkoutIdentity = () => {
@@ -169,7 +169,35 @@ export const useSaveWorkoutSet = () => {
   return useMutation({
     mutationKey: ['workout', 'set', 'save', userId],
     mutationFn: (input: SaveWorkoutSetInput) => repository.saveSet(userId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: workoutQueryKeys.activeSession(userId) }),
+    onSuccess: (savedSet) => {
+      queryClient.setQueryData<WorkoutSession | null>(workoutQueryKeys.activeSession(userId), (session) => session ? ({
+        ...session,
+        exercises: session.exercises.map((exercise) => ({
+          ...exercise,
+          sets: exercise.sets.map((set): WorkoutSet => set.id === savedSet.id ? savedSet : set),
+        })),
+      }) : session)
+      void queryClient.invalidateQueries({ queryKey: workoutQueryKeys.activeSession(userId) })
+    },
+  })
+}
+
+export const useRenameWorkoutSessionExercise = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'session-exercise', 'rename', userId],
+    mutationFn: (input: RenameWorkoutSessionExerciseInput) => repository.renameSessionExercise(userId, input),
+    onSuccess: (renamed) => {
+      queryClient.setQueryData<WorkoutSession | null>(workoutQueryKeys.activeSession(userId), (session) => session ? ({
+        ...session,
+        exercises: session.exercises.map((exercise) => exercise.id === renamed.id
+          ? { ...exercise, exerciseName: renamed.exerciseName, updatedAt: renamed.updatedAt }
+          : exercise),
+      }) : session)
+      void queryClient.invalidateQueries({ queryKey: workoutQueryKeys.activeSession(userId) })
+    },
   })
 }
 

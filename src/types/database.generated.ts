@@ -808,6 +808,7 @@ export type Database = {
         }
         Returns: Database['public']['Tables']['focus_sessions']['Row']
       }
+      delete_focus_session: { Args: { p_session_id: string }; Returns: string }
       start_focus_run: { Args: { p_description?: string; p_mode: string }; Returns: string }
       finish_workout_session: {
         Args: { p_notes?: string; p_session_id: string }
@@ -870,6 +871,10 @@ export type Database = {
         }
       }
       start_workout_session: { Args: { p_routine_id: string }; Returns: string }
+      rename_active_workout_exercise: {
+        Args: { p_exercise_name: string; p_session_exercise_id: string }
+        Returns: Database['public']['Tables']['workout_session_exercises']['Row']
+      }
     }
     Enums: {
       [_ in never]: never

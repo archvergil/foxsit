@@ -24,9 +24,11 @@ const buildAssets = (kind: BannerAssetKind, count: number): BannerAsset[] =>
 export const workoutBannerAssets = buildAssets('workout', 13)
 export const collectionBannerAssets = buildAssets('habits', 11)
 export const bannerAssets = [...workoutBannerAssets, ...collectionBannerAssets]
+export const habitProjectBannerAssets = bannerAssets
 export const defaultWorkoutBannerAsset = workoutBannerAssets[0]!.id
 export const workoutBannerAssetIds = workoutBannerAssets.map(({ id }) => id)
 export const collectionBannerAssetIds = collectionBannerAssets.map(({ id }) => id)
+export const habitProjectBannerAssetIds = habitProjectBannerAssets.map(({ id }) => id)
 
 export const bannerAssetById = (id: string | null | undefined) =>
   bannerAssets.find((asset) => asset.id === id)

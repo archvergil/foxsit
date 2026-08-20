@@ -88,7 +88,7 @@
 .calendar-agenda__empty { min-height: 19rem; display: grid; align-content: center; justify-items: center; padding: var(--space-5); text-align: center; }
 .calendar-agenda__empty svg { width: 1.6rem; margin-bottom: var(--space-4); color: var(--ink-faint); }
 .calendar-agenda__empty p { margin: var(--space-2) 0 0; font-size: var(--text-sm); }
-.calendar-agenda__list { display: grid; gap: var(--space-2); margin-top: var(--space-5); }
+.calendar-agenda__list { max-height: min(58vh, 36rem); display: grid; gap: var(--space-2); margin-top: var(--space-5); padding-right: var(--space-1); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .calendar-agenda-item { width: 100%; min-height: 4.25rem; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--space-3); padding: var(--space-3); color: var(--ink); background: var(--canvas-raised); border: 1px solid var(--border); border-radius: 0.55rem; cursor: pointer; text-align: left; }
 .calendar-agenda-item__color { width: 0.55rem; height: 2rem; background: var(--blue); border-radius: var(--radius-pill); }
 .calendar-agenda-item__color--mint { background: var(--mint); }

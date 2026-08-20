@@ -78,7 +78,7 @@ export function HabitTodayCard({ habit, log, date, pending, index, habitCount, i
             <button type="button" aria-label={`Edit habit ${habit.title}`} onClick={onEdit}><Pencil aria-hidden /></button>
           </span>
         </header>
-        <div className="habit-today-card__progress" aria-label={`${count} of ${habit.targetCount} ${habit.unit ?? 'times'}`}><span><i style={{ width: `${progress}%` }} /></span><strong>{skipped ? 'Skipped' : `${count}/${habit.targetCount} ${habit.unit ?? (habit.targetCount === 1 ? 'time' : 'times')}`}</strong></div>
+        <div className="habit-today-card__progress" role="progressbar" aria-label={`${count} of ${habit.targetCount} ${habit.unit ?? 'times'}`} aria-valuemin={0} aria-valuemax={habit.targetCount} aria-valuenow={count}><span><i style={{ width: `${progress}%` }} /></span><strong>{skipped ? 'Skipped' : `${count}/${habit.targetCount} ${habit.unit ?? (habit.targetCount === 1 ? 'time' : 'times')}`}</strong></div>
         <div className="habit-today-card__actions">
           {habit.targetCount > 1 && count > 0 && !skipped ? <button type="button" disabled={pending} aria-label={`Decrease ${habit.title}`} onClick={() => void apply('decrement')}><Minus aria-hidden /></button> : null}
           <button className="habit-today-card__primary" type="button" disabled={pending || skipped} aria-label={completed ? `Undo ${habit.title}` : `Increment ${habit.title}`} onClick={() => void apply(completed ? 'decrement' : 'increment')}>

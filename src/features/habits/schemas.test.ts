@@ -43,7 +43,7 @@ describe('habit schemas', () => {
     }).success).toBe(false)
   })
 
-  it('normalizes a visual project and rejects banners from the Workout catalog', () => {
+  it('normalizes a visual project and accepts the complete GIF catalog', () => {
     const form = habitProjectFormSchema.parse({
       name: '  Fitness  ', icon: 'dumbbell', colorToken: 'coral', customColor: '',
       bannerAsset: 'habits_3.gif', bannerMonochrome: true,
@@ -51,6 +51,7 @@ describe('habit schemas', () => {
     expect(resolveHabitProjectForm(form, 2000)).toMatchObject({
       name: 'Fitness', icon: 'dumbbell', bannerAsset: 'habits_3.gif', bannerMonochrome: true,
     })
-    expect(habitProjectFormSchema.safeParse({ ...form, bannerAsset: 'workout_3.gif' }).success).toBe(false)
+    expect(habitProjectFormSchema.safeParse({ ...form, bannerAsset: 'workout_13.gif' }).success).toBe(true)
+    expect(habitProjectFormSchema.safeParse({ ...form, bannerAsset: 'unknown.gif' }).success).toBe(false)
   })
 })

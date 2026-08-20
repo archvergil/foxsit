@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { workoutBannerAssetIds } from '@/lib/bannerAssets'
-import type { FinishWorkoutSessionInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import type { FinishWorkoutSessionInput, RenameWorkoutSessionExerciseInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 
 export const workoutColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
 export const workoutActivityTypeSchema = z.enum(['strength', 'cardio'])
@@ -90,6 +90,11 @@ export const saveWorkoutSetInputSchema = z.object({
   reps: z.number().int().min(1, 'Enter at least one rep.').max(1000),
   rir: z.number().int().min(0).max(10).nullable(),
 }) satisfies z.ZodType<SaveWorkoutSetInput>
+
+export const renameWorkoutSessionExerciseInputSchema = z.object({
+  sessionExerciseId: z.string().uuid(),
+  exerciseName: z.string().trim().min(1, 'Exercise name is required.').max(160),
+}) satisfies z.ZodType<RenameWorkoutSessionExerciseInput>
 
 export const finishWorkoutSessionInputSchema = z.object({
   sessionId: z.string().uuid(),

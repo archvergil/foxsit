@@ -6,7 +6,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { BannerPicker } from '@/components/visual/BannerPicker'
-import { collectionBannerAssets } from '@/lib/bannerAssets'
+import { habitProjectBannerAssets } from '@/lib/bannerAssets'
 import { HabitProjectGlyph } from './HabitProjectGlyph'
 import { habitProjectIconOptions } from './habitProjectIcons'
 import { useCreateHabitProject, useDeleteHabitProject, useUpdateHabitProject } from './queries'
@@ -71,7 +71,7 @@ export function HabitProjectEditor({ project, projects, onClose }: {
         <label><span>Name</span><input autoFocus {...form.register('name')} />{form.formState.errors.name ? <small role="alert">{form.formState.errors.name.message}</small> : null}</label>
         <fieldset className="habit-project-editor__icons"><legend>Icon</legend><div>{habitProjectIconOptions.slice(0, 5).map(({ value, label }) => <button type="button" className={selectedIcon === value ? 'is-selected' : ''} aria-label={label} aria-pressed={selectedIcon === value} key={value} onClick={() => chooseIcon(value)}><HabitProjectGlyph icon={value} /><small>{label}</small></button>)}<button type="button" aria-label="More project icons" onClick={() => setIconDialogOpen(true)}><MoreHorizontal aria-hidden /><small>More</small></button></div></fieldset>
         <label><span>Accent</span><select {...form.register('colorToken')}><option value="mint">Mint</option><option value="coral">Coral</option><option value="blue">Blue</option><option value="sand">Sand</option><option value="slate">Slate</option></select></label>
-        <BannerPicker assets={collectionBannerAssets} value={bannerAsset || null} monochrome={bannerMonochrome} onChange={(value) => form.setValue('bannerAsset', value ?? '', { shouldDirty: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
+        <BannerPicker assets={habitProjectBannerAssets} value={bannerAsset || null} monochrome={bannerMonochrome} onChange={(value) => form.setValue('bannerAsset', value ?? '', { shouldDirty: true })} onMonochromeChange={(value) => form.setValue('bannerMonochrome', value, { shouldDirty: true })} />
         <Button type="submit" isLoading={createProject.isPending || updateProject.isPending}>{project ? 'Save project' : 'Create project'}</Button>
       </form>
       {error ? <p className="habit-editor__error" role="alert">{error.message}</p> : null}

@@ -60,6 +60,7 @@ vi.mock('./notifications', () => ({
 vi.mock('./queries', () => ({
   useFocusSessions: () => ({ data: [], error: null, isPending: false }),
   useCreateFocusSession: () => ({ mutateAsync: vi.fn(), error: null, isPending: false }),
+  useDeleteFocusSession: () => ({ mutateAsync: vi.fn(), variables: undefined, error: null, isPending: false }),
   useStartRewardFocusRun: () => ({ mutateAsync: startRewardRun, error: null, isPending: false }),
   useAbandonRewardFocusRun: () => ({ mutateAsync: abandonRewardRun, error: null, isPending: false }),
 }))

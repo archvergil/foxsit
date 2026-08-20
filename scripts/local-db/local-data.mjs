@@ -540,6 +540,13 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
     return mapFocusSession(one(result, 'save the focus session'))
   }),
 
+  deleteFocusSession: (userId, sessionId) => withAuthenticatedUser(userId, async () => {
+    one(await database.query(
+      'select public.delete_focus_session($1) as id',
+      [uuid.parse(sessionId)],
+    ), 'delete the Focus session')
+  }),
+
   listCalendarEvents: (userId, input) => withAuthenticatedUser(userId, async () => {
     const range = calendarRange.parse(input)
     const result = await database.query(

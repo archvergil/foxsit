@@ -51,6 +51,10 @@ describe('Workout history deletion', () => {
     } finally {
       await resetLocalRole(database!)
     }
+    await database!.query(
+      "update public.workout_sessions set status='cancelled', ended_at=now(), duration_seconds=0 where id=$1",
+      [activeId],
+    )
   })
 
   it('deletes a routine while preserving its completed-session snapshot', async () => {
@@ -94,6 +98,30 @@ describe('Workout history deletion', () => {
       await expect(database!.query(
         'update public.workout_sessions set routine_id=null where id=$1', [sessionId],
       )).rejects.toThrow(/immutable/i)
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+
+  it('renames only an exercise from the authenticated owner active workout', async () => {
+    const sessionId = (await database!.query<{ id: string }>(
+      "insert into public.workout_sessions(user_id,routine_name) values($1,'Rename test') returning id",
+      [USER_A],
+    )).rows[0]!.id
+    const exerciseId = (await database!.query<{ id: string }>(
+      `insert into public.workout_session_exercises
+        (user_id,session_id,exercise_name,position,target_sets,target_reps_min,target_reps_max,rest_seconds)
+       values($1,$2,'Old exercise',1000,3,8,12,90) returning id`,
+      [USER_A, sessionId],
+    )).rows[0]!.id
+
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      const renamed = await database!.query<{ exercise_name: string }>(
+        'select exercise_name from public.rename_active_workout_exercise($1,$2)',
+        [exerciseId, '  Incline press  '],
+      )
+      expect(renamed.rows).toEqual([{ exercise_name: 'Incline press' }])
     } finally {
       await resetLocalRole(database!)
     }

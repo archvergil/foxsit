@@ -97,12 +97,20 @@ describe('local account and data API', () => {
       }),
     })
     expect(focusResponse.status).toBe(200)
+    const focusSession = (await focusResponse.json()).data
 
     const historyResponse = await request(server.url, session.accessToken, '/v1/focus-sessions?limit=10')
     expect(historyResponse.status).toBe(200)
     expect((await historyResponse.json()).data).toMatchObject([
       { taskId: task.id, focusedSeconds: 1500, completed: true },
     ])
+
+    const deleteFocusResponse = await request(server.url, session.accessToken, `/v1/focus-sessions/${focusSession.id}`, {
+      method: 'DELETE',
+    })
+    expect(deleteFocusResponse.status).toBe(200)
+    const emptyHistoryResponse = await request(server.url, session.accessToken, '/v1/focus-sessions?limit=10')
+    expect((await emptyHistoryResponse.json()).data).toEqual([])
   })
 
   it('isolates local API reads by the authenticated session', async () => {

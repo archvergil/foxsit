@@ -27,9 +27,9 @@ export function BannerPicker({ assets, value, monochrome, onChange, onMonochrome
             <span className="banner-picker__none"><ImageOff aria-hidden /></span><small>None</small>{value === null ? <Check aria-hidden /> : null}
           </button>
         ) : null}
-        {assets.map((asset) => (
+        {assets.map((asset, index) => (
           <button className={value === asset.id ? 'is-selected' : ''} type="button" key={asset.id} aria-label={asset.label} aria-pressed={value === asset.id} onClick={() => onChange(asset.id)}>
-            <img src={asset.previewSrc} alt="" loading="eager" decoding="async" /><small>{asset.label}</small>{value === asset.id ? <Check aria-hidden /> : null}
+            <img src={asset.previewSrc} alt="" loading={index < 4 ? 'eager' : 'lazy'} decoding="async" /><small>{asset.label}</small>{value === asset.id ? <Check aria-hidden /> : null}
           </button>
         ))}
       </div>

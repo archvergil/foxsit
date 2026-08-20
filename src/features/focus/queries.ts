@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/authContext'
 import { useFocusRepository } from './focusRepositoryContext'
 import { focusQueryKeys } from './repository'
-import type { CreateFocusSessionInput, FocusSessionFilters, RewardFocusMode } from './types'
+import type { CreateFocusSessionInput, FocusSession, FocusSessionFilters, RewardFocusMode } from './types'
 
 const useFocusIdentity = () => {
   const { session } = useAuth()
@@ -28,6 +28,22 @@ export const useCreateFocusSession = () => {
     mutationKey: ['focus', 'create-session', userId],
     mutationFn: (input: CreateFocusSessionInput) => repository.createSession(userId, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: focusQueryKeys.sessions(userId) }),
+  })
+}
+
+export const useDeleteFocusSession = () => {
+  const repository = useFocusRepository()
+  const queryClient = useQueryClient()
+  const userId = useFocusIdentity()
+  return useMutation({
+    mutationKey: ['focus', 'delete-session', userId],
+    mutationFn: (sessionId: string) => repository.deleteSession(userId, sessionId),
+    onSuccess: (_result, sessionId) => {
+      for (const [queryKey, sessions] of queryClient.getQueriesData<FocusSession[]>({ queryKey: focusQueryKeys.sessions(userId) })) {
+        queryClient.setQueryData(queryKey, sessions?.filter(({ id }) => id !== sessionId))
+      }
+      void queryClient.invalidateQueries({ queryKey: focusQueryKeys.sessions(userId) })
+    },
   })
 }
 

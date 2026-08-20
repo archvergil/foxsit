@@ -3,6 +3,7 @@ import type { CreateFocusSessionInput, FocusSession, FocusSessionFilters, Reward
 export interface FocusRepository {
   listSessions(userId: string, filters?: FocusSessionFilters): Promise<FocusSession[]>
   createSession(userId: string, input: CreateFocusSessionInput): Promise<FocusSession>
+  deleteSession(userId: string, sessionId: string): Promise<void>
   startRewardRun?: (userId: string, mode: RewardFocusMode, description: string | null) => Promise<string>
   completeRewardRun?: (userId: string, runId: string) => Promise<void>
   abandonRewardRun?: (userId: string, runId: string) => Promise<void>

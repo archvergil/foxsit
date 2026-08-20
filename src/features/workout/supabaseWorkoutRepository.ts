@@ -4,6 +4,7 @@ import type { Database } from '@/types/database.generated'
 import type { WorkoutRepository } from './repository'
 import {
   finishWorkoutSessionInputSchema,
+  renameWorkoutSessionExerciseInputSchema,
   workoutActivityTypeSchema,
   workoutColorTokenSchema,
   workoutRoutineExerciseInputSchema,
@@ -264,8 +265,17 @@ export const createSupabaseWorkoutRepository = (
       rir: value.rir,
       completed_at: new Date().toISOString(),
     }).eq('id', value.setId).eq('session_id', value.sessionId).eq('user_id', userId)
-      .select('id').maybeSingle()
-    assertData(data, error, 'save the workout set')
+      .select('*').maybeSingle()
+    return mapSet(assertData(data, error, 'save the workout set'))
+  },
+
+  renameSessionExercise: async (_userId, input) => {
+    const value = renameWorkoutSessionExerciseInputSchema.parse(input)
+    const { data, error } = await client.rpc('rename_active_workout_exercise', {
+      p_session_exercise_id: value.sessionExerciseId,
+      p_exercise_name: value.exerciseName,
+    })
+    return mapSessionExercise(assertData(data, error, 'rename the active workout exercise'), [])
   },
 
   cancelSession: async (userId, sessionId, endedAt) => {

@@ -1,4 +1,4 @@
-import { Check, CheckCircle2, CircleStop, Dumbbell, TimerReset, X } from 'lucide-react'
+import { Check, CheckCircle2, CircleStop, Dumbbell, Pencil, TimerReset, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { VisualBanner } from '@/components/visual/VisualBanner'
 import { useAuth } from '@/features/auth/authContext'
 import { useTimerClock } from '@/features/focus/useTimerClock'
-import { useCancelWorkoutSession, useFinishWorkoutSession, useSaveWorkoutSet } from './queries'
+import { useCancelWorkoutSession, useFinishWorkoutSession, useRenameWorkoutSessionExercise, useSaveWorkoutSet } from './queries'
 import { formatWorkoutDuration, remainingWorkoutRestMs } from './restTimer'
 import type { WorkoutSession, WorkoutSessionExercise, WorkoutSet } from './types'
 import { cascadeWorkoutSetDraft, workoutSetDraftFromSet, type WorkoutSetDraft } from './workoutSetDrafts'
@@ -73,6 +73,48 @@ function WorkoutSetRow({
       </Button>
       {validationError ? <p role="alert">{validationError}</p> : null}
     </li>
+  )
+}
+
+function ActiveExerciseHeader({ exercise, index }: { exercise: WorkoutSessionExercise; index: number }) {
+  const rename = useRenameWorkoutSessionExercise()
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(exercise.exerciseName)
+  const [error, setError] = useState<string | null>(null)
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setError(null)
+    if (name.trim() === exercise.exerciseName) {
+      setEditing(false)
+      return
+    }
+    try {
+      await rename.mutateAsync({ sessionExerciseId: exercise.id, exerciseName: name })
+      setEditing(false)
+    } catch (renameError) {
+      setError(renameError instanceof Error ? renameError.message : 'The exercise name could not be updated.')
+    }
+  }
+
+  return (
+    <header>
+      <span>{String(index + 1).padStart(2, '0')}</span>
+      <div className="workout-active__exercise-heading">
+        {editing ? (
+          <form onSubmit={(event) => void save(event)}>
+            <label className="visually-hidden" htmlFor={`active-exercise-${exercise.id}`}>Exercise name</label>
+            <input id={`active-exercise-${exercise.id}`} maxLength={160} value={name} onChange={(event) => setName(event.target.value)} />
+            <Button type="submit" isLoading={rename.isPending}><Check aria-hidden />Save</Button>
+            <Button type="button" variant="quiet" disabled={rename.isPending} onClick={() => { setName(exercise.exerciseName); setEditing(false) }}><X aria-hidden />Cancel</Button>
+          </form>
+        ) : (
+          <div className="workout-active__exercise-title"><h3>{exercise.exerciseName}</h3><button type="button" aria-label={`Rename ${exercise.exerciseName}`} onClick={() => { setName(exercise.exerciseName); setEditing(true) }}><Pencil aria-hidden /></button></div>
+        )}
+        <p>{exercise.muscleGroup ?? 'Uncategorized'} · Target {exercise.targetRepsMin}–{exercise.targetRepsMax} reps · {exercise.restSeconds}s rest</p>
+        {error ? <small role="alert">{error}</small> : null}
+      </div>
+    </header>
   )
 }
 
@@ -159,10 +201,7 @@ export function ActiveWorkoutSession({ session, bannerAsset, bannerMonochrome = 
       <section className="workout-active__exercises" aria-label="Active workout exercises">
         {session.exercises.map((exercise, index) => (
           <article key={exercise.id}>
-            <header>
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <div><h3>{exercise.exerciseName}</h3><p>{exercise.muscleGroup ?? 'Uncategorized'} · Target {exercise.targetRepsMin}–{exercise.targetRepsMax} reps · {exercise.restSeconds}s rest</p></div>
-            </header>
+            <ActiveExerciseHeader exercise={exercise} index={index} />
             <div className="workout-set__labels" aria-hidden><span>Set</span><span>kg</span><span>Reps</span><span>RIR</span><span>Status</span></div>
             <ol>{exercise.sets.map((set, setIndex) => <WorkoutSetRow key={set.id} session={session} exercise={exercise} set={set} draft={drafts[set.id] ?? workoutSetDraftFromSet(set)} onDraftChange={(field, value) => updateDraft(exercise, setIndex, field, value)} />)}</ol>
             {exercise.notes ? <p className="workout-active__notes">{exercise.notes}</p> : null}

@@ -300,6 +300,14 @@
   }
 }
 
+@media (max-width: 80rem) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 @media (max-width: 25rem) {
   .reward-balances, .reward-progress-grid { grid-template-columns: 1fr; }
   .reward-progress-grid article:last-child { grid-column: auto; }

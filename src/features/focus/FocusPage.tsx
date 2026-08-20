@@ -14,7 +14,7 @@ import { FocusHistory } from './FocusHistory'
 import { focusSummary } from './focusSummary'
 import { notificationAvailability, requestFocusNotifications } from './notifications'
 import { usePomodoroStore } from './pomodoroStore'
-import { useAbandonRewardFocusRun, useCreateFocusSession, useFocusSessions, useStartRewardFocusRun } from './queries'
+import { useAbandonRewardFocusRun, useCreateFocusSession, useDeleteFocusSession, useFocusSessions, useStartRewardFocusRun } from './queries'
 import { matchingRewardFocusMode, presetDurations, rewardFocusPresets } from './rewardFocusModes'
 import { formatTimer, remainingTimerMs, sessionFromTimer } from './timer'
 import type { FocusPhase, RewardFocusMode } from './types'
@@ -37,10 +37,10 @@ export default function FocusPage() {
   const { session } = useAuth()
   const { timeZone } = useTaskDateContext()
   const [searchParams] = useSearchParams()
-  const [historyStartedAfter] = useState(() => new Date(Date.now() - 7 * 24 * 60 * 60_000).toISOString())
   const taskQuery = useTaskList({})
-  const historyQuery = useFocusSessions({ startedAfter: historyStartedAfter, limit: 200 })
+  const historyQuery = useFocusSessions({ limit: 200 })
   const saveSession = useCreateFocusSession()
+  const deleteSession = useDeleteFocusSession()
   const startRewardRun = useStartRewardFocusRun()
   const abandonRewardRun = useAbandonRewardFocusRun()
   const timer = usePomodoroStore()
@@ -294,7 +294,12 @@ export default function FocusPage() {
           isLoading={historyQuery.isPending}
           error={historyQuery.error}
           onRetry={() => void historyQuery.refetch()}
+          deletingSessionId={deleteSession.isPending ? deleteSession.variables ?? null : null}
+          onDelete={async (sessionId) => {
+            await deleteSession.mutateAsync(sessionId)
+          }}
         />
+        {deleteSession.error ? <p className="focus-history__delete-error" role="alert">{deleteSession.error.message}</p> : null}
       </section>
     </section>
   )

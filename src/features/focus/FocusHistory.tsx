@@ -1,5 +1,6 @@
-import { Check, Clock3, Link2, TimerOff } from 'lucide-react'
+import { Check, Clock3, Link2, TimerOff, Trash2 } from 'lucide-react'
 
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import type { Task } from '@/features/tasks/types'
 import type { FocusSession } from './types'
 
@@ -18,6 +19,8 @@ export function FocusHistory({
   isLoading,
   error,
   onRetry,
+  onDelete,
+  deletingSessionId,
 }: {
   sessions: FocusSession[] | undefined
   tasks: Task[]
@@ -25,6 +28,8 @@ export function FocusHistory({
   isLoading: boolean
   error: Error | null
   onRetry: () => void
+  onDelete: (sessionId: string) => Promise<void>
+  deletingSessionId: string | null
 }) {
   if (isLoading) return <div className="focus-history__state" role="status">Loading focus history…</div>
   if (error) {
@@ -48,7 +53,7 @@ export function FocusHistory({
   const taskMap = new Map(tasks.map((task) => [task.id, task.title]))
   return (
     <div className="focus-history__list">
-      {sessions.slice(0, 8).map((focusSession) => (
+      {sessions.map((focusSession) => (
         <article className="focus-history__row" key={focusSession.id}>
           <span className={`focus-history__status${focusSession.completed ? ' focus-history__status--complete' : ''}`}>
             {focusSession.completed ? <Check aria-hidden /> : <TimerOff aria-hidden />}
@@ -69,6 +74,14 @@ export function FocusHistory({
             <span className="focus-history__task"><Link2 aria-hidden />{taskMap.get(focusSession.taskId) ?? 'Linked task'}</span>
           ) : null}
           <strong className="focus-history__minutes">{minutes(focusSession.focusedSeconds)} min</strong>
+          <ConfirmDialog
+            actionLabel="Delete session"
+            description="This Focus history entry will be permanently removed. Earned reward transactions, if any, remain in the immutable reward ledger."
+            onConfirm={() => onDelete(focusSession.id)}
+            pending={deletingSessionId === focusSession.id}
+            title="Delete this Focus session?"
+            trigger={<button className="focus-history__delete" type="button" aria-label={`Delete ${phaseLabel[focusSession.sessionType]} session`}><Trash2 aria-hidden /></button>}
+          />
         </article>
       ))}
     </div>

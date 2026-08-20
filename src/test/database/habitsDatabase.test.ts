@@ -131,7 +131,7 @@ describe('Habits database migration', () => {
   it('isolates visual habit projects and detaches habits when a project is deleted', async () => {
     const ownProject = (await database!.query<{ id: string }>(
       `insert into public.habit_projects (user_id, name, icon, banner_asset, banner_monochrome)
-       values ($1, 'Fitness', 'dumbbell', 'habits_4.gif', true) returning id`,
+       values ($1, 'Fitness', 'dumbbell', 'workout_13.gif', true) returning id`,
       [USER_A],
     )).rows[0]!.id
     const foreignProject = (await database!.query<{ id: string }>(

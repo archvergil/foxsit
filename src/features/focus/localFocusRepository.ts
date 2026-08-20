@@ -17,4 +17,5 @@ export const createLocalFocusRepository = (client: LocalApiClient): FocusReposit
   listSessions: (_userId, filters = {}) => client.get(sessionPath(filters)),
   createSession: (_userId, input) =>
     client.post('/v1/focus-sessions', createFocusSessionSchema.parse(input)),
+  deleteSession: (_userId, sessionId) => client.delete(`/v1/focus-sessions/${sessionId}`),
 })

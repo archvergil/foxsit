@@ -11,12 +11,15 @@ import { ProfileRepositoryProvider } from '@/features/settings/ProfileRepository
 import type { WorkoutRepository } from './repository'
 import type {
   FinishWorkoutSessionInput,
+  RenameWorkoutSessionExerciseInput,
   SaveWorkoutSetInput,
   WorkoutRoutine,
   WorkoutRoutineExercise,
   WorkoutRoutineExerciseInput,
   WorkoutRoutineInput,
   WorkoutSession,
+  WorkoutSessionExercise,
+  WorkoutSet,
 } from './types'
 import WorkoutPage from './WorkoutPage'
 import { WorkoutRepositoryProvider } from './WorkoutRepositoryProvider'
@@ -92,7 +95,7 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     this.activeSession = activeSession
     return Promise.resolve(activeSession)
   }
-  saveSet(_userId: string, input: SaveWorkoutSetInput): Promise<void> {
+  saveSet(_userId: string, input: SaveWorkoutSetInput): Promise<WorkoutSet> {
     if (!this.activeSession) return Promise.reject(new Error('No active workout.'))
     this.activeSession = {
       ...this.activeSession,
@@ -103,7 +106,8 @@ class MemoryWorkoutRepository implements WorkoutRepository {
         } : set),
       })),
     }
-    return Promise.resolve()
+    const saved = this.activeSession.exercises.flatMap(({ sets }) => sets).find(({ id }) => id === input.setId)
+    return saved ? Promise.resolve(saved) : Promise.reject(new Error('Set not found.'))
   }
   cancelSession(): Promise<void> { this.activeSession = null; return Promise.resolve() }
   finishSession(_userId: string, input: FinishWorkoutSessionInput): Promise<void> {
@@ -133,6 +137,17 @@ class MemoryWorkoutRepository implements WorkoutRepository {
   deleteCompletedSession(_userId: string, sessionId: string): Promise<void> {
     this.history = this.history.filter(({ id }) => id !== sessionId)
     return Promise.resolve()
+  }
+  renameSessionExercise(_userId: string, input: RenameWorkoutSessionExerciseInput): Promise<WorkoutSessionExercise> {
+    if (!this.activeSession) return Promise.reject(new Error('No active workout.'))
+    const exercise = this.activeSession.exercises.find(({ id }) => id === input.sessionExerciseId)
+    if (!exercise) return Promise.reject(new Error('Exercise not found.'))
+    const renamed = { ...exercise, exerciseName: input.exerciseName.trim(), updatedAt: '2026-08-18T12:11:00.000Z' }
+    this.activeSession = {
+      ...this.activeSession,
+      exercises: this.activeSession.exercises.map((item) => item.id === renamed.id ? renamed : item),
+    }
+    return Promise.resolve(renamed)
   }
 }
 
@@ -257,12 +272,18 @@ describe('Workout routine flow', () => {
     const weightInput = await screen.findByRole('spinbutton', { name: 'Bench press set 1 weight in kilograms' })
     expect(screen.getByRole('heading', { level: 2, name: 'Upper body' })).toBeVisible()
 
+    await user.click(screen.getByRole('button', { name: 'Rename Bench press' }))
+    await user.clear(screen.getByRole('textbox', { name: 'Exercise name' }))
+    await user.type(screen.getByRole('textbox', { name: 'Exercise name' }), 'Incline bench press')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('heading', { level: 3, name: 'Incline bench press' })).toBeVisible()
+
     await user.type(weightInput, '40')
-    await user.type(screen.getByRole('spinbutton', { name: 'Bench press set 1 repetitions' }), '10')
-    await user.type(screen.getByRole('spinbutton', { name: 'Bench press set 1 reps in reserve' }), '2')
-    expect(screen.getByRole('spinbutton', { name: 'Bench press set 2 weight in kilograms' })).toHaveValue(40)
-    expect(screen.getByRole('spinbutton', { name: 'Bench press set 2 repetitions' })).toHaveValue(10)
-    expect(screen.getByRole('spinbutton', { name: 'Bench press set 3 reps in reserve' })).toHaveValue(2)
+    await user.type(screen.getByRole('spinbutton', { name: 'Incline bench press set 1 repetitions' }), '10')
+    await user.type(screen.getByRole('spinbutton', { name: 'Incline bench press set 1 reps in reserve' }), '2')
+    expect(screen.getByRole('spinbutton', { name: 'Incline bench press set 2 weight in kilograms' })).toHaveValue(40)
+    expect(screen.getByRole('spinbutton', { name: 'Incline bench press set 2 repetitions' })).toHaveValue(10)
+    expect(screen.getByRole('spinbutton', { name: 'Incline bench press set 3 reps in reserve' })).toHaveValue(2)
     await user.click(screen.getAllByRole('button', { name: 'Complete' })[0]!)
 
     await waitFor(() => expect(repository.activeSession?.exercises[0]?.sets[0]).toMatchObject({

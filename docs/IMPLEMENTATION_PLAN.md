@@ -1,6 +1,6 @@
 # Implementation plan
 
-Last updated: 2026-08-19
+Last updated: 2026-08-20
 
 Status legend: `[x]` complete, `[~]` in progress, `[ ]` pending, `[!]` blocked by an external input.
 
@@ -60,6 +60,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Default every new task's scheduled date to the user's local today.
 - [x] Persisted timestamp-based Pomodoro store and mini player.
 - [x] Durable focus session history and task integration.
+- [x] Confirmed owner-only Focus history deletion with active rewarded-run protection and bounded history scrolling.
 - [~] Unit, component and E2E coverage for the daily flow (the local mobile/tablet/desktop matrix is current; authenticated Supabase Workout/Rewards E2E remains pending).
 
 ## Phase 4 — Calendar
@@ -83,6 +84,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add an explicit clear-history-only choice to Habit deletion and keep the habit itself intact.
 - [x] Make Habit project banners keyboard-accessible collapse controls on mobile and desktop.
 - [x] Add expanded Lucide icon pickers for Habits and Habit projects, and a centered mobile-safe project dialog.
+- [x] Expose the complete authorized Habit and Workout GIF catalog to Habit projects and make partial count progress visually explicit.
 
 ## Phase 6 — Workout
 
@@ -94,6 +96,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Transactional finish, completed history, volume, estimated 1RM and PRs.
 - [x] Add mobile-first collapsible exercise entry, active-session routine artwork and cascading set drafts that persist only through explicit set completion.
 - [x] Add owner-only completed-session deletion with a confirmed destructive action and cascading history cleanup.
+- [x] Add active-session exercise renaming and reconcile saved sets immediately after durable persistence without blocking on a full session reload.
 - [ ] Workout ↔ habit and calendar adapters.
 
 ## Phase 7 — Today integrations
@@ -137,9 +140,19 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005` and `202608190006`; verify Habit award/reversal and expanded-icon creation, Workout history/routine deletion, Calendar preferences, profile-photo Storage policies, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the seven listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006` and `202608200001`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion, Calendar preferences, profile-photo Storage policies, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the eight listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the mobile interaction, Workout latency and bounded-history repair on 2026-08-20:
+
+- disabled page scaling at the viewport contract, prevented double-tap scaling on interactive controls and kept mobile/iPad form controls at Safari-safe 16 px text;
+- changed Workout set completion to return and reconcile the durably saved set immediately, with the full session refresh continuing in the background;
+- added owner-only active exercise renaming through migration `202608200001`, while retaining active-session validation on the server;
+- added confirmed owner-only Focus history deletion, protected in-progress rewarded runs and bounded Focus, Workout, Habit, Calendar and Rewards history/list surfaces with internal scrolling;
+- exposed all 24 authorized Habit/Workout GIF banners to Habit projects, lazy-loaded offscreen previews and expanded the database constraint accordingly;
+- strengthened count-habit progress bars and exposed semantic progressbar values for partial states such as 2/3;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (162/162), `npm run build`, `git diff --check` and the complete local Playwright mobile/tablet/desktop matrix (24 passed, 3 intentional desktop/iPad-specific skips) passed; direct integrated-browser QA remained unavailable because no browser instance was connected.
 
 Completed the expired Focus-cycle recovery repair on 2026-08-20:
 

@@ -225,6 +225,7 @@ const profileRepository: ProfileRepository = {
 const focusRepository: FocusRepository = {
   listSessions: () => Promise.resolve([]),
   createSession: () => Promise.reject(new Error('Not implemented in this test repository.')),
+  deleteSession: () => Promise.resolve(),
 }
 
 const renderPage = (repository: TasksRepository, route = '/tasks') => {
