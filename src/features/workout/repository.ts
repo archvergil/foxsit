@@ -1,5 +1,6 @@
 import type {
   FinishWorkoutSessionInput,
+  CrossfitRoundResult,
   RenameWorkoutSessionExerciseInput,
   SaveWorkoutSetInput,
   WorkoutRoutine,
@@ -24,6 +25,8 @@ export interface WorkoutRepository {
   renameSessionExercise(userId: string, input: RenameWorkoutSessionExerciseInput): Promise<WorkoutSessionExercise>
   cancelSession(userId: string, sessionId: string, endedAt: string): Promise<void>
   finishSession(userId: string, input: FinishWorkoutSessionInput): Promise<void>
+  incrementCrossfitRound(userId: string, sessionId: string): Promise<CrossfitRoundResult>
+  settleCrossfitSession(userId: string, sessionId: string): Promise<void>
   listCompletedSessions(userId: string): Promise<WorkoutSession[]>
   deleteCompletedSession(userId: string, sessionId: string): Promise<void>
 }

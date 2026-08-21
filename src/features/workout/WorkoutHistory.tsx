@@ -19,7 +19,7 @@ const formatSessionDate = (timestamp: string, timeZone: string) => new Intl.Date
 }).format(new Date(timestamp))
 
 function WorkoutHistoryCard({ session, timeZone, onDelete, deleting }: { session: WorkoutSession; timeZone: string; onDelete: () => Promise<void>; deleting: boolean }) {
-  const completedExercises = session.exercises.map((exercise) => ({
+  const completedExercises = session.activityType === 'crossfit' ? session.exercises : session.exercises.map((exercise) => ({
     ...exercise,
     sets: exercise.sets.filter((set) => set.completedAt),
   })).filter((exercise) => exercise.sets.length > 0)
@@ -31,12 +31,12 @@ function WorkoutHistoryCard({ session, timeZone, onDelete, deleting }: { session
         <span><small>{formatSessionDate(session.endedAt ?? session.startedAt, timeZone)}</small><strong>{session.routineName}</strong><small>{completedExercises.length} exercises</small></span>
         <dl>
           <div><dt>Duration</dt><dd>{formatWorkoutDuration((session.durationSeconds ?? 0) * 1000)}</dd></div>
-          <div><dt>Volume</dt><dd>{formatWeightKg(session.totalVolumeKg)}</dd></div>
-          <div><dt>PRs</dt><dd>{session.personalRecords}</dd></div>
+          <div><dt>{session.activityType === 'crossfit' ? 'Rounds' : 'Volume'}</dt><dd>{session.activityType === 'crossfit' ? session.crossfitRoundsCompleted : formatWeightKg(session.totalVolumeKg)}</dd></div>
+          <div><dt>{session.activityType === 'crossfit' ? 'Format' : 'PRs'}</dt><dd>{session.activityType === 'crossfit' ? 'AMRAP' : session.personalRecords}</dd></div>
         </dl>
       </summary>
       <div className="workout-history-card__details">
-        {completedExercises.map((exercise) => (
+        {session.activityType === 'crossfit' ? <section className="workout-history-card__crossfit-score"><header><strong>{session.crossfitRoundsCompleted} completed rounds</strong><small>{Math.round((session.crossfitTimeCapSeconds ?? 0) / 60)} minute time cap</small></header><ul>{completedExercises.map((exercise) => <li key={exercise.id}><span>{String(exercise.position).padStart(2, '0')}</span><strong>{exercise.exerciseName}</strong><span>{exercise.crossfitReps ?? 0} reps · {exercise.crossfitUsesWeight ? `${exercise.crossfitWeightKg ?? 0} kg` : 'No weight'}</span></li>)}</ul></section> : completedExercises.map((exercise) => (
           <section key={exercise.id}>
             <header><strong>{exercise.exerciseName}</strong><small>{exercise.muscleGroup ?? 'Uncategorized'}</small></header>
             <ul>{exercise.sets.map((set) => (
@@ -71,12 +71,14 @@ export function WorkoutHistory() {
 
   const totalVolume = history.data.reduce((total, item) => total + item.totalVolumeKg, 0)
   const totalRecords = history.data.reduce((total, item) => total + item.personalRecords, 0)
+  const bestCrossfitRounds = history.data.reduce((best, item) => item.activityType === 'crossfit' ? Math.max(best, item.crossfitRoundsCompleted) : best, 0)
   return (
     <div className="workout-history">
       <section className="workout-history__summary" aria-label="Workout history summary">
         <div><CalendarDays aria-hidden /><span><small>Sessions</small><strong>{history.data.length}</strong></span></div>
         <div><Gauge aria-hidden /><span><small>Total volume</small><strong>{formatWeightKg(totalVolume)}</strong></span></div>
         <div><Trophy aria-hidden /><span><small>Personal records</small><strong>{totalRecords}</strong></span></div>
+        <div><Dumbbell aria-hidden /><span><small>Best CrossFit score</small><strong>{bestCrossfitRounds} rounds</strong></span></div>
       </section>
       <section className="workout-history__list" aria-label="Completed workout sessions">
         {history.data.map((item) => <WorkoutHistoryCard key={item.id} session={item} timeZone={timeZone} deleting={deleteSession.isPending && deleteSession.variables === item.id} onDelete={() => deleteSession.mutateAsync(item.id).then(() => undefined)} />)}

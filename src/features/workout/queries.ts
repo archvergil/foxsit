@@ -226,3 +226,38 @@ export const useFinishWorkoutSession = () => {
     },
   })
 }
+
+export const useIncrementCrossfitRound = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'crossfit', 'round', userId],
+    mutationFn: (sessionId: string) => repository.incrementCrossfitRound(userId, sessionId),
+    onSuccess: async (result) => {
+      if (result.status === 'completed') {
+        queryClient.setQueryData(workoutQueryKeys.activeSession(userId), null)
+        await queryClient.invalidateQueries({ queryKey: workoutQueryKeys.history(userId) })
+        return
+      }
+      queryClient.setQueryData<WorkoutSession | null>(workoutQueryKeys.activeSession(userId), (session) => session ? ({
+        ...session,
+        crossfitRoundsCompleted: result.roundsCompleted,
+      }) : session)
+    },
+  })
+}
+
+export const useSettleCrossfitWorkout = () => {
+  const repository = useWorkoutRepository()
+  const queryClient = useQueryClient()
+  const userId = useWorkoutIdentity()
+  return useMutation({
+    mutationKey: ['workout', 'crossfit', 'settle', userId],
+    mutationFn: (sessionId: string) => repository.settleCrossfitSession(userId, sessionId),
+    onSuccess: async () => {
+      queryClient.setQueryData(workoutQueryKeys.activeSession(userId), null)
+      await queryClient.invalidateQueries({ queryKey: workoutQueryKeys.history(userId) })
+    },
+  })
+}

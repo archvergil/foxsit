@@ -19,7 +19,7 @@ const RoutineCard = ({ routine }: { routine: WorkoutRoutine }) => (
   <VisualBanner assetId={routine.bannerAsset ?? defaultWorkoutBannerAsset} monochrome={routine.bannerAsset ? (routine.bannerMonochrome ?? true) : true} className="workout-routine-card workout-routine-card--slate">
     <Link className="workout-routine-card__link" to={`/workout/routine/${routine.id}`}>
       <span className="workout-routine-card__icon"><Dumbbell aria-hidden /></span>
-      <span><span className="eyebrow">{routine.exercises.length} exercises</span><strong>{routine.name}</strong><small>{routine.description ?? 'Ready for exercise planning.'}</small></span>
+      <span><span className="eyebrow">{routine.activityType === 'crossfit' ? `${Math.round((routine.crossfitTimeCapSeconds ?? 0) / 60)} min AMRAP` : `${routine.exercises.length} exercises`}</span><strong>{routine.name}</strong><small>{routine.description ?? 'Ready for exercise planning.'}</small></span>
       <ChevronRight aria-hidden />
     </Link>
   </VisualBanner>
@@ -64,9 +64,9 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
         </span>
       </div>
       <VisualBanner assetId={routine.bannerAsset ?? defaultWorkoutBannerAsset} monochrome={routine.bannerAsset ? (routine.bannerMonochrome ?? true) : true} className="workout-detail__hero workout-detail__hero--slate">
-        <span className="eyebrow">Workout routine</span><h2>{routine.name}</h2>
+        <span className="eyebrow">{routine.activityType === 'crossfit' ? 'CrossFit · AMRAP' : 'Workout routine'}</span><h2>{routine.name}</h2>
         <p>{routine.description ?? 'Add exercises below to turn this routine into a repeatable plan.'}</p>
-        <dl><div><dt>Exercises</dt><dd>{routine.exercises.length}</dd></div><div><dt>Planned sets</dt><dd>{routine.exercises.reduce((total, exercise) => total + exercise.targetSets, 0)}</dd></div></dl>
+        <dl><div><dt>Exercises</dt><dd>{routine.exercises.length}</dd></div><div><dt>{routine.activityType === 'crossfit' ? 'Time cap' : 'Planned sets'}</dt><dd>{routine.activityType === 'crossfit' ? `${Math.round((routine.crossfitTimeCapSeconds ?? 0) / 60)} min` : routine.exercises.reduce((total, exercise) => total + exercise.targetSets, 0)}</dd></div></dl>
       </VisualBanner>
       <section className="workout-exercise-list" aria-label="Routine exercises">
         <header><div><span className="eyebrow">Exercise order</span><h2>Training blocks</h2></div></header>
@@ -74,8 +74,8 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
           <ol>{routine.exercises.map((exercise, index) => (
             <li key={exercise.id}>
               <span className="workout-exercise-list__position">{String(index + 1).padStart(2, '0')}</span>
-              <span><strong>{exercise.exerciseName}</strong><small>{exercise.muscleGroup ?? 'Uncategorized'} · {exercise.targetSets} × {exercise.targetRepsMin}–{exercise.targetRepsMax}</small>{exercise.notes ? <p>{exercise.notes}</p> : null}</span>
-              <span className="workout-exercise-list__rest"><Timer aria-hidden />{exercise.restSeconds}s</span>
+              <span><strong>{exercise.exerciseName}</strong><small>{routine.activityType === 'crossfit' ? `${exercise.crossfitReps ?? 0} reps · ${exercise.crossfitUsesWeight ? `${exercise.crossfitWeightKg ?? 0} kg` : 'No weight'}` : `${exercise.muscleGroup ?? 'Uncategorized'} · ${exercise.targetSets} × ${exercise.targetRepsMin}–${exercise.targetRepsMax}`}</small>{exercise.notes ? <p>{exercise.notes}</p> : null}</span>
+              {routine.activityType === 'crossfit' ? <span className="workout-exercise-list__rest">Circuit</span> : <span className="workout-exercise-list__rest"><Timer aria-hidden />{exercise.restSeconds}s</span>}
               <ConfirmDialog
                 actionLabel="Remove exercise"
                 description="This exercise and its planned sets will be permanently removed from the routine."
@@ -89,7 +89,7 @@ function WorkoutRoutineDetail({ routine, onEdit }: { routine: WorkoutRoutine; on
         )}
         {deleteExercise.error ? <p className="workout-write-error" role="alert">{deleteExercise.error.message}</p> : null}
       </section>
-      <WorkoutExerciseEditor routineId={routine.id} />
+      <WorkoutExerciseEditor routineId={routine.id} activityType={routine.activityType} />
       {startSession.error ? <p className="workout-write-error" role="alert">{startSession.error.message}</p> : null}
     </div>
   )
@@ -109,7 +109,7 @@ export default function WorkoutPage() {
 
   return (
     <div className="workout-page">
-      <PageHeader eyebrow="Workout · production" title={activeView ? (activeSession.data?.routineName ?? 'Active workout') : selectedRoutine?.name ?? (historyView ? 'Workout history' : 'Train with context.')} description={activeView ? 'Sets are saved to Supabase as you complete them.' : historyView ? 'Completed sessions, volume, estimated strength and personal records.' : selectedRoutine ? 'Build the repeatable plan, then start a durable workout session.' : 'Routines and active training are stored in Supabase and isolated by your account.'} actions={!routineId && !historyView && !activeView ? <Button onClick={() => setEditorRoutine('new')}><Plus aria-hidden />New routine</Button> : undefined} />
+      <PageHeader eyebrow="Workout · production" title={activeView ? (activeSession.data?.routineName ?? 'Active workout') : selectedRoutine?.name ?? (historyView ? 'Workout history' : 'Train with context.')} description={activeView ? (activeSession.data?.activityType === 'crossfit' ? 'Rounds and the AMRAP deadline are saved durably.' : 'Sets are saved to Supabase as you complete them.') : historyView ? 'Completed sessions, CrossFit rounds, volume, estimated strength and personal records.' : selectedRoutine ? 'Build the repeatable plan, then start a durable workout session.' : 'Routines and active training are stored in Supabase and isolated by your account.'} actions={!routineId && !historyView && !activeView ? <Button onClick={() => setEditorRoutine('new')}><Plus aria-hidden />New routine</Button> : undefined} />
       <SegmentedControl activeIndex={workoutViewIndex} className="workout-view-switch" label="Workout views" name={activeSession.data ? 'workout-view-three' : 'workout-view-two'} options={activeSession.data ? 3 : 2}><Link className={!historyView && !activeView ? 'is-active' : ''} to="/workout/routines">Routines</Link>{activeSession.data ? <Link className={activeView ? 'is-active' : ''} to="/workout/session/active">Active</Link> : null}<Link className={historyView ? 'is-active' : ''} to="/workout/history">History</Link></SegmentedControl>
       {!activeView && activeSession.data ? <Link className="workout-active-banner" to="/workout/session/active"><span><span className="eyebrow">Workout in progress</span><strong>{activeSession.data.routineName}</strong></span><span>Continue<ChevronRight aria-hidden /></span></Link> : null}
       {activeView && activeSession.isLoading ? <div className="workout-state" role="status">Recovering your active workout…</div> : null}

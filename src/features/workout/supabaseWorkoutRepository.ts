@@ -43,6 +43,9 @@ const mapExercise = (row: ExerciseRow): WorkoutRoutineExercise => ({
   targetRepsMax: row.target_reps_max,
   restSeconds: row.rest_seconds,
   notes: row.notes,
+  crossfitUsesWeight: row.crossfit_uses_weight,
+  crossfitWeightKg: row.crossfit_weight_kg,
+  crossfitReps: row.crossfit_reps,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 })
@@ -54,6 +57,7 @@ const mapRoutine = (row: RoutineRow, exercises: WorkoutRoutineExercise[] = []): 
   description: row.description,
   colorToken: workoutColorTokenSchema.parse(row.color_token),
   activityType: workoutActivityTypeSchema.parse(row.activity_type),
+  crossfitTimeCapSeconds: row.crossfit_time_cap_seconds,
   bannerAsset: row.banner_asset,
   bannerMonochrome: row.banner_monochrome,
   position: row.position,
@@ -94,6 +98,9 @@ const mapSessionExercise = (row: SessionExerciseRow, sets: WorkoutSet[]): Workou
   targetRepsMax: row.target_reps_max,
   restSeconds: row.rest_seconds,
   notes: row.notes,
+  crossfitUsesWeight: row.crossfit_uses_weight,
+  crossfitWeightKg: row.crossfit_weight_kg,
+  crossfitReps: row.crossfit_reps,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   sets,
@@ -144,6 +151,9 @@ const mapSession = (row: SessionRow, exercises: WorkoutSessionExercise[]): Worko
   totalVolumeKg: row.total_volume_kg,
   bestEstimatedOneRepMaxKg: row.best_estimated_1rm_kg,
   personalRecords: row.personal_records,
+  crossfitTimeCapSeconds: row.crossfit_time_cap_seconds,
+  crossfitDueAt: row.crossfit_due_at,
+  crossfitRoundsCompleted: row.crossfit_rounds_completed,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   exercises,
@@ -192,6 +202,7 @@ export const createSupabaseWorkoutRepository = (
       description: value.description,
       color_token: value.colorToken,
       activity_type: value.activityType,
+      crossfit_time_cap_seconds: value.crossfitTimeCapSeconds,
       banner_asset: value.bannerAsset ?? null,
       banner_monochrome: value.bannerMonochrome ?? false,
       position: Date.now(),
@@ -206,6 +217,7 @@ export const createSupabaseWorkoutRepository = (
       description: value.description,
       color_token: value.colorToken,
       activity_type: value.activityType,
+      crossfit_time_cap_seconds: value.crossfitTimeCapSeconds,
       banner_asset: value.bannerAsset ?? null,
       banner_monochrome: value.bannerMonochrome ?? false,
     }).eq('id', routineId).eq('user_id', userId).select('*').single()
@@ -236,6 +248,9 @@ export const createSupabaseWorkoutRepository = (
       target_reps_max: value.targetRepsMax,
       rest_seconds: value.restSeconds,
       notes: value.notes,
+      crossfit_uses_weight: value.crossfitUsesWeight,
+      crossfit_weight_kg: value.crossfitWeightKg,
+      crossfit_reps: value.crossfitReps,
       position: (positionResult.data?.position ?? 0) + 1000,
     }).select('*').single()
     return mapExercise(assertData(data, error, 'add the exercise'))
@@ -306,6 +321,20 @@ export const createSupabaseWorkoutRepository = (
       .order('ended_at', { ascending: false }).limit(50)
     const rows = assertData(result.data, result.error, 'load workout history')
     return loadSessionRelations(client, userId, rows)
+  },
+
+  incrementCrossfitRound: async (_userId, sessionId) => {
+    const { data, error } = await client.rpc('increment_crossfit_round', { p_session_id: sessionId })
+    const result = assertData(data, error, 'record the completed CrossFit round') as { status?: unknown; rounds_completed?: unknown }
+    if ((result.status !== 'active' && result.status !== 'completed') || typeof result.rounds_completed !== 'number') {
+      throw new WorkoutRepositoryError('The CrossFit round response was invalid.')
+    }
+    return { status: result.status, roundsCompleted: result.rounds_completed }
+  },
+
+  settleCrossfitSession: async (_userId, sessionId) => {
+    const { data, error } = await client.rpc('settle_crossfit_workout', { p_session_id: sessionId })
+    assertData(data, error, 'finish the CrossFit workout')
   },
 
   deleteCompletedSession: async (_userId, sessionId) => {

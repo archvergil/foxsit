@@ -1,5 +1,5 @@
-import { Check, CheckCircle2, CircleStop, Dumbbell, Pencil, TimerReset, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Check, CheckCircle2, CircleStop, Dumbbell, Pencil, Plus, TimerReset, Trophy, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/Button'
@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { VisualBanner } from '@/components/visual/VisualBanner'
 import { useAuth } from '@/features/auth/authContext'
 import { useTimerClock } from '@/features/focus/useTimerClock'
-import { useCancelWorkoutSession, useFinishWorkoutSession, useRenameWorkoutSessionExercise, useSaveWorkoutSet } from './queries'
+import { useCancelWorkoutSession, useFinishWorkoutSession, useIncrementCrossfitRound, useRenameWorkoutSessionExercise, useSaveWorkoutSet, useSettleCrossfitWorkout } from './queries'
 import { formatWorkoutDuration, remainingWorkoutRestMs } from './restTimer'
 import type { WorkoutSession, WorkoutSessionExercise, WorkoutSet } from './types'
 import { cascadeWorkoutSetDraft, workoutSetDraftFromSet, type WorkoutSetDraft } from './workoutSetDrafts'
@@ -76,7 +76,7 @@ function WorkoutSetRow({
   )
 }
 
-function ActiveExerciseHeader({ exercise, index }: { exercise: WorkoutSessionExercise; index: number }) {
+function ActiveExerciseHeader({ exercise, index, description }: { exercise: WorkoutSessionExercise; index: number; description?: string }) {
   const rename = useRenameWorkoutSessionExercise()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(exercise.exerciseName)
@@ -111,7 +111,7 @@ function ActiveExerciseHeader({ exercise, index }: { exercise: WorkoutSessionExe
         ) : (
           <div className="workout-active__exercise-title"><h3>{exercise.exerciseName}</h3><button type="button" aria-label={`Rename ${exercise.exerciseName}`} onClick={() => { setName(exercise.exerciseName); setEditing(true) }}><Pencil aria-hidden /></button></div>
         )}
-        <p>{exercise.muscleGroup ?? 'Uncategorized'} · Target {exercise.targetRepsMin}–{exercise.targetRepsMax} reps · {exercise.restSeconds}s rest</p>
+        <p>{description ?? `${exercise.muscleGroup ?? 'Uncategorized'} · Target ${exercise.targetRepsMin}–${exercise.targetRepsMax} reps · ${exercise.restSeconds}s rest`}</p>
         {error ? <small role="alert">{error}</small> : null}
       </div>
     </header>
@@ -139,7 +139,7 @@ function RestTimer({ session }: { session: WorkoutSession }) {
   )
 }
 
-export function ActiveWorkoutSession({ session, bannerAsset, bannerMonochrome = true }: {
+function ActiveTraditionalWorkoutSession({ session, bannerAsset, bannerMonochrome = true }: {
   session: WorkoutSession
   bannerAsset?: string | null | undefined
   bannerMonochrome?: boolean | undefined
@@ -220,4 +220,90 @@ export function ActiveWorkoutSession({ session, bannerAsset, bannerMonochrome = 
       {finishSession.error ? <p className="workout-write-error" role="alert">{finishSession.error.message}</p> : null}
     </div>
   )
+}
+
+type ActiveWorkoutProps = {
+  session: WorkoutSession
+  bannerAsset?: string | null | undefined
+  bannerMonochrome?: boolean | undefined
+}
+
+function ActiveCrossfitSession({ session, bannerAsset, bannerMonochrome = true }: ActiveWorkoutProps) {
+  const navigate = useNavigate()
+  const cancelSession = useCancelWorkoutSession()
+  const incrementRound = useIncrementCrossfitRound()
+  const settleWorkout = useSettleCrossfitWorkout()
+  const settlementAttempted = useRef(false)
+  const now = useTimerClock(true)
+  const dueAt = session.crossfitDueAt ? Date.parse(session.crossfitDueAt) : Date.parse(session.startedAt)
+  const remainingMs = Math.max(0, dueAt - now)
+  const elapsedMs = Math.max(0, now - Date.parse(session.startedAt))
+  const timeCapMs = Math.max(1, (session.crossfitTimeCapSeconds ?? 1) * 1000)
+  const timeProgress = Math.min(100, Math.round((elapsedMs / timeCapMs) * 100))
+
+  useEffect(() => {
+    if (remainingMs > 0 || settlementAttempted.current) return
+    settlementAttempted.current = true
+    settleWorkout.mutate(session.id, {
+      onSuccess: () => { void navigate('/workout/history') },
+    })
+  }, [navigate, remainingMs, session.id, settleWorkout])
+
+  const addRound = async () => {
+    try {
+      const result = await incrementRound.mutateAsync(session.id)
+      if (result.status === 'completed') await navigate('/workout/history')
+    } catch {
+      // The durable-write error remains visible for retry.
+    }
+  }
+
+  const discard = async () => {
+    try {
+      await cancelSession.mutateAsync({ sessionId: session.id, endedAt: new Date().toISOString() })
+      await navigate('/workout/routines')
+    } catch {
+      // The durable-write error remains visible for retry.
+    }
+  }
+
+  return (
+    <div className="workout-active workout-crossfit-active">
+      <VisualBanner assetId={bannerAsset} monochrome={bannerMonochrome} className="workout-active__summary workout-crossfit-active__summary">
+        <span className="workout-active__icon"><Dumbbell aria-hidden /></span>
+        <span><span className="eyebrow">CrossFit · AMRAP</span><h2>{session.routineName}</h2><p>Complete the full circuit, then record one round.</p></span>
+        <dl><div><dt>Remaining</dt><dd aria-live="off">{formatWorkoutDuration(remainingMs)}</dd></div><div><dt>Rounds</dt><dd>{session.crossfitRoundsCompleted}</dd></div></dl>
+        <div className="workout-active__progress" aria-label={`${timeProgress}% of time elapsed`}><span style={{ width: `${timeProgress}%` }} /></div>
+      </VisualBanner>
+
+      <section className="workout-crossfit-active__score" aria-label="CrossFit round counter">
+        <Trophy aria-hidden />
+        <span><small>Completed circuits</small><strong>{session.crossfitRoundsCompleted}</strong></span>
+        <Button disabled={remainingMs === 0} isLoading={incrementRound.isPending} onClick={() => void addRound()}><Plus aria-hidden />One More</Button>
+        <p>Tap only after completing every movement below. The count is saved immediately.</p>
+      </section>
+
+      <section className="workout-active__exercises workout-crossfit-active__circuit" aria-label="CrossFit circuit">
+        {session.exercises.map((exercise, index) => {
+          const prescription = `${exercise.crossfitReps ?? 0} reps · ${exercise.crossfitUsesWeight ? `${exercise.crossfitWeightKg ?? 0} kg` : 'No weight'}`
+          return <article key={exercise.id}><ActiveExerciseHeader exercise={exercise} index={index} description={prescription} /></article>
+        })}
+      </section>
+
+      <section className="workout-active__footer workout-crossfit-active__footer">
+        <div><strong>{remainingMs === 0 ? 'Time is up.' : 'The WOD ends automatically at 00:00.'}</strong><p>Its time cap, exercise prescription and final round count remain in history.</p></div>
+        <ConfirmDialog actionLabel="Discard workout" description="This active WOD will end without adding it to completed history." onConfirm={discard} pending={cancelSession.isPending} title="Discard this CrossFit workout?" trigger={<Button variant="quiet" disabled={cancelSession.isPending}><CircleStop aria-hidden />Discard workout</Button>} />
+      </section>
+      {settleWorkout.isPending ? <p className="workout-crossfit-active__settling" role="status">Time is up. Saving the final score…</p> : null}
+      {incrementRound.error ? <p className="workout-write-error" role="alert">{incrementRound.error.message}</p> : null}
+      {settleWorkout.error ? <p className="workout-write-error" role="alert">{settleWorkout.error.message} <button type="button" onClick={() => { settlementAttempted.current = false; settleWorkout.reset() }}>Try again</button></p> : null}
+      {cancelSession.error ? <p className="workout-write-error" role="alert">{cancelSession.error.message}</p> : null}
+    </div>
+  )
+}
+
+export function ActiveWorkoutSession(props: ActiveWorkoutProps) {
+  return props.session.activityType === 'crossfit'
+    ? <ActiveCrossfitSession {...props} />
+    : <ActiveTraditionalWorkoutSession {...props} />
 }

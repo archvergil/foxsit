@@ -481,6 +481,9 @@ export type Database = {
       workout_routine_exercises: {
         Row: {
           created_at: string
+          crossfit_reps: number | null
+          crossfit_uses_weight: boolean
+          crossfit_weight_kg: number | null
           exercise_name: string
           id: string
           muscle_group: string | null
@@ -496,6 +499,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          crossfit_reps?: number | null
+          crossfit_uses_weight?: boolean
+          crossfit_weight_kg?: number | null
           exercise_name: string
           id?: string
           muscle_group?: string | null
@@ -511,6 +517,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          crossfit_reps?: number | null
+          crossfit_uses_weight?: boolean
+          crossfit_weight_kg?: number | null
           exercise_name?: string
           id?: string
           muscle_group?: string | null
@@ -542,6 +551,7 @@ export type Database = {
           banner_monochrome: boolean
           color_token: string
           created_at: string
+          crossfit_time_cap_seconds: number | null
           description: string | null
           id: string
           name: string
@@ -556,6 +566,7 @@ export type Database = {
           banner_monochrome?: boolean
           color_token?: string
           created_at?: string
+          crossfit_time_cap_seconds?: number | null
           description?: string | null
           id?: string
           name: string
@@ -570,6 +581,7 @@ export type Database = {
           banner_monochrome?: boolean
           color_token?: string
           created_at?: string
+          crossfit_time_cap_seconds?: number | null
           description?: string | null
           id?: string
           name?: string
@@ -582,6 +594,9 @@ export type Database = {
       workout_session_exercises: {
         Row: {
           created_at: string
+          crossfit_reps: number | null
+          crossfit_uses_weight: boolean
+          crossfit_weight_kg: number | null
           exercise_key: string | null
           exercise_name: string
           id: string
@@ -599,6 +614,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          crossfit_reps?: number | null
+          crossfit_uses_weight?: boolean
+          crossfit_weight_kg?: number | null
           exercise_key?: string | null
           exercise_name: string
           id?: string
@@ -616,6 +634,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          crossfit_reps?: number | null
+          crossfit_uses_weight?: boolean
+          crossfit_weight_kg?: number | null
           exercise_key?: string | null
           exercise_name?: string
           id?: string
@@ -654,6 +675,9 @@ export type Database = {
           best_estimated_1rm_kg: number | null
           completed_sets: number
           created_at: string
+          crossfit_due_at: string | null
+          crossfit_rounds_completed: number
+          crossfit_time_cap_seconds: number | null
           duration_seconds: number | null
           ended_at: string | null
           id: string
@@ -672,6 +696,9 @@ export type Database = {
           best_estimated_1rm_kg?: number | null
           completed_sets?: number
           created_at?: string
+          crossfit_due_at?: string | null
+          crossfit_rounds_completed?: number
+          crossfit_time_cap_seconds?: number | null
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
@@ -690,6 +717,9 @@ export type Database = {
           best_estimated_1rm_kg?: number | null
           completed_sets?: number
           created_at?: string
+          crossfit_due_at?: string | null
+          crossfit_rounds_completed?: number
+          crossfit_time_cap_seconds?: number | null
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
@@ -835,6 +865,8 @@ export type Database = {
         Args: { p_notes?: string; p_session_id: string }
         Returns: string
       }
+      increment_crossfit_round: { Args: { p_session_id: string }; Returns: Json }
+      settle_crossfit_workout: { Args: { p_session_id: string }; Returns: string }
       delete_workout_session: { Args: { p_session_id: string }; Returns: string }
       is_valid_weekdays: { Args: { value: number[] }; Returns: boolean }
       reorder_habits: {

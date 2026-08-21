@@ -1,5 +1,5 @@
 export type WorkoutColorToken = 'mint' | 'coral' | 'blue' | 'sand' | 'slate'
-export type WorkoutActivityType = 'strength' | 'cardio'
+export type WorkoutActivityType = 'strength' | 'cardio' | 'crossfit'
 
 export interface WorkoutRoutineExercise {
   id: string
@@ -13,6 +13,9 @@ export interface WorkoutRoutineExercise {
   targetRepsMax: number
   restSeconds: number
   notes: string | null
+  crossfitUsesWeight: boolean
+  crossfitWeightKg: number | null
+  crossfitReps: number | null
   createdAt: string
   updatedAt: string
 }
@@ -24,6 +27,7 @@ export interface WorkoutRoutine {
   description: string | null
   colorToken: WorkoutColorToken
   activityType: WorkoutActivityType
+  crossfitTimeCapSeconds: number | null
   bannerAsset?: string | null | undefined
   bannerMonochrome?: boolean | undefined
   position: number
@@ -38,12 +42,14 @@ export interface WorkoutRoutineInput {
   description: string | null
   colorToken: WorkoutColorToken
   activityType: WorkoutActivityType
+  crossfitTimeCapSeconds: number | null
   bannerAsset?: string | null | undefined
   bannerMonochrome?: boolean | undefined
 }
 
 export interface WorkoutRoutineExerciseInput {
   routineId: string
+  activityType: WorkoutActivityType
   exerciseName: string
   muscleGroup: string | null
   targetSets: number
@@ -51,6 +57,9 @@ export interface WorkoutRoutineExerciseInput {
   targetRepsMax: number
   restSeconds: number
   notes: string | null
+  crossfitUsesWeight: boolean
+  crossfitWeightKg: number | null
+  crossfitReps: number | null
 }
 
 export type WorkoutSessionStatus = 'active' | 'completed' | 'cancelled'
@@ -86,6 +95,9 @@ export interface WorkoutSessionExercise {
   targetRepsMax: number
   restSeconds: number
   notes: string | null
+  crossfitUsesWeight: boolean
+  crossfitWeightKg: number | null
+  crossfitReps: number | null
   createdAt: string
   updatedAt: string
   sets: WorkoutSet[]
@@ -106,6 +118,9 @@ export interface WorkoutSession {
   totalVolumeKg: number
   bestEstimatedOneRepMaxKg: number | null
   personalRecords: number
+  crossfitTimeCapSeconds: number | null
+  crossfitDueAt: string | null
+  crossfitRoundsCompleted: number
   createdAt: string
   updatedAt: string
   exercises: WorkoutSessionExercise[]
@@ -127,4 +142,9 @@ export interface RenameWorkoutSessionExerciseInput {
 export interface FinishWorkoutSessionInput {
   sessionId: string
   notes: string | null
+}
+
+export interface CrossfitRoundResult {
+  status: 'active' | 'completed'
+  roundsCompleted: number
 }

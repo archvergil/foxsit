@@ -31,12 +31,14 @@ export function WorkoutRoutineEditor({
       description: routine?.description ?? '',
       colorToken: 'slate',
       activityType: routine?.activityType ?? 'strength',
+      crossfitTimeCapMinutes: Math.round((routine?.crossfitTimeCapSeconds ?? 1200) / 60),
       bannerAsset: routine?.bannerAsset ?? defaultWorkoutBannerAsset,
       bannerMonochrome: routine?.bannerAsset ? (routine.bannerMonochrome ?? true) : true,
     },
   })
   const bannerAsset = useWatch({ control: form.control, name: 'bannerAsset' }) ?? ''
   const bannerMonochrome = useWatch({ control: form.control, name: 'bannerMonochrome' }) ?? false
+  const activityType = useWatch({ control: form.control, name: 'activityType' })
   const error = createRoutine.error ?? updateRoutine.error
 
   const submit = form.handleSubmit(async (values) => {
@@ -69,12 +71,18 @@ export function WorkoutRoutineEditor({
         <input type="hidden" {...form.register('colorToken')} />
         <label>
           <span>Activity</span>
-          <select {...form.register('activityType')}>
+          <select {...form.register('activityType')} disabled={Boolean(routine?.exercises.length)}>
             <option value="strength">Strength</option>
             <option value="cardio">Cardio</option>
+            <option value="crossfit">CrossFit</option>
           </select>
-          <small>This classification is copied to each session for Rewards.</small>
+          <small>{routine?.exercises.length ? 'Remove existing exercises before changing the modality.' : 'The modality is copied to every completed session.'}</small>
         </label>
+        {activityType === 'crossfit' ? <label>
+          <span>AMRAP time cap (minutes)</span>
+          <input type="number" min="1" max="180" inputMode="numeric" {...form.register('crossfitTimeCapMinutes', { valueAsNumber: true })} />
+          {form.formState.errors.crossfitTimeCapMinutes ? <small role="alert">{form.formState.errors.crossfitTimeCapMinutes.message}</small> : <small>The countdown automatically completes the WOD.</small>}
+        </label> : null}
         <label className="workout-editor__wide">
           <span>Description</span>
           <textarea rows={4} placeholder="Goal, split or useful context" {...form.register('description')} />
