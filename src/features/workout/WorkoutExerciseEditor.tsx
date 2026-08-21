@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 
 import { Button } from '@/components/ui/Button'
 import { useCreateWorkoutExercise } from './queries'
@@ -34,6 +34,7 @@ export function WorkoutExerciseEditor({ routineId, activityType }: { routineId: 
       // Keep the exercise draft available for retry.
     }
   })
+  const crossfitUsesWeight = useWatch({ control: form.control, name: 'crossfitUsesWeight' })
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 640px)')
@@ -51,7 +52,7 @@ export function WorkoutExerciseEditor({ routineId, activityType }: { routineId: 
         <label className="workout-exercise-editor__name"><span>Exercise</span><input placeholder="e.g. Bench press" {...form.register('exerciseName')} aria-invalid={Boolean(form.formState.errors.exerciseName)} />{form.formState.errors.exerciseName ? <small role="alert">{form.formState.errors.exerciseName.message}</small> : null}</label>
         {activityType === 'crossfit' ? <>
           <label className="workout-exercise-editor__checkbox"><input type="checkbox" {...form.register('crossfitUsesWeight')} /><span>Uses weight (kg)</span></label>
-          {form.watch('crossfitUsesWeight') ? <label><span>Weight (kg)</span><input type="number" inputMode="decimal" min="0" max="10000" step="0.25" {...form.register('crossfitWeightKg', { setValueAs: (value) => value === '' ? null : Number(value) })} />{form.formState.errors.crossfitWeightKg ? <small role="alert">{form.formState.errors.crossfitWeightKg.message}</small> : null}</label> : null}
+          {crossfitUsesWeight ? <label><span>Weight (kg)</span><input type="number" inputMode="decimal" min="0" max="10000" step="0.25" {...form.register('crossfitWeightKg', { setValueAs: (value) => value === '' ? null : Number(value) })} />{form.formState.errors.crossfitWeightKg ? <small role="alert">{form.formState.errors.crossfitWeightKg.message}</small> : null}</label> : null}
           <label><span>Repetitions</span><input type="number" inputMode="numeric" min="1" max="1000" {...form.register('crossfitReps', { setValueAs: (value) => value === '' ? null : Number(value) })} />{form.formState.errors.crossfitReps ? <small role="alert">{form.formState.errors.crossfitReps.message}</small> : null}</label>
         </> : <>
           <label><span>Muscle group</span><input placeholder="Optional" {...form.register('muscleGroup')} /></label>

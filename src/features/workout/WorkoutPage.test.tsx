@@ -11,6 +11,7 @@ import { ProfileRepositoryProvider } from '@/features/settings/ProfileRepository
 import type { WorkoutRepository } from './repository'
 import type {
   FinishWorkoutSessionInput,
+  CrossfitRoundResult,
   RenameWorkoutSessionExerciseInput,
   SaveWorkoutSetInput,
   WorkoutRoutine,
@@ -76,10 +77,14 @@ class MemoryWorkoutRepository implements WorkoutRepository {
     if (this.activeSession) return Promise.resolve(this.activeSession)
     const routine = this.routines.find(({ id }) => id === routineId)
     if (!routine || routine.exercises.length === 0) return Promise.reject(new Error('Add at least one exercise.'))
+    const startedAt = new Date().toISOString()
     const activeSession: WorkoutSession = {
       id: crypto.randomUUID(), userId, routineId, routineName: routine.name, activityType: routine.activityType, status: 'active',
-      startedAt: '2026-08-18T12:00:00.000Z', endedAt: null, durationSeconds: null, notes: null,
+      startedAt, endedAt: null, durationSeconds: null, notes: null,
       completedSets: 0, totalVolumeKg: 0, bestEstimatedOneRepMaxKg: null, personalRecords: 0,
+      crossfitTimeCapSeconds: routine.crossfitTimeCapSeconds,
+      crossfitDueAt: routine.crossfitTimeCapSeconds === null ? null : new Date(Date.parse(startedAt) + routine.crossfitTimeCapSeconds * 1000).toISOString(),
+      crossfitRoundsCompleted: 0,
       createdAt: '2026-08-18T12:00:00.000Z', updatedAt: '2026-08-18T12:00:00.000Z',
       exercises: routine.exercises.map((exercise) => ({
         ...exercise, sessionId: 'session-id', sourceRoutineExerciseId: exercise.id,
@@ -136,6 +141,23 @@ class MemoryWorkoutRepository implements WorkoutRepository {
   listCompletedSessions(): Promise<WorkoutSession[]> { return Promise.resolve(this.history) }
   deleteCompletedSession(_userId: string, sessionId: string): Promise<void> {
     this.history = this.history.filter(({ id }) => id !== sessionId)
+    return Promise.resolve()
+  }
+  incrementCrossfitRound(): Promise<CrossfitRoundResult> {
+    if (!this.activeSession || this.activeSession.activityType !== 'crossfit') return Promise.reject(new Error('No active CrossFit workout.'))
+    this.activeSession = { ...this.activeSession, crossfitRoundsCompleted: this.activeSession.crossfitRoundsCompleted + 1 }
+    return Promise.resolve({ status: 'active', roundsCompleted: this.activeSession.crossfitRoundsCompleted })
+  }
+  settleCrossfitSession(): Promise<void> {
+    if (!this.activeSession || this.activeSession.activityType !== 'crossfit') return Promise.reject(new Error('No active CrossFit workout.'))
+    const finished: WorkoutSession = {
+      ...this.activeSession,
+      status: 'completed',
+      endedAt: this.activeSession.crossfitDueAt,
+      durationSeconds: this.activeSession.crossfitTimeCapSeconds,
+    }
+    this.history.unshift(finished)
+    this.activeSession = null
     return Promise.resolve()
   }
   renameSessionExercise(_userId: string, input: RenameWorkoutSessionExerciseInput): Promise<WorkoutSessionExercise> {
@@ -198,6 +220,7 @@ describe('Workout routine flow', () => {
     const repository = new MemoryWorkoutRepository()
     await repository.createRoutine(USER_ID, {
       name: 'Legacy routine', description: null, colorToken: 'slate', activityType: 'strength',
+      crossfitTimeCapSeconds: null,
       bannerAsset: null, bannerMonochrome: false,
     })
     const { container } = renderPage(repository)
@@ -211,6 +234,7 @@ describe('Workout routine flow', () => {
     const repository = new MemoryWorkoutRepository()
     const routine = await repository.createRoutine(USER_ID, {
       name: 'Pull day', description: null, colorToken: 'slate', activityType: 'strength',
+      crossfitTimeCapSeconds: null,
       bannerAsset: 'workout_1.gif', bannerMonochrome: true,
     })
     const user = userEvent.setup()
@@ -229,6 +253,7 @@ describe('Workout routine flow', () => {
     repository.deleteFailure = new Error('The routine could not be deleted.')
     const routine = await repository.createRoutine(USER_ID, {
       name: 'Protected day', description: null, colorToken: 'slate', activityType: 'strength',
+      crossfitTimeCapSeconds: null,
       bannerAsset: 'workout_2.gif', bannerMonochrome: true,
     })
     const user = userEvent.setup()
@@ -306,4 +331,29 @@ describe('Workout routine flow', () => {
     await waitFor(() => expect(repository.history).toHaveLength(0))
     expect(await screen.findByText('No completed workouts yet.')).toBeVisible()
   }, 10_000)
+
+  it('creates an AMRAP circuit and records one score for the whole WOD', async () => {
+    const repository = new MemoryWorkoutRepository()
+    const routine = await repository.createRoutine(USER_ID, {
+      name: 'Cindy', description: null, colorToken: 'slate', activityType: 'crossfit',
+      crossfitTimeCapSeconds: 1200, bannerAsset: 'workout_1.gif', bannerMonochrome: true,
+    })
+    await repository.createExercise(USER_ID, {
+      routineId: routine.id, activityType: 'crossfit', exerciseName: 'Pull-up', muscleGroup: null,
+      targetSets: 3, targetRepsMin: 8, targetRepsMax: 12, restSeconds: 90, notes: null,
+      crossfitUsesWeight: false, crossfitWeightKg: null, crossfitReps: 5,
+    })
+    const user = userEvent.setup()
+    renderPage(repository, `/workout/routine/${routine.id}`)
+
+    expect(await screen.findByText('5 reps · No weight')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Start workout' }))
+    expect(await screen.findByRole('button', { name: 'One More' })).toBeVisible()
+    expect(screen.getByLabelText('CrossFit round counter')).toHaveTextContent('0')
+
+    await user.click(screen.getByRole('button', { name: 'One More' }))
+    await waitFor(() => expect(repository.activeSession?.crossfitRoundsCompleted).toBe(1))
+    expect(screen.getByLabelText('CrossFit round counter')).toHaveTextContent('1')
+    expect(screen.getByLabelText('CrossFit circuit')).toHaveTextContent('Pull-up')
+  })
 })

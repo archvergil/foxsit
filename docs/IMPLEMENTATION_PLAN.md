@@ -100,6 +100,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add mobile-first collapsible exercise entry, active-session routine artwork and cascading set drafts that persist only through explicit set completion.
 - [x] Add owner-only completed-session deletion with a confirmed destructive action and cascading history cleanup.
 - [x] Add active-session exercise renaming and reconcile saved sets immediately after durable persistence without blocking on a full session reload.
+- [x] Add CrossFit AMRAP routines with optional prescribed kilograms, per-movement repetitions, one durable WOD round counter, an editable time cap, automatic deadline completion and score-based history.
 - [ ] Workout ↔ habit and calendar adapters.
 
 ## Phase 7 — Today integrations
@@ -144,9 +145,17 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001`, `202608210002`, `202608210003` and `202608210004`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion, atomic/abandoned-run reward recovery and background phase settlement, Calendar preferences, profile-photo Storage policies, Task-to-Event conversion, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` and migration `202608210001` are recorded as applied; the eleven listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001`, `202608210002`, `202608210003`, `202608210004` and `202608210006`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion, active exercise renaming and CrossFit AMRAP completion, Focus history deletion, atomic/abandoned-run reward recovery and background phase settlement, Calendar preferences, profile-photo Storage policies, Task-to-Event conversion, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011`, `202608210001` and `202608210005` are recorded as applied; the twelve listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the CrossFit AMRAP recovery and deploy repair on 2026-08-21:
+
+- finished the existing CrossFit routine, movement, active timer, whole-WOD round counter and score-history slice instead of treating the Cloudflare TypeScript failure as the only defect;
+- added responsive active-score/circuit styling and aligned every test repository, fixture and schema contract with the new nullable CrossFit fields;
+- added migration `202608210006` to prevent modality changes underneath existing movements and make the session activity snapshot explicit; migration `202608210005` was reported as already applied, while the corrective migration still requires production application because this checkout is not linked to a Supabase project;
+- added frontend/schema and PGlite regressions for optional kilograms, per-movement repetitions, no generated CrossFit sets, whole-WOD increments, ownership, immutable counters and deadline finalization;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (188/188), `npm run test:db` (48/48), `npm run build` and `git diff --check` passed; interactive visual QA remained unavailable because no browser instance was connected.
 
 Completed the background Focus settlement and touch-viewport containment repair on 2026-08-21:
 

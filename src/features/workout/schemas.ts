@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { workoutBannerAssetIds } from '@/lib/bannerAssets'
-import type { FinishWorkoutSessionInput, RenameWorkoutSessionExerciseInput, SaveWorkoutSetInput, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
+import type { FinishWorkoutSessionInput, RenameWorkoutSessionExerciseInput, SaveWorkoutSetInput, WorkoutActivityType, WorkoutRoutineExerciseInput, WorkoutRoutineInput } from './types'
 
 export const workoutColorTokenSchema = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
 export const workoutActivityTypeSchema = z.enum(['strength', 'cardio', 'crossfit'])
@@ -50,6 +50,12 @@ export const workoutRoutineExerciseInputSchema = z.object({
   if (value.activityType === 'crossfit' && value.crossfitUsesWeight && value.crossfitWeightKg === null) {
     context.addIssue({ code: 'custom', path: ['crossfitWeightKg'], message: 'Enter the prescribed weight.' })
   }
+  if (value.activityType === 'crossfit' && !value.crossfitUsesWeight && value.crossfitWeightKg !== null) {
+    context.addIssue({ code: 'custom', path: ['crossfitWeightKg'], message: 'Enable prescribed weight before entering kilograms.' })
+  }
+  if (value.activityType !== 'crossfit' && (value.crossfitReps !== null || value.crossfitUsesWeight || value.crossfitWeightKg !== null)) {
+    context.addIssue({ code: 'custom', path: ['activityType'], message: 'CrossFit movement fields require a CrossFit routine.' })
+  }
 })
 
 export const workoutRoutineFormSchema = z.object({
@@ -95,7 +101,7 @@ export type WorkoutExerciseFormValues = z.infer<typeof workoutExerciseFormSchema
 
 export const resolveWorkoutExerciseForm = (
   routineId: string,
-  activityType: import('./types').WorkoutActivityType,
+  activityType: WorkoutActivityType,
   values: WorkoutExerciseFormValues,
 ): WorkoutRoutineExerciseInput => workoutRoutineExerciseInputSchema.parse({
   routineId,

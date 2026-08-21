@@ -185,6 +185,27 @@
 .workout-active__progress { grid-column: 1 / -1; height: 0.45rem; overflow: hidden; background: color-mix(in srgb, currentColor 13%, transparent); border-radius: var(--radius-pill); }
 .workout-active__progress span { display: block; height: 100%; background: currentColor; border-radius: inherit; transition: width var(--duration-normal) var(--ease-out); }
 
+.workout-crossfit-active__score {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+.workout-crossfit-active__score > svg { width: 2rem; color: var(--mint-ink); }
+.workout-crossfit-active__score > span { display: grid; gap: var(--space-1); }
+.workout-crossfit-active__score small { color: var(--ink-faint); }
+.workout-crossfit-active__score strong { font-family: var(--font-mono); font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1; }
+.workout-crossfit-active__score .button { min-width: 9rem; }
+.workout-crossfit-active__score > p { grid-column: 2 / -1; margin: 0; color: var(--ink-faint); font-size: var(--text-sm); }
+.workout-crossfit-active__circuit { grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); }
+.workout-crossfit-active__circuit article { min-height: 7rem; display: grid; align-content: center; }
+.workout-crossfit-active__settling { padding: var(--space-3); margin: 0; color: var(--ink-muted); background: var(--surface-muted); border-radius: var(--radius-sm); }
+.workout-history-card__crossfit-score li { grid-template-columns: 3rem minmax(8rem, 1fr) auto; }
+
 .workout-rest-timer { position: sticky; z-index: 10; top: var(--space-3); min-height: 5rem; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-4); color: var(--ink); background: var(--surface-muted); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
 .workout-rest-timer.is-finished { color: var(--ink); background: var(--canvas-raised); }
 .workout-rest-timer > svg { width: 1.4rem; }
@@ -298,6 +319,11 @@
   .workout-active__exercises li > p { grid-column: 1 / -1; }
   .workout-active__footer { align-items: stretch; flex-direction: column; }
   .workout-active__footer-actions { align-items: stretch; flex-direction: column-reverse; }
+  .workout-crossfit-active__score { grid-template-columns: auto minmax(0, 1fr); }
+  .workout-crossfit-active__score .button { grid-column: 1 / -1; width: 100%; }
+  .workout-crossfit-active__score > p { grid-column: 1 / -1; }
+  .workout-history-card__crossfit-score li { grid-template-columns: 2.5rem minmax(0, 1fr); }
+  .workout-history-card__crossfit-score li > span:last-child { grid-column: 2; }
   .workout-history__summary { grid-template-columns: 1fr; }
   .workout-history__summary > div { min-height: 5rem; }
   .workout-history-card summary { grid-template-columns: auto 1fr; }
