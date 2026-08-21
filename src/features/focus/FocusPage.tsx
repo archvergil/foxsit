@@ -216,7 +216,7 @@ export default function FocusPage() {
               </>
             )}
           </div>
-          {timer.completionStatus === 'error' || saveSession.error || startRewardRun.error || abandonRewardRun.error ? <p className="focus-timer-card__error" role="alert">The Focus phase was not saved. Retry the transition, or discard the expired timer to recover the controls.</p> : null}
+          {timer.completionStatus === 'error' || saveSession.error || startRewardRun.error || abandonRewardRun.error ? <p className="focus-timer-card__error" role="alert">The save confirmation was interrupted. Retry safely to confirm the same phase and refresh its reward; duplicate sessions and coins are blocked.</p> : null}
         </section>
 
         <aside className="focus-setup-card">

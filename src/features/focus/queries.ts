@@ -27,7 +27,10 @@ export const useCreateFocusSession = () => {
   return useMutation({
     mutationKey: ['focus', 'create-session', userId],
     mutationFn: (input: CreateFocusSessionInput) => repository.createSession(userId, input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: focusQueryKeys.sessions(userId) }),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: focusQueryKeys.sessions(userId) })
+      void queryClient.invalidateQueries({ queryKey: ['rewards'] })
+    },
   })
 }
 

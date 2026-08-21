@@ -8,6 +8,7 @@ import { authenticateLocalUser, createLocalTestDatabase, createLocalUser, resetL
 const USER_A = 'a0000000-0000-4000-8000-000000000001'
 const USER_B = 'b0000000-0000-4000-8000-000000000002'
 const USER_DELETE = 'b0000000-0000-4000-8000-000000000003'
+const USER_ATOMIC_FOCUS = 'c0000000-0000-4000-8000-000000000004'
 
 describe('Rewards economy on local PGlite', () => {
   let database: PGlite | undefined
@@ -17,6 +18,7 @@ describe('Rewards economy on local PGlite', () => {
     await createLocalUser(database, { id: USER_A, email: 'rewards-a@local.test' })
     await createLocalUser(database, { id: USER_B, email: 'rewards-b@local.test' })
     await createLocalUser(database, { id: USER_DELETE, email: 'rewards-delete@local.test' })
+    await createLocalUser(database, { id: USER_ATOMIC_FOCUS, email: 'rewards-focus-atomic@local.test' })
   }, 30_000)
 
   afterAll(async () => database?.close())
@@ -115,6 +117,61 @@ describe('Rewards economy on local PGlite', () => {
         [session.rows[0]!.id],
       )
       expect(transactions.rows[0]!.count).toBe(1)
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+
+  it('awards the run atomically with its final Focus session and makes a lost-response retry safe', async () => {
+    await authenticateLocalUser(database!, USER_ATOMIC_FOCUS)
+    try {
+      const runId = (await database!.query<{ start_focus_run: string }>(
+        "select public.start_focus_run('40_5',null) as start_focus_run",
+      )).rows[0]!.start_focus_run
+      const phases = [
+        ['focus', 2400], ['short_break', 300],
+        ['focus', 2400], ['short_break', 300],
+        ['focus', 2400], ['short_break', 300],
+        ['focus', 2400], ['long_break', 300],
+        ['focus', 2400],
+      ] as const
+      const totalSeconds = phases.reduce((sum, [, seconds]) => sum + seconds, 0)
+      let cursor = Date.now() - (totalSeconds + 60) * 1000
+      let finalStartedAt = ''
+      let savedFinalId = ''
+
+      for (const [sessionType, seconds] of phases) {
+        const startedAt = new Date(cursor).toISOString()
+        cursor += seconds * 1000
+        const endedAt = new Date(cursor).toISOString()
+        const saved = await database!.query<{ id: string }>(`
+          select (public.record_focus_session($1,null,$2,$3,$4,$4,$5,true)).id as id
+        `, [runId, startedAt, endedAt, seconds, sessionType])
+        if (sessionType === 'focus') {
+          finalStartedAt = startedAt
+          savedFinalId = saved.rows[0]!.id
+        }
+      }
+
+      const walletAfterFinalSession = await database!.query<{ silver_balance: bigint; gold_balance: bigint }>(
+        'select silver_balance,gold_balance from public.reward_wallets where user_id=$1',
+        [USER_ATOMIC_FOCUS],
+      )
+      expect(Number(walletAfterFinalSession.rows[0]!.silver_balance)).toBe(6)
+      expect(Number(walletAfterFinalSession.rows[0]!.gold_balance)).toBe(5)
+
+      const retry = await database!.query<{ id: string }>(`
+        select (public.record_focus_session($1,null,$2,$3,2400,2400,'focus',true)).id as id
+      `, [runId, finalStartedAt, new Date().toISOString()])
+      expect(retry.rows[0]!.id).toBe(savedFinalId)
+      await database!.query('select public.complete_focus_run_and_award($1)', [runId])
+
+      const ledger = await database!.query<{ count: number }>(`
+        select count(*)::integer as count
+        from public.reward_transactions
+        where user_id=$1 and reason='focus_base' and source_id=$2
+      `, [USER_ATOMIC_FOCUS, runId])
+      expect(ledger.rows[0]!.count).toBe(1)
     } finally {
       await resetLocalRole(database!)
     }

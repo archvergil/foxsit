@@ -140,9 +140,18 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006` and `202608200001`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion, Calendar preferences, profile-photo Storage policies, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the eight listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001` and `202608210001`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion and atomic reward recovery, Calendar preferences, profile-photo Storage policies, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the nine listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the atomic Focus reward and orphaned-run reconciliation repair on 2026-08-21:
+
+- moved eligibility verification, run finalization, wallet/counter updates and immutable reward-ledger inserts into the same database transaction that records the final Focus session;
+- made `record_focus_session` return the existing idempotent session even after that transaction completes the run, so retrying a lost response cannot create duplicate history or coins;
+- added a one-time migration reconciliation for every eligible completed Focus run whose sessions were saved but whose reward was never processed;
+- refreshes both Focus history and Rewards queries after success or an interrupted response, while keeping the explicit completion RPC as an idempotent compatibility path;
+- added a database regression for the full 40/5 sequence of five Focus sessions and four breaks, including a simulated lost-response retry and exact-once ledger assertion;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (166/166), `npm run build`, the focused Rewards database suite (8/8) and `git diff --check` passed locally; production reconciliation still requires applying migration `202608210001` to the linked Supabase project.
 
 Completed the profile-photo framing and cross-form containment repair on 2026-08-20:
 
