@@ -9,6 +9,7 @@ const USER_A = 'a0000000-0000-4000-8000-000000000001'
 const USER_B = 'b0000000-0000-4000-8000-000000000002'
 const USER_DELETE = 'b0000000-0000-4000-8000-000000000003'
 const USER_ATOMIC_FOCUS = 'c0000000-0000-4000-8000-000000000004'
+const USER_ABANDONED_FOCUS = 'c0000000-0000-4000-8000-000000000005'
 
 describe('Rewards economy on local PGlite', () => {
   let database: PGlite | undefined
@@ -19,6 +20,7 @@ describe('Rewards economy on local PGlite', () => {
     await createLocalUser(database, { id: USER_B, email: 'rewards-b@local.test' })
     await createLocalUser(database, { id: USER_DELETE, email: 'rewards-delete@local.test' })
     await createLocalUser(database, { id: USER_ATOMIC_FOCUS, email: 'rewards-focus-atomic@local.test' })
+    await createLocalUser(database, { id: USER_ABANDONED_FOCUS, email: 'rewards-focus-abandoned@local.test' })
   }, 30_000)
 
   afterAll(async () => database?.close())
@@ -175,6 +177,62 @@ describe('Rewards economy on local PGlite', () => {
     } finally {
       await resetLocalRole(database!)
     }
+  })
+
+  it('reconciles a complete 40/5 run that the legacy recovery flow marked abandoned', async () => {
+    await database!.query('alter table public.focus_sessions disable trigger focus_sessions_auto_finalize_reward')
+    let runId: string | undefined
+    try {
+      await authenticateLocalUser(database!, USER_ABANDONED_FOCUS)
+      runId = (await database!.query<{ start_focus_run: string }>(
+        "select public.start_focus_run('40_5',null) as start_focus_run",
+      )).rows[0]!.start_focus_run
+      const phases = [
+        ['focus', 2400], ['short_break', 300],
+        ['focus', 2400], ['short_break', 300],
+        ['focus', 2400], ['short_break', 300],
+        ['focus', 2400], ['long_break', 300],
+        ['focus', 2400],
+      ] as const
+      const totalSeconds = phases.reduce((sum, [, seconds]) => sum + seconds, 0)
+      let cursor = Date.now() - (totalSeconds + 60) * 1000
+
+      for (const [sessionType, seconds] of phases) {
+        const startedAt = new Date(cursor).toISOString()
+        cursor += seconds * 1000
+        await database!.query(`
+          select public.record_focus_session($1,null,$2,$3,$4,$4,$5,true)
+        `, [runId, startedAt, new Date(cursor).toISOString(), seconds, sessionType])
+      }
+    } finally {
+      await resetLocalRole(database!)
+      await database!.query('alter table public.focus_sessions enable trigger focus_sessions_auto_finalize_reward')
+    }
+    if (!runId) throw new Error('The abandoned Focus fixture was not created.')
+    await database!.query(
+      'update public.focus_runs set abandoned_at=clock_timestamp() where id=$1',
+      [runId],
+    )
+
+    const recovery = await database!.query<{ reconcile_eligible_abandoned_focus_runs: number }>(
+      'select public.reconcile_eligible_abandoned_focus_runs($1) as reconcile_eligible_abandoned_focus_runs',
+      [USER_ABANDONED_FOCUS],
+    )
+    expect(recovery.rows[0]!.reconcile_eligible_abandoned_focus_runs).toBe(1)
+
+    const wallet = await database!.query<{ silver_balance: bigint; gold_balance: bigint }>(
+      'select silver_balance,gold_balance from public.reward_wallets where user_id=$1',
+      [USER_ABANDONED_FOCUS],
+    )
+    expect(Number(wallet.rows[0]!.silver_balance)).toBe(6)
+    expect(Number(wallet.rows[0]!.gold_balance)).toBe(5)
+
+    const run = await database!.query<{ abandoned_at: string | null; reward_processed_at: string | null }>(
+      'select abandoned_at,reward_processed_at from public.focus_runs where id=$1',
+      [runId],
+    )
+    expect(run.rows[0]!.abandoned_at).toBeNull()
+    expect(run.rows[0]!.reward_processed_at).not.toBeNull()
   })
 
   it('awards all habits completed today and reverses an accidental completion', async () => {
