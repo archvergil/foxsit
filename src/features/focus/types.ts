@@ -32,4 +32,14 @@ export interface CreateFocusSessionInput {
   completed: boolean
 }
 
+export interface ScheduleFocusPhaseInput {
+  taskId?: string | null
+  focusRunId?: string | null
+  startedAt: string
+  plannedSeconds: number
+  sessionType: FocusPhase
+}
+
+export type FocusPhaseJobStatus = 'running' | 'paused' | 'completed' | 'cancelled'
+
 export type RewardFocusMode = '25_5' | '30_5' | '40_5'

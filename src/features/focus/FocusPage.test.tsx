@@ -37,6 +37,7 @@ const timer = {
 
 const startRewardRun = vi.fn()
 const abandonRewardRun = vi.fn()
+const schedulePhase = vi.fn()
 
 vi.mock('@/features/auth/authContext', () => ({
   useAuth: () => ({ session: { user: { id: 'user-1' } } }),
@@ -63,11 +64,16 @@ vi.mock('./queries', () => ({
   useDeleteFocusSession: () => ({ mutateAsync: vi.fn(), variables: undefined, error: null, isPending: false }),
   useStartRewardFocusRun: () => ({ mutateAsync: startRewardRun, error: null, isPending: false }),
   useAbandonRewardFocusRun: () => ({ mutateAsync: abandonRewardRun, error: null, isPending: false }),
+  useScheduleFocusPhase: () => ({ mutateAsync: schedulePhase, error: null, isPending: false }),
+  usePauseFocusPhase: () => ({ mutateAsync: vi.fn(), error: null, isPending: false }),
+  useResumeFocusPhase: () => ({ mutateAsync: vi.fn(), error: null, isPending: false }),
+  useCancelFocusPhase: () => ({ mutateAsync: vi.fn(), error: null, isPending: false }),
 }))
 
 describe('Focus session setup', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    schedulePhase.mockResolvedValue('phase-job-1')
     Object.assign(timer, {
       status: 'idle',
       ownerUserId: null,

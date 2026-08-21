@@ -22,6 +22,7 @@ interface StartPomodoroInput {
   rewardRunId?: string | null
   rewardMode?: RewardFocusMode | null
   rewardRequiredStacks?: number
+  scheduledPhaseId?: string | null
 }
 
 export interface PomodoroStore extends PomodoroDurations {
@@ -38,6 +39,7 @@ export interface PomodoroStore extends PomodoroDurations {
   rewardMode: RewardFocusMode | null
   rewardRequiredStacks: number
   rewardCompletedStacks: number
+  scheduledPhaseId: string | null
   completionStatus: PomodoroCompletionStatus
   completionAttempt: number
   configure: (durations: PomodoroDurations) => void
@@ -63,6 +65,7 @@ const activeReset = {
   rewardMode: null,
   rewardRequiredStacks: 0,
   rewardCompletedStacks: 0,
+  scheduledPhaseId: null,
   completionStatus: 'idle' as const,
   completionAttempt: 0,
 }
@@ -85,7 +88,7 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
     taskId: phase === 'focus' ? state.taskId : null,
   } : state),
 
-  start: ({ userId, phase, taskId = null, durations, rewardRunId = null, rewardMode = null, rewardRequiredStacks = 0, now = Date.now() }) => set((state) => {
+  start: ({ userId, phase, taskId = null, durations, rewardRunId = null, rewardMode = null, rewardRequiredStacks = 0, scheduledPhaseId = null, now = Date.now() }) => set((state) => {
     const nextPhase = phase ?? state.phase
     const nextDurations = durations ?? state
     return {
@@ -102,6 +105,7 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
       rewardMode: rewardMode ?? state.rewardMode,
       rewardRequiredStacks: rewardRequiredStacks || state.rewardRequiredStacks,
       rewardCompletedStacks: rewardRunId && rewardRunId !== state.rewardRunId ? 0 : state.rewardCompletedStacks,
+      scheduledPhaseId,
       completionStatus: 'idle',
       completionAttempt: 0,
     }
@@ -160,6 +164,7 @@ const storeInitializer = (set: StoreApi<PomodoroStore>['setState']): PomodoroSto
       rewardMode: rewardFinished ? null : state.rewardMode,
       rewardRequiredStacks: rewardFinished ? 0 : state.rewardRequiredStacks,
       rewardCompletedStacks: rewardFinished ? 0 : rewardCompletedStacks,
+      scheduledPhaseId: null,
       phase: next.phase,
       cycleIndex: next.cycleIndex,
       durationMs: durationForPhase(next.phase, state),
@@ -198,6 +203,7 @@ export const createPomodoroStore = (
       rewardMode: state.rewardMode,
       rewardRequiredStacks: state.rewardRequiredStacks,
       rewardCompletedStacks: state.rewardCompletedStacks,
+      scheduledPhaseId: state.scheduledPhaseId,
       focusMs: state.focusMs,
       shortBreakMs: state.shortBreakMs,
       longBreakMs: state.longBreakMs,

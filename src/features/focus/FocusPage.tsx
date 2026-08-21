@@ -14,9 +14,9 @@ import { FocusHistory } from './FocusHistory'
 import { focusSummary } from './focusSummary'
 import { notificationAvailability, requestFocusNotifications } from './notifications'
 import { usePomodoroStore } from './pomodoroStore'
-import { useAbandonRewardFocusRun, useCreateFocusSession, useDeleteFocusSession, useFocusSessions, useStartRewardFocusRun } from './queries'
+import { useAbandonRewardFocusRun, useCancelFocusPhase, useCreateFocusSession, useDeleteFocusSession, useFocusSessions, usePauseFocusPhase, useResumeFocusPhase, useScheduleFocusPhase, useStartRewardFocusRun } from './queries'
 import { matchingRewardFocusMode, presetDurations, rewardFocusPresets } from './rewardFocusModes'
-import { formatTimer, remainingTimerMs, sessionFromTimer } from './timer'
+import { durationForPhase, formatTimer, remainingTimerMs, sessionFromTimer } from './timer'
 import type { FocusPhase, RewardFocusMode } from './types'
 import { useTimerClock } from './useTimerClock'
 
@@ -43,6 +43,10 @@ export default function FocusPage() {
   const deleteSession = useDeleteFocusSession()
   const startRewardRun = useStartRewardFocusRun()
   const abandonRewardRun = useAbandonRewardFocusRun()
+  const schedulePhase = useScheduleFocusPhase()
+  const pausePhase = usePauseFocusPhase()
+  const resumePhase = useResumeFocusPhase()
+  const cancelPhase = useCancelFocusPhase()
   const timer = usePomodoroStore()
   const active = timer.status !== 'idle' && timer.ownerUserId === session?.user.id
   const configurationLocked = active || Boolean(timer.rewardRunId)
@@ -70,7 +74,13 @@ export default function FocusPage() {
   const saveInterrupted = async (finish: 'skip' | 'stop') => {
     const input = sessionFromTimer(timer, Date.now(), false)
     try {
-      if (input) await saveSession.mutateAsync(input)
+      if (timer.scheduledPhaseId) {
+        const status = await cancelPhase.mutateAsync(timer.scheduledPhaseId)
+        if (status === 'completed') {
+          timer.retryCompletion()
+          return
+        }
+      } else if (input) await saveSession.mutateAsync(input)
       if (timer.rewardRunId) {
         await abandonRewardRun.mutateAsync(timer.rewardRunId)
         timer.clear()
@@ -83,6 +93,13 @@ export default function FocusPage() {
 
   const discardExpired = async (finish: 'skip' | 'stop') => {
     try {
+      if (timer.scheduledPhaseId) {
+        const status = await cancelPhase.mutateAsync(timer.scheduledPhaseId)
+        if (status === 'completed') {
+          timer.retryCompletion()
+          return
+        }
+      }
       if (timer.rewardRunId) {
         await abandonRewardRun.mutateAsync(timer.rewardRunId)
         timer.clear()
@@ -107,25 +124,66 @@ export default function FocusPage() {
     const taskId = timer.phase === 'focus' && taskQuery.data?.some(({ id, status }) => id === selectedTaskId && status === 'open')
       ? selectedTaskId
       : null
+    let newlyCreatedRunId: string | null = null
     try {
+      const startedAt = Date.now()
       if (timer.phase === 'focus' && rewardMode) {
         const runMode = timer.rewardRunId ? timer.rewardMode ?? rewardMode : rewardMode
         const preset = rewardFocusPresets.find(({ mode }) => mode === runMode)!
         const runId = timer.rewardRunId
           ?? await startRewardRun.mutateAsync({ mode: runMode, description: rewardDescription.trim() || null })
+        if (!timer.rewardRunId) newlyCreatedRunId = runId
+        const durations = presetDurations(preset)
+        const scheduledPhaseId = await schedulePhase.mutateAsync({
+          taskId,
+          focusRunId: runId,
+          startedAt: new Date(startedAt).toISOString(),
+          plannedSeconds: Math.round(durationForPhase(timer.phase, durations) / 1000),
+          sessionType: timer.phase,
+        })
         timer.start({
           userId: session.user.id,
           taskId,
-          durations: presetDurations(preset),
+          now: startedAt,
+          durations,
           rewardRunId: runId,
           rewardMode: runMode,
           rewardRequiredStacks: timer.rewardRunId ? timer.rewardRequiredStacks : preset.stacks,
+          scheduledPhaseId,
         })
       } else {
-        timer.start({ userId: session.user.id, taskId })
+        const scheduledPhaseId = await schedulePhase.mutateAsync({
+          taskId,
+          focusRunId: timer.rewardRunId,
+          startedAt: new Date(startedAt).toISOString(),
+          plannedSeconds: Math.round(durationForPhase(timer.phase, timer) / 1000),
+          sessionType: timer.phase,
+        })
+        timer.start({ userId: session.user.id, taskId, now: startedAt, scheduledPhaseId })
       }
     } catch {
-      // Start only after the rewarded run has durable server identity.
+      if (newlyCreatedRunId) {
+        try { await abandonRewardRun.mutateAsync(newlyCreatedRunId) } catch { /* Reconciliation can safely close the empty run later. */ }
+      }
+      // Start only after both the rewarded run and phase have durable server identity.
+    }
+  }
+
+  const togglePause = async () => {
+    try {
+      if (timer.scheduledPhaseId) {
+        const status = timer.status === 'paused'
+          ? await resumePhase.mutateAsync(timer.scheduledPhaseId)
+          : await pausePhase.mutateAsync(timer.scheduledPhaseId)
+        if (status === 'completed') {
+          timer.retryCompletion()
+          return
+        }
+      }
+      if (timer.status === 'paused') timer.resume()
+      else timer.pause()
+    } catch {
+      // Preserve the client state unless the durable phase transition succeeds.
     }
   }
 
@@ -174,7 +232,7 @@ export default function FocusPage() {
             {!active ? (
               <Button
                 type="button"
-                isLoading={startRewardRun.isPending}
+                isLoading={startRewardRun.isPending || schedulePhase.isPending}
                 onClick={() => void startTimer()}
               >
                 <CirclePlay aria-hidden />Start timer
@@ -201,22 +259,22 @@ export default function FocusPage() {
               <>
                 <Button
                   type="button"
-                  disabled={saveSession.isPending}
-                  onClick={() => timer.status === 'paused' ? timer.resume() : timer.pause()}
+                  disabled={saveSession.isPending || pausePhase.isPending || resumePhase.isPending}
+                  onClick={() => void togglePause()}
                 >
                   {timer.status === 'paused' ? <CirclePlay aria-hidden /> : <CirclePause aria-hidden />}
                   {timer.status === 'paused' ? 'Resume' : 'Pause'}
                 </Button>
-                <Button variant="secondary" type="button" disabled={saveSession.isPending} onClick={() => void saveInterrupted('skip')}>
+                <Button variant="secondary" type="button" disabled={saveSession.isPending || cancelPhase.isPending} onClick={() => void saveInterrupted('skip')}>
                   <SkipForward aria-hidden />Skip
                 </Button>
-                <Button variant="quiet" type="button" disabled={saveSession.isPending} onClick={() => void saveInterrupted('stop')}>
+                <Button variant="quiet" type="button" disabled={saveSession.isPending || cancelPhase.isPending} onClick={() => void saveInterrupted('stop')}>
                   <Square aria-hidden />Stop
                 </Button>
               </>
             )}
           </div>
-          {timer.completionStatus === 'error' || saveSession.error || startRewardRun.error || abandonRewardRun.error ? <p className="focus-timer-card__error" role="alert">The save confirmation was interrupted. Retry safely to confirm the same phase and refresh its reward; duplicate sessions and coins are blocked.</p> : null}
+          {timer.completionStatus === 'error' || saveSession.error || schedulePhase.error || pausePhase.error || resumePhase.error || cancelPhase.error || startRewardRun.error || abandonRewardRun.error ? <p className="focus-timer-card__error" role="alert">The server confirmation was interrupted. Retry safely: the durable phase, session and reward are idempotent.</p> : null}
         </section>
 
         <aside className="focus-setup-card">

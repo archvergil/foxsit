@@ -68,6 +68,37 @@ export const createSupabaseFocusRepository = (
     return mapSession(assertData(data, error, 'save the focus session'))
   },
 
+  schedulePhase: async (_userId, input) => {
+    const { data, error } = await client.rpc('schedule_focus_phase', {
+      p_focus_run_id: input.focusRunId ?? null,
+      p_task_id: input.taskId ?? null,
+      p_started_at: input.startedAt,
+      p_planned_seconds: input.plannedSeconds,
+      p_session_type: input.sessionType,
+    })
+    return assertData(data, error, 'schedule the Focus phase')
+  },
+
+  settlePhase: async (_userId, jobId) => {
+    const { data, error } = await client.rpc('settle_focus_phase', { p_job_id: jobId })
+    return mapSession(assertData(data, error, 'settle the Focus phase'))
+  },
+
+  pausePhase: async (_userId, jobId) => {
+    const { data, error } = await client.rpc('pause_focus_phase', { p_job_id: jobId })
+    return assertData(data, error, 'pause the Focus phase')
+  },
+
+  resumePhase: async (_userId, jobId) => {
+    const { data, error } = await client.rpc('resume_focus_phase', { p_job_id: jobId })
+    return assertData(data, error, 'resume the Focus phase')
+  },
+
+  cancelPhase: async (_userId, jobId) => {
+    const { data, error } = await client.rpc('cancel_focus_phase', { p_job_id: jobId })
+    return assertData(data, error, 'stop the Focus phase')
+  },
+
   deleteSession: async (_userId, sessionId) => {
     const { error } = await client.rpc('delete_focus_session', { p_session_id: sessionId })
     if (error) throw new FocusRepositoryError('Could not delete the Focus session.', { cause: error })

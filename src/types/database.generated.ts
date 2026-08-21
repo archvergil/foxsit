@@ -812,6 +812,23 @@ export type Database = {
         }
         Returns: Database['public']['Tables']['focus_sessions']['Row']
       }
+      schedule_focus_phase: {
+        Args: {
+          p_focus_run_id: string | null
+          p_task_id: string | null
+          p_started_at: string
+          p_planned_seconds: number
+          p_session_type: string
+        }
+        Returns: string
+      }
+      settle_focus_phase: {
+        Args: { p_job_id: string }
+        Returns: Database['public']['Tables']['focus_sessions']['Row']
+      }
+      pause_focus_phase: { Args: { p_job_id: string }; Returns: "running" | "paused" | "completed" | "cancelled" }
+      resume_focus_phase: { Args: { p_job_id: string }; Returns: "running" | "paused" | "completed" | "cancelled" }
+      cancel_focus_phase: { Args: { p_job_id: string }; Returns: "running" | "paused" | "completed" | "cancelled" }
       delete_focus_session: { Args: { p_session_id: string }; Returns: string }
       start_focus_run: { Args: { p_description?: string; p_mode: string }; Returns: string }
       finish_workout_session: {

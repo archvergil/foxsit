@@ -10,6 +10,7 @@ const USER_B = 'b0000000-0000-4000-8000-000000000002'
 const USER_DELETE = 'b0000000-0000-4000-8000-000000000003'
 const USER_ATOMIC_FOCUS = 'c0000000-0000-4000-8000-000000000004'
 const USER_ABANDONED_FOCUS = 'c0000000-0000-4000-8000-000000000005'
+const USER_BACKGROUND_FOCUS = 'c0000000-0000-4000-8000-000000000006'
 
 describe('Rewards economy on local PGlite', () => {
   let database: PGlite | undefined
@@ -21,6 +22,7 @@ describe('Rewards economy on local PGlite', () => {
     await createLocalUser(database, { id: USER_DELETE, email: 'rewards-delete@local.test' })
     await createLocalUser(database, { id: USER_ATOMIC_FOCUS, email: 'rewards-focus-atomic@local.test' })
     await createLocalUser(database, { id: USER_ABANDONED_FOCUS, email: 'rewards-focus-abandoned@local.test' })
+    await createLocalUser(database, { id: USER_BACKGROUND_FOCUS, email: 'rewards-focus-background@local.test' })
   }, 30_000)
 
   afterAll(async () => database?.close())
@@ -119,6 +121,50 @@ describe('Rewards economy on local PGlite', () => {
         [session.rows[0]!.id],
       )
       expect(transactions.rows[0]!.count).toBe(1)
+    } finally {
+      await resetLocalRole(database!)
+    }
+  })
+
+  it('finalizes a scheduled Focus phase after its deadline without a client callback', async () => {
+    let jobId: string
+    await authenticateLocalUser(database!, USER_BACKGROUND_FOCUS)
+    try {
+      const job = await database!.query<{ id: string }>(`
+        select public.schedule_focus_phase(
+          null, null, clock_timestamp() - interval '2 seconds', 1, 'focus'
+        ) as id
+      `)
+      jobId = job.rows[0]!.id
+    } finally {
+      await resetLocalRole(database!)
+    }
+
+    const finalized = await database!.query<{ count: number }>(
+      'select public.finalize_due_focus_phase_jobs($1) as count',
+      [USER_BACKGROUND_FOCUS],
+    )
+    expect(finalized.rows[0]!.count).toBe(1)
+
+    await authenticateLocalUser(database!, USER_BACKGROUND_FOCUS)
+    try {
+      const session = await database!.query<{ completed: boolean; focused_seconds: number }>(`
+        select session.completed, session.focused_seconds
+        from public.focus_phase_jobs as job
+        join public.focus_sessions as session on session.id = job.session_id
+        where job.id = $1 and job.status = 'completed'
+      `, [jobId])
+      expect(session.rows[0]).toMatchObject({ completed: true, focused_seconds: 1 })
+
+      const retry = await database!.query<{ id: string }>(
+        'select (public.settle_focus_phase($1)).id as id',
+        [jobId],
+      )
+      expect(retry.rows[0]!.id).toBeTruthy()
+      expect((await database!.query(
+        'select id from public.focus_sessions where user_id=$1',
+        [USER_BACKGROUND_FOCUS],
+      )).rows).toHaveLength(1)
     } finally {
       await resetLocalRole(database!)
     }

@@ -10,9 +10,17 @@ export const requestFocusNotifications = async () => {
   return window.Notification.requestPermission()
 }
 
-export const notifyPhaseComplete = (phase: FocusPhase) => {
+export const notifyPhaseComplete = async (phase: FocusPhase) => {
   if (!('Notification' in window) || window.Notification.permission !== 'granted') return
   const title = phase === 'focus' ? 'Focus complete' : 'Break complete'
   const body = phase === 'focus' ? 'Your next break is ready.' : 'Ready for another focus session?'
-  new window.Notification(title, { body, icon: '/icons/icon-192.png', tag: 'pomodoro-complete' })
+  const options = { body, icon: '/icons/app-icon.png', tag: 'pomodoro-complete' }
+
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    const registration = await navigator.serviceWorker.ready
+    await registration.showNotification(title, options)
+    return
+  }
+
+  new window.Notification(title, options)
 }

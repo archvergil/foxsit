@@ -35,7 +35,7 @@ describe('timestamp-based Pomodoro timer', () => {
   it('persists the active timestamps and restores an honest remaining time', () => {
     const first = createPomodoroStore(window.localStorage)
     first.getState().configure({ focusMs: 60_000, shortBreakMs: 30_000, longBreakMs: 45_000 })
-    first.getState().start({ userId: 'user-a', taskId: null, now: 10_000 })
+    first.getState().start({ userId: 'user-a', taskId: null, now: 10_000, scheduledPhaseId: 'phase-job-a' })
     first.getState().pause(25_000)
     first.getState().resume(35_000)
 
@@ -46,6 +46,7 @@ describe('timestamp-based Pomodoro timer', () => {
       startedAt: 10_000,
       accumulatedPausedMs: 10_000,
       durationMs: 60_000,
+      scheduledPhaseId: 'phase-job-a',
     })
     expect(remainingTimerMs(restored.getState(), 55_000)).toBe(25_000)
   })

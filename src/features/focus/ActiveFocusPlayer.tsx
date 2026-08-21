@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth/authContext'
 import { persistCompletedTimerPhase } from './completeTimerPhase'
 import { notifyPhaseComplete } from './notifications'
 import { usePomodoroStore } from './pomodoroStore'
-import { useCompleteRewardFocusRun, useCreateFocusSession } from './queries'
+import { useCompleteRewardFocusRun, useCreateFocusSession, usePauseFocusPhase, useResumeFocusPhase, useSettleFocusPhase } from './queries'
 import { formatTimer, remainingTimerMs } from './timer'
 import { useTimerClock } from './useTimerClock'
 
@@ -22,6 +22,9 @@ export function ActiveFocusPlayer() {
   const timer = usePomodoroStore()
   const createSession = useCreateFocusSession()
   const completeRewardRun = useCompleteRewardFocusRun()
+  const settlePhase = useSettleFocusPhase()
+  const pausePhase = usePauseFocusPhase()
+  const resumePhase = useResumeFocusPhase()
   const owned = Boolean(session && timer.ownerUserId === session.user.id)
   const active = owned && timer.status !== 'idle'
   const now = useTimerClock(active && timer.status === 'running')
@@ -39,14 +42,33 @@ export function ActiveFocusPlayer() {
       const completedRewardStack = await persistCompletedTimerPhase({
         timer,
         saveSession: createSession.mutateAsync,
+        settleScheduledPhase: settlePhase.mutateAsync,
         completeRewardRun: completeRewardRun.mutateAsync,
       })
-      notifyPhaseComplete(timer.phase)
+      void notifyPhaseComplete(timer.phase).catch(() => undefined)
       timer.finishPhase(completedRewardStack)
     } catch {
       timer.failCompletion(startedAt)
     }
-  }, [completeRewardRun, createSession, owned, timer])
+  }, [completeRewardRun, createSession, owned, settlePhase, timer])
+
+  const togglePause = async () => {
+    try {
+      if (timer.scheduledPhaseId) {
+        const status = timer.status === 'paused'
+          ? await resumePhase.mutateAsync(timer.scheduledPhaseId)
+          : await pausePhase.mutateAsync(timer.scheduledPhaseId)
+        if (status === 'completed') {
+          timer.retryCompletion()
+          return
+        }
+      }
+      if (timer.status === 'paused') timer.resume()
+      else timer.pause()
+    } catch {
+      // Keep the local phase unchanged until the durable transition succeeds.
+    }
+  }
 
   useEffect(() => {
     if (
@@ -85,8 +107,8 @@ export function ActiveFocusPlayer() {
           className="focus-mini-player__control"
           type="button"
           aria-label={timer.status === 'paused' ? 'Resume timer' : 'Pause timer'}
-          disabled={remaining === 0}
-          onClick={() => timer.status === 'paused' ? timer.resume() : timer.pause()}
+          disabled={remaining === 0 || pausePhase.isPending || resumePhase.isPending}
+          onClick={() => void togglePause()}
         >
           {timer.status === 'paused' ? <CirclePlay aria-hidden /> : <CirclePause aria-hidden />}
         </button>

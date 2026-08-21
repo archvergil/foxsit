@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/authContext'
 import { useFocusRepository } from './focusRepositoryContext'
 import { focusQueryKeys } from './repository'
-import type { CreateFocusSessionInput, FocusSession, FocusSessionFilters, RewardFocusMode } from './types'
+import type { CreateFocusSessionInput, FocusSession, FocusSessionFilters, RewardFocusMode, ScheduleFocusPhaseInput } from './types'
 
 const useFocusIdentity = () => {
   const { session } = useAuth()
@@ -33,6 +33,59 @@ export const useCreateFocusSession = () => {
     },
   })
 }
+
+export const useScheduleFocusPhase = () => {
+  const repository = useFocusRepository()
+  const userId = useFocusIdentity()
+  return useMutation({
+    mutationKey: ['focus', 'phase', 'schedule', userId],
+    mutationFn: (input: ScheduleFocusPhaseInput) => repository.schedulePhase
+      ? repository.schedulePhase(userId, input)
+      : Promise.resolve<string | null>(null),
+  })
+}
+
+export const useSettleFocusPhase = () => {
+  const repository = useFocusRepository()
+  const queryClient = useQueryClient()
+  const userId = useFocusIdentity()
+  return useMutation({
+    mutationKey: ['focus', 'phase', 'settle', userId],
+    mutationFn: (jobId: string) => {
+      if (!repository.settlePhase) throw new Error('Durable Focus phases require Supabase.')
+      return repository.settlePhase(userId, jobId)
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: focusQueryKeys.sessions(userId) })
+      void queryClient.invalidateQueries({ queryKey: ['rewards'] })
+    },
+  })
+}
+
+const useFocusPhaseStateMutation = (action: 'pause' | 'resume' | 'cancel') => {
+  const repository = useFocusRepository()
+  const queryClient = useQueryClient()
+  const userId = useFocusIdentity()
+  return useMutation({
+    mutationKey: ['focus', 'phase', action, userId],
+    mutationFn: (jobId: string) => {
+      const mutation = action === 'pause'
+        ? repository.pausePhase
+        : action === 'resume'
+          ? repository.resumePhase
+          : repository.cancelPhase
+      if (!mutation) throw new Error('Durable Focus phases require Supabase.')
+      return mutation(userId, jobId)
+    },
+    onSettled: () => {
+      if (action === 'cancel') void queryClient.invalidateQueries({ queryKey: focusQueryKeys.sessions(userId) })
+    },
+  })
+}
+
+export const usePauseFocusPhase = () => useFocusPhaseStateMutation('pause')
+export const useResumeFocusPhase = () => useFocusPhaseStateMutation('resume')
+export const useCancelFocusPhase = () => useFocusPhaseStateMutation('cancel')
 
 export const useDeleteFocusSession = () => {
   const repository = useFocusRepository()
