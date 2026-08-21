@@ -14,6 +14,7 @@ const reasonLabels: Record<string, string> = {
   focus_daily_40_bonus: 'Second 40/5 run bonus',
   strength_reward: 'Strength workout',
   cardio_reward: 'Cardio workout',
+  crossfit_reward: 'CrossFit workout',
   cardio_monthly_bonus: 'Monthly cardio bonus',
   habit_daily_completion: 'All daily habits completed',
   habit_daily_completion_revoked: 'Daily habit reward reversed',
@@ -107,8 +108,8 @@ export default function RewardsPage() {
           <small>Focus, workouts and Silver → Gold</small>
         </article>
         <article>
-          <header><span>Eligible workouts</span><strong>{data.counter.strengthRewardedCount + data.counter.cardioRewardedCount}</strong></header>
-          <small>{data.counter.strengthRewardedCount}/25 strength · {data.counter.cardioRewardedCount}/15 cardio</small>
+          <header><span>Eligible workouts</span><strong>{data.counter.strengthRewardedCount + data.counter.cardioRewardedCount + data.counter.crossfitRewardedCount}</strong></header>
+          <small>{data.counter.strengthRewardedCount}/25 strength · {data.counter.cardioRewardedCount}/15 cardio · {data.counter.crossfitRewardedCount}/25 CrossFit</small>
         </article>
       </section>
 

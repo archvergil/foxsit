@@ -11,6 +11,8 @@ const USER_DELETE = 'b0000000-0000-4000-8000-000000000003'
 const USER_ATOMIC_FOCUS = 'c0000000-0000-4000-8000-000000000004'
 const USER_ABANDONED_FOCUS = 'c0000000-0000-4000-8000-000000000005'
 const USER_BACKGROUND_FOCUS = 'c0000000-0000-4000-8000-000000000006'
+const USER_CROSSFIT_RETRO = 'c0000000-0000-4000-8000-000000000007'
+const USER_CROSSFIT_BACKGROUND = 'c0000000-0000-4000-8000-000000000008'
 
 describe('Rewards economy on local PGlite', () => {
   let database: PGlite | undefined
@@ -23,6 +25,8 @@ describe('Rewards economy on local PGlite', () => {
     await createLocalUser(database, { id: USER_ATOMIC_FOCUS, email: 'rewards-focus-atomic@local.test' })
     await createLocalUser(database, { id: USER_ABANDONED_FOCUS, email: 'rewards-focus-abandoned@local.test' })
     await createLocalUser(database, { id: USER_BACKGROUND_FOCUS, email: 'rewards-focus-background@local.test' })
+    await createLocalUser(database, { id: USER_CROSSFIT_RETRO, email: 'rewards-crossfit-retro@local.test' })
+    await createLocalUser(database, { id: USER_CROSSFIT_BACKGROUND, email: 'rewards-crossfit-background@local.test' })
   }, 30_000)
 
   afterAll(async () => database?.close())
@@ -124,6 +128,84 @@ describe('Rewards economy on local PGlite', () => {
     } finally {
       await resetLocalRole(database!)
     }
+  })
+
+  it('retroactively awards a missed CrossFit workout exactly once at the shared 2 Silver and 4 Gold rate', async () => {
+    const sessionId = (await database!.query<{ id: string }>(`
+      insert into public.workout_sessions(
+        user_id,routine_name,activity_type,status,started_at,ended_at,duration_seconds,
+        crossfit_time_cap_seconds,crossfit_due_at,crossfit_rounds_completed
+      )
+      select $1,'Missed AMRAP','crossfit','completed',started_at,started_at+interval '60 seconds',60,
+        60,started_at+interval '60 seconds',3
+      from (select clock_timestamp()-interval '2 hours' as started_at) timing
+      returning id
+    `, [USER_CROSSFIT_RETRO])).rows[0]!.id
+
+    const first = await database!.query<{ count: number }>(
+      'select public.reconcile_unrewarded_crossfit_workout_rewards($1) as count',
+      [USER_CROSSFIT_RETRO],
+    )
+    const retry = await database!.query<{ count: number }>(
+      'select public.reconcile_unrewarded_crossfit_workout_rewards($1) as count',
+      [USER_CROSSFIT_RETRO],
+    )
+    expect(first.rows[0]!.count).toBe(1)
+    expect(retry.rows[0]!.count).toBe(0)
+
+    const reward = await database!.query<{
+      reason: string
+      silver_delta: number
+      gold_delta: number
+      rule_version: string
+    }>(
+      `select reason,silver_delta,gold_delta,rule_version
+       from public.reward_transactions where source_id=$1`,
+      [sessionId],
+    )
+    expect(reward.rows).toHaveLength(1)
+    expect(reward.rows[0]).toMatchObject({
+      reason: 'crossfit_reward', silver_delta: 2, gold_delta: 4, rule_version: '2026-08-21.2',
+    })
+
+    const wallet = await database!.query<{ silver_balance: number; gold_balance: number }>(
+      'select silver_balance,gold_balance from public.reward_wallets where user_id=$1',
+      [USER_CROSSFIT_RETRO],
+    )
+    expect(wallet.rows[0]).toEqual({ silver_balance: 2, gold_balance: 4 })
+
+    const rules = await database!.query<{ workout: Record<string, { silver: number; gold: number }> }>(
+      "select rules->'workout' as workout from public.reward_rule_sets where is_active",
+    )
+    expect(rules.rows[0]!.workout.crossfit).toMatchObject({ silver: 2, gold: 4 })
+    expect(rules.rows[0]!.workout.crossfit).toMatchObject({
+      silver: rules.rows[0]!.workout.strength!.silver,
+      gold: rules.rows[0]!.workout.cardio!.gold,
+    })
+  })
+
+  it('awards a CrossFit workout finalized by the background deadline job', async () => {
+    const sessionId = (await database!.query<{ id: string }>(`
+      insert into public.workout_sessions(
+        user_id,routine_name,activity_type,started_at,crossfit_time_cap_seconds,crossfit_due_at
+      )
+      select $1,'Background AMRAP','crossfit',started_at,60,started_at+interval '60 seconds'
+      from (select clock_timestamp()-interval '2 minutes' as started_at) timing
+      returning id
+    `, [USER_CROSSFIT_BACKGROUND])).rows[0]!.id
+
+    await database!.query('select public.finalize_due_crossfit_workouts()')
+
+    const result = await database!.query<{ status: string; reason: string; silver_delta: number; gold_delta: number }>(
+      `select session.status,reward.reason,reward.silver_delta,reward.gold_delta
+       from public.workout_sessions session
+       join public.reward_transactions reward on reward.source_id=session.id
+       where session.id=$1`,
+      [sessionId],
+    )
+    expect(result.rows).toEqual([{
+      status: 'completed', reason: 'crossfit_reward', silver_delta: 2, gold_delta: 4,
+    }])
   })
 
   it('finalizes a scheduled Focus phase after its deadline without a client callback', async () => {

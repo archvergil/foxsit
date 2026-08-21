@@ -18,6 +18,7 @@ export const rewardsDashboardResponseSchema = z.object({
     gold_credited: numeric,
     strength_rewarded_count: numeric,
     cardio_rewarded_count: numeric,
+    crossfit_rewarded_count: numeric.default(0),
     conversion_count: numeric,
   }),
   predominant_mode: z.enum(['25_5', '30_5', '40_5']),

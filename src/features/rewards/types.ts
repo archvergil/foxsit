@@ -16,6 +16,7 @@ export interface RewardCounter {
   goldCredited: number
   strengthRewardedCount: number
   cardioRewardedCount: number
+  crossfitRewardedCount: number
   conversionCount: number
 }
 

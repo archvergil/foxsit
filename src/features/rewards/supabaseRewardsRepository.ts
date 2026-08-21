@@ -29,6 +29,7 @@ const mapDashboard = (input: unknown): RewardsDashboard => {
       goldCredited: value.counter.gold_credited,
       strengthRewardedCount: value.counter.strength_rewarded_count,
       cardioRewardedCount: value.counter.cardio_rewarded_count,
+      crossfitRewardedCount: value.counter.crossfit_rewarded_count,
       conversionCount: value.counter.conversion_count,
     },
     predominantMode: value.predominant_mode,

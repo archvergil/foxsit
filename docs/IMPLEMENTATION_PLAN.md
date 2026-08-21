@@ -123,6 +123,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add the versioned reward-rule configuration, wallet, monthly counters, immutable ledger and redemption migrations with RLS.
 - [x] Extend durable Focus runs and Workout sessions with the facts needed to award eligible activity exactly once.
 - [x] Add transactional reward, conversion and redemption RPCs with profile-timezone monthly limits and idempotency constraints.
+- [x] Reward CrossFit AMRAP completion at the same 2 Silver + 4 Gold base rate as Strength/Cardio and reconcile previously missed completed AMRAPs exactly once.
 - [x] Add a transactional 10 Silver + 2 Gold daily Habit award with exact reversal and safe re-award after an accidental undo.
 - [x] Build the responsive Rewards area: balances, monthly progress, conversions, ledger and both credit stores.
 - [~] Cover the economy with unit, database/RLS, component and authenticated E2E tests; migration `202608180011` is applied and deployed authenticated E2E remains pending.
@@ -145,9 +146,18 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001`, `202608210002`, `202608210003`, `202608210004` and `202608210006`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion, active exercise renaming and CrossFit AMRAP completion, Focus history deletion, atomic/abandoned-run reward recovery and background phase settlement, Calendar preferences, profile-photo Storage policies, Task-to-Event conversion, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011`, `202608210001` and `202608210005` are recorded as applied; the twelve listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001`, `202608210002`, `202608210003`, `202608210004`, `202608210006` and `202608210007`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion, active exercise renaming, CrossFit AMRAP completion/rewards, Focus history deletion, atomic/abandoned-run reward recovery and background phase settlement, Calendar preferences, profile-photo Storage policies, Task-to-Event conversion, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011`, `202608210001` and `202608210005` are recorded as applied; the thirteen listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the CrossFit reward and retroactive-credit repair on 2026-08-21:
+
+- added the same 2 Silver + 4 Gold base award used by Strength and Cardio, with a distinct CrossFit ledger reason and monthly counter;
+- made the status trigger use an internal owner-explicit reward finalizer so AMRAPs completed by the background deadline job receive coins without relying on a live authenticated callback;
+- added migration `202608210007`, whose idempotent reconciliation automatically credits completed CrossFit sessions that have no prior Workout reward ledger row;
+- updated the Rewards dashboard to include CrossFit in eligible-workout progress and transaction labels;
+- added database regressions for exact-once retroactive credit and reward issuance from background AMRAP finalization.
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (190/190), `npm run test:db` (50/50), `npm run build` and `git diff --check` passed.
 
 Completed the CrossFit AMRAP recovery and deploy repair on 2026-08-21:
 

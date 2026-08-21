@@ -16,7 +16,8 @@ const dashboard: RewardsDashboard = {
   wallet: { silverBalance: 500, goldBalance: 300, version: 1 },
   counter: {
     localMonth: '2026-08-01', focus25Completed: 2, focus30Completed: 0, focus40Completed: 0,
-    focusSilverCredited: 4, goldCredited: 10, strengthRewardedCount: 1, cardioRewardedCount: 0, conversionCount: 1,
+    focusSilverCredited: 4, goldCredited: 10, strengthRewardedCount: 1, cardioRewardedCount: 0,
+    crossfitRewardedCount: 1, conversionCount: 1,
   },
   predominantMode: '25_5', focusSilverCap: 150, goldCap: 100, conversionLimit: 5,
   silverPerGold: 20, goldToSilver: 10,
@@ -59,6 +60,7 @@ describe('Rewards workspace', () => {
     renderPage(repository)
 
     const silverStore = (await screen.findByRole('heading', { name: 'Silver store' })).closest('section')!
+    expect(screen.getByText('1/25 strength · 0/15 cardio · 1/25 CrossFit')).toBeVisible()
     expect(within(silverStore).getByText('R$ 10')).toBeVisible()
     expect(within(silverStore).getByText('21 Silver')).toBeVisible()
     await user.click(within(silverStore).getByRole('button', { name: 'Review request' }))

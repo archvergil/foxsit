@@ -36,6 +36,7 @@ supabase/migrations/202608210003_convert_task_to_calendar_event.sql
 supabase/migrations/202608210004_durable_focus_phase_jobs.sql
 supabase/migrations/202608210005_crossfit_amrap_workouts.sql
 supabase/migrations/202608210006_crossfit_amrap_contract_repairs.sql
+supabase/migrations/202608210007_crossfit_workout_rewards.sql
 ```
 
 It creates `public.profiles`, strict theme/week/timezone checks, automatic `updated_at`, own-row RLS and an `auth.users` trigger. Sign-up metadata supplies `display_name` and the browser's IANA timezone; defaults remain safe if metadata is absent.
@@ -74,6 +75,8 @@ Workout routine planning is live through `workout_routines` and `workout_routine
 
 Migration `202608210005` adds CrossFit AMRAP routines. A CrossFit routine stores a 1–180 minute cap and movements with required repetitions plus an optional kilogram prescription. Its session snapshots the entire circuit and absolute `crossfit_due_at`, creates no per-movement sets and owns one server-controlled round counter for the WOD. `increment_crossfit_round` locks and increments that counter before the deadline; an expired call, the authenticated client settlement path or the private scheduled finalizer completes the session at the durable deadline. Migration `202608210006` additionally prevents modality changes underneath existing movements and keeps the session activity snapshot explicit in the start transaction.
 
+Migration `202608210007` gives every eligible CrossFit completion the same base award as Strength and Cardio: 2 Silver and 4 Gold, subject to the existing shared Gold cap. CrossFit has its own reason, daily classification limit and 25-per-month counter instead of masquerading as Cardio. The completion trigger calls a private owner-explicit finalizer, so both authenticated settlement and the background deadline job award atomically. The migration also scans completed CrossFit sessions without a Workout ledger row and credits them retroactively; the scan is idempotent and can be safely rerun by a privileged migration runner through `reconcile_unrewarded_crossfit_workout_rewards`.
+
 `finish_workout_session` locks the owned active session, requires at least one completed set and commits completion, duration, notes and frozen metrics in one transaction. Set volume is `load × reps`; estimated 1RM uses Epley with a single rep equal to its actual load. One best set per normalized exercise is marked as a PR only when it strictly exceeds every previously completed session. Finished/cancelled sessions and their internal snapshots are immutable, direct creation of session internals is revoked, and history reads the frozen Supabase rows rather than recalculating mutable client state.
 
 ## Rewards contracts
@@ -84,7 +87,7 @@ The ledger mutation trigger rejects every direct update/delete, but migration `2
 
 Migration `202608200001` adds narrow owner-only RPCs for deleting a Focus history row and renaming an exercise snapshot while its Workout session is active. Focus deletion rejects rows attached to an in-progress rewarded run, and completed reward ledger entries remain immutable. The same migration expands Habit-project banner validation to the full authorized Habit and Workout GIF catalog.
 
-Durable `focus_runs` link timer phases through `focus_sessions.focus_run_id`. Rewarded phases pass through `record_focus_session`, which validates the owned active run, configured duration, elapsed timestamps and retry idempotency. Completion requires every focus stack and intervening break. Workout routines and sessions snapshot immutable `activity_type` (`strength`, `cardio` or `crossfit`); the existing strength/cardio finish transaction invokes the exact-once award, while CrossFit remains excluded until a reward rule is explicitly defined. Conversions, redemptions and all Gold caps are enforced by narrow server RPCs using the active rule version.
+Durable `focus_runs` link timer phases through `focus_sessions.focus_run_id`. Rewarded phases pass through `record_focus_session`, which validates the owned active run, configured duration, elapsed timestamps and retry idempotency. Completion requires every focus stack and intervening break. Workout routines and sessions snapshot immutable `activity_type` (`strength`, `cardio` or `crossfit`); all three modalities receive the same 2 Silver and 4 Gold base award through the exact-once Workout finalizer. Conversions, redemptions and all Gold caps are enforced by narrow server RPCs using the active rule version.
 
 Migration `202608210001` makes the final rewarded Focus phase atomic: its session insert triggers eligibility verification, run completion, wallet/counter updates and immutable ledger inserts before the same transaction commits. Retrying a session after a lost response returns its existing idempotent row even though the run is already complete. The migration also reconciles every pre-existing eligible run with saved stacks and breaks but no `reward_processed_at`, preserving the original monthly caps and exact-once ledger keys.
 
