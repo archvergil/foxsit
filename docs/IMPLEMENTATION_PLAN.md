@@ -61,6 +61,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add an atomic Task-to-Calendar conversion that asks only for a start time, preserves the scheduled/local-created date and removes the source task only after the event insert succeeds.
 - [x] Persisted timestamp-based Pomodoro store and mini player.
 - [x] Durable focus session history and task integration.
+- [x] Server-scheduled Focus phases with exact-once background completion, pause/resume/cancel synchronization and reward reconciliation independent of page visibility.
 - [x] Confirmed owner-only Focus history deletion with active rewarded-run protection and bounded history scrolling.
 - [~] Unit, component and E2E coverage for the daily flow (the local mobile/tablet/desktop matrix is current; authenticated Supabase Workout/Rewards E2E remains pending).
 
@@ -114,6 +115,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Replace the mobile More destination with Workout and move Settings to a gear next to the profile photo.
 - [x] Remove mobile Rewards horizontal overflow and constrain store/conversion controls within the viewport.
 - [x] Add a dedicated tablet composition for Task navigation/quick-add, stable Habit header actions and shrink-safe Task, Focus and Calendar form controls.
+- [x] Enforce the no-zoom touch contract, 16 px Safari form controls, viewport-bounded editors and safe-area-aware modal scrolling across mobile and tablet.
 
 ## Phase 8 — Rewards
 
@@ -142,9 +144,17 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001`, `202608210002` and `202608210003`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion and atomic/abandoned-run reward recovery, Calendar preferences, profile-photo Storage policies, Task-to-Event conversion, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` and migration `202608210001` are recorded as applied; the ten listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001`, `202608210002`, `202608210003` and `202608210004`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion, atomic/abandoned-run reward recovery and background phase settlement, Calendar preferences, profile-photo Storage policies, Task-to-Event conversion, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` and migration `202608210001` are recorded as applied; the eleven listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the background Focus settlement and touch-viewport containment repair on 2026-08-21:
+
+- added migration `202608210004`, which schedules every Focus or break phase durably at start and uses `pg_cron` to finalize due phases, save exact-once history and trigger existing reward reconciliation even while the PWA is suspended;
+- synchronized pause, resume, stop and completion against the same server job, persisted its identity across reloads and retained an idempotent client settlement path;
+- routed installed-PWA completion alerts through the service worker notification API when the page is executing, with the existing notification fallback elsewhere;
+- blocked pinch/control-wheel zoom only on touch-capable clients, retained one-finger Calendar interactions, raised all touch form controls to Safari-safe sizing and bounded editors/modals to the safe visual viewport;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (182/182), `npm run build` and `git diff --check` passed; direct mobile/iPad browser QA remained unavailable because no in-app browser session was connected.
 
 Completed the Calendar direct-manipulation and Task conversion slice on 2026-08-21:
 

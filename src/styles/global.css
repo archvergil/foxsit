@@ -5,6 +5,8 @@
 }
 
 html {
+  width: 100%;
+  max-width: 100%;
   min-width: 20rem;
   min-height: 100%;
   background: var(--canvas);
@@ -12,14 +14,26 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
   min-width: 20rem;
   min-height: 100vh;
   margin: 0;
   color: var(--ink);
   background: var(--canvas);
+  overflow-x: clip;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100dvh;
+  overflow-x: clip;
 }
 
 button,
@@ -37,9 +51,14 @@ textarea {
   max-width: 100%;
 }
 
+.app-content :where(section, article, aside, form, fieldset, label, div) {
+  min-width: 0;
+}
+
 input[type='date'],
 input[type='datetime-local'],
 input[type='time'] {
+  width: 100%;
   min-inline-size: 0;
   max-inline-size: 100%;
 }

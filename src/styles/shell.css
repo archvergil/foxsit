@@ -1,4 +1,6 @@
 .app-shell {
+  width: 100%;
+  max-width: 100%;
   min-height: 100dvh;
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
@@ -143,6 +145,8 @@
 
 .app-shell__body {
   min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .app-content {
@@ -150,6 +154,7 @@
   min-height: 100dvh;
   padding: clamp(1.5rem, 4vw, 4.5rem);
   margin-inline: auto;
+  overflow-x: clip;
 }
 
 .mobile-header,

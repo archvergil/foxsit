@@ -306,6 +306,56 @@
   textarea {
     font-size: 16px !important;
   }
+
+  input[type='date'],
+  input[type='datetime-local'],
+  input[type='time'] {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    inline-size: 100% !important;
+  }
+
+  .task-quick-add,
+  .task-detail-form,
+  .calendar-editor form,
+  .habit-editor form,
+  .workout-editor form,
+  .focus-custom-form {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .habit-project-editor__backdrop,
+  .habit-project-icon-dialog__backdrop,
+  .habit-icon-dialog__backdrop,
+  .avatar-crop-dialog__backdrop,
+  .task-to-event-dialog__backdrop,
+  .reward-confirmation-backdrop,
+  .confirm-dialog__viewport {
+    padding-top: max(var(--space-3), env(safe-area-inset-top));
+    padding-right: max(var(--space-3), env(safe-area-inset-right));
+    padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+    padding-left: max(var(--space-3), env(safe-area-inset-left));
+    overflow: auto;
+    overscroll-behavior: contain;
+    place-items: start center;
+  }
+
+  .habit-project-editor,
+  .habit-project-icon-dialog,
+  .habit-icon-dialog,
+  .avatar-crop-dialog,
+  .task-to-event-dialog,
+  .reward-confirmation,
+  .confirm-dialog {
+    width: min(100%, 36rem);
+    max-width: calc(100vw - max(var(--space-6), env(safe-area-inset-left) + env(safe-area-inset-right)));
+    max-height: calc(100dvh - max(var(--space-6), env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+    margin-block: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 @media (max-width: 25rem) {

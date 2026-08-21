@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import { App } from '@/app/App'
 import { AppProviders } from '@/app/providers'
+import { installTouchViewportGuards } from '@/lib/installTouchViewportGuards'
 import '@/styles/tokens.css'
 import '@/styles/themes.css'
 import '@/styles/global.css'
@@ -21,6 +22,8 @@ import '@/styles/responsive.css'
 
 const root = document.getElementById('root')
 if (!root) throw new Error('App root element not found.')
+
+installTouchViewportGuards()
 
 createRoot(root).render(
   <StrictMode>
