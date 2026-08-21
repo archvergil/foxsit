@@ -289,6 +289,14 @@ export const createSupabaseTasksRepository = (
     return mapTask(assertData(data, error, 'change the task status'))
   },
 
+  convertTaskToCalendarEvent: async (_userId, taskId, startTime) => {
+    const { data, error } = await client.rpc('convert_task_to_calendar_event', {
+      p_task_id: taskId,
+      p_start_time: startTime,
+    })
+    return assertData(data, error, 'convert the task into an event')
+  },
+
   deleteTask: async (userId, taskId) => {
     const { data, error } = await client
       .from('tasks')

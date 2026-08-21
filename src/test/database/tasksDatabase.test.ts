@@ -104,6 +104,84 @@ describe('Tasks database migrations on local PGlite', () => {
     expect(inserted.rows[0]?.due_at.toISOString()).toBe('2026-08-18T04:30:00.000Z')
   })
 
+  it('atomically turns an owned task into a timed calendar event on its scheduled date', async () => {
+    await database!.query("update public.profiles set timezone='America/Sao_Paulo' where id=$1", [USER_A])
+    const projectId = (await database!.query<{ id: string }>(
+      "insert into public.task_projects(user_id,name,color_token) values($1,'Launch','coral') returning id",
+      [USER_A],
+    )).rows[0]!.id
+    const taskId = (await database!.query<{ id: string }>(`
+      insert into public.tasks(user_id,project_id,title,notes,scheduled_date,estimate_minutes)
+      values($1,$2,'Release checklist','Carry the task context','2026-08-21',45)
+      returning id
+    `, [USER_A, projectId])).rows[0]!.id
+    await database!.query(
+      "insert into public.task_checklist_items(user_id,task_id,title) values($1,$2,'Temporary step')",
+      [USER_A, taskId],
+    )
+
+    await authenticateLocalUser(database!, USER_A)
+    let eventId: string | undefined
+    try {
+      eventId = (await database!.query<{ id: string }>(
+        'select public.convert_task_to_calendar_event($1,$2::time) as id',
+        [taskId, '09:30'],
+      )).rows[0]!.id
+    } finally {
+      await resetLocalRole(database!)
+    }
+    expect(eventId).toBeDefined()
+
+    const event = await database!.query<{
+      title: string
+      description: string
+      start_at: Date
+      end_at: Date
+      color_token: string
+      category: string
+    }>('select title,description,start_at,end_at,color_token,category from public.calendar_events where id=$1', [eventId])
+    expect(event.rows[0]).toMatchObject({
+      title: 'Release checklist',
+      description: 'Carry the task context',
+      color_token: 'coral',
+      category: 'Task',
+    })
+    expect(event.rows[0]!.start_at.toISOString()).toBe('2026-08-21T12:30:00.000Z')
+    expect(event.rows[0]!.end_at.toISOString()).toBe('2026-08-21T13:15:00.000Z')
+    expect((await database!.query('select id from public.tasks where id=$1', [taskId])).rows).toHaveLength(0)
+    expect((await database!.query('select id from public.task_checklist_items where task_id=$1', [taskId])).rows).toHaveLength(0)
+  })
+
+  it('keeps the source task when conversion is invalid or targets another owner', async () => {
+    const ownTaskId = (await database!.query<{ id: string }>(
+      "insert into public.tasks(user_id,title) values($1,'Keep on failure') returning id",
+      [USER_A],
+    )).rows[0]!.id
+    const otherTaskId = (await database!.query<{ id: string }>(
+      "insert into public.tasks(user_id,title) values($1,'Private task') returning id",
+      [USER_B],
+    )).rows[0]!.id
+
+    await authenticateLocalUser(database!, USER_A)
+    try {
+      await expect(database!.query(
+        'select public.convert_task_to_calendar_event($1,null) as id',
+        [ownTaskId],
+      )).rejects.toThrow(/start time is required/i)
+      await expect(database!.query(
+        'select public.convert_task_to_calendar_event($1,$2::time) as id',
+        [otherTaskId, '09:30'],
+      )).rejects.toThrow(/open task not found/i)
+    } finally {
+      await resetLocalRole(database!)
+    }
+
+    expect((await database!.query(
+      'select id from public.tasks where id = any($1::uuid[]) order by id',
+      [[ownTaskId, otherTaskId]],
+    )).rows).toHaveLength(2)
+  })
+
   it('detaches tasks when a project is deleted without clearing task ownership', async () => {
     const project = await database!.query<{ id: string }>(
       `insert into public.task_projects (user_id, name) values ($1, 'Disposable') returning id`,

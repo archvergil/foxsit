@@ -9,7 +9,13 @@ import { eventOccursOnDate, formatCalendarDateLabel, formatCalendarEventTime, ta
 import { formatCalendarHour, layoutWeekTimedEvents, type CalendarWeekModel } from './calendarWeek'
 import type { CalendarEvent } from './types'
 import type { CalendarHabitItem } from './habitCalendarAdapter'
-import { useCalendarEventDrag, type CalendarEventDrop } from './calendarEventMove'
+import {
+  formatCalendarInteractionTime,
+  useCalendarEventDrag,
+  useCalendarQuickTap,
+  type CalendarEventChange,
+  type CalendarEventDrop,
+} from './calendarEventMove'
 
 const HOUR_HEIGHT = 56
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
@@ -24,7 +30,7 @@ export function CalendarWeekGrid({
   onSelectDate,
   onCreateAt,
   onEditEvent,
-  onMoveEvent,
+  onChangeEvent,
 }: {
   week: CalendarWeekModel
   selectedDate: string
@@ -35,10 +41,9 @@ export function CalendarWeekGrid({
   onSelectDate: (date: string) => void
   onCreateAt: (date: string, hour: number) => void
   onEditEvent: (event: CalendarEvent) => void
-  onMoveEvent: (event: CalendarEvent, drop: CalendarEventDrop) => void
+  onChangeEvent: (event: CalendarEvent, change: CalendarEventChange) => void
 }) {
   const today = localDateKey(new Date(), timeZone)
-  const timedSegments = layoutWeekTimedEvents(events, week, timeZone)
   const bodyScrollRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
 
@@ -47,16 +52,18 @@ export function CalendarWeekGrid({
     if (!body) return null
     const bodyRect = body.getBoundingClientRect()
     const relativeY = clientY - bodyRect.top
-    if (relativeY < 0 || relativeY >= 24 * HOUR_HEIGHT) return null
+    if (relativeY < 0 || relativeY > 24 * HOUR_HEIGHT) return null
     const column = [...body.querySelectorAll<HTMLElement>('[data-calendar-date]')].find((item) => {
       const rect = item.getBoundingClientRect()
       return clientX >= rect.left && clientX <= rect.right
     })
     const date = column?.dataset.calendarDate
     if (!date) return null
-    return { date, minutes: Math.min(23 * 60 + 30, Math.max(0, Math.round(relativeY / (HOUR_HEIGHT / 2)) * 30)) }
+    return { date, minutes: Math.min(24 * 60, Math.max(0, Math.round(relativeY / (HOUR_HEIGHT / 4)) * 15)) }
   }, [])
-  const eventDrag = useCalendarEventDrag({ onDrop: onMoveEvent, resolveDrop })
+  const eventDrag = useCalendarEventDrag({ onChange: onChangeEvent, resolveDrop })
+  const slotTap = useCalendarQuickTap()
+  const timedSegments = layoutWeekTimedEvents(events, week, timeZone)
 
   useEffect(() => {
     const currentHour = Number(formatTimestampForInput(new Date().toISOString(), timeZone).slice(11, 13))
@@ -131,32 +138,71 @@ export function CalendarWeekGrid({
                       key={hour}
                       style={{ top: `${hour * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
                       aria-label={`Create event on ${formatCalendarDateLabel(day.date)} at ${formatCalendarHour(hour)}`}
-                      onClick={() => onCreateAt(day.date, hour)}
+                      onPointerDown={slotTap.onPointerDown}
+                      onPointerMove={slotTap.onPointerMove}
+                      onPointerUp={slotTap.onPointerUp}
+                      onPointerCancel={slotTap.onPointerCancel}
+                      onClick={() => { if (!slotTap.consumeClick()) onCreateAt(day.date, hour) }}
                     />
                   ))}
                   {timedSegments.filter((segment) => segment.date === day.date).map((segment) => {
                     const top = segment.startMinutes / 60 * HOUR_HEIGHT
                     const height = Math.max(28, (segment.endMinutes - segment.startMinutes) / 60 * HOUR_HEIGHT)
+                    const preview = eventDrag.preview?.eventId === segment.event.id ? eventDrag.preview : null
+                    const previewStartsHere = preview?.kind === 'resize-start' && preview.drop.date === segment.date
+                    const previewEndsHere = preview?.kind === 'resize-end' && preview.drop.date === segment.date
+                    const displayTop = previewStartsHere ? preview.drop.minutes / 60 * HOUR_HEIGHT : top
+                    const displayHeight = previewStartsHere
+                      ? Math.max(14, (segment.endMinutes - preview.drop.minutes) / 60 * HOUR_HEIGHT)
+                      : previewEndsHere
+                        ? Math.max(14, (preview.drop.minutes - segment.startMinutes) / 60 * HOUR_HEIGHT)
+                        : height
+                    const compact = displayHeight < 52
                     return (
                       <button
-                        className={`calendar-week-event calendar-week-event--${segment.event.colorToken}${eventDrag.draggingEventId === segment.event.id ? ' calendar-week-event--dragging' : ''}`}
+                        className={`calendar-week-event calendar-week-event--${segment.event.colorToken}${compact ? ' calendar-week-event--compact' : ''}${eventDrag.draggingEventId === segment.event.id ? ' calendar-week-event--dragging' : ''}`}
                         type="button"
                         key={`${segment.event.id}-${segment.date}`}
                         style={{
-                          top: `${top}px`,
-                          height: `${height}px`,
+                          top: `${displayTop}px`,
+                          height: `${displayHeight}px`,
                           left: `${segment.column / segment.columnCount * 100}%`,
                           width: `${100 / segment.columnCount}%`,
+                          transform: preview?.kind === 'move'
+                            ? `translate3d(${preview.deltaX}px, ${preview.deltaY}px, 0) scale(1.015)`
+                            : undefined,
                         }}
                         aria-label={`Edit event ${segment.event.title}`}
-                        onPointerDown={(pointerEvent) => eventDrag.onPointerDown(pointerEvent, segment.event)}
+                        onPointerDown={(pointerEvent) => eventDrag.onPointerDown(
+                          pointerEvent,
+                          segment.event,
+                          'move',
+                          null,
+                          { date: segment.date, minutes: segment.startMinutes },
+                        )}
                         onPointerMove={eventDrag.onPointerMove}
                         onPointerUp={eventDrag.onPointerUp}
                         onPointerCancel={eventDrag.onPointerCancel}
                         onClick={() => { if (!eventDrag.consumeClick()) onEditEvent(segment.event) }}
                       >
+                        <i
+                          className="calendar-week-event__resize calendar-week-event__resize--start"
+                          aria-hidden
+                          onPointerDown={(pointerEvent) => {
+                            pointerEvent.stopPropagation()
+                            eventDrag.onPointerDown(pointerEvent, segment.event, 'resize-start', segment.date)
+                          }}
+                        />
                         <strong>{segment.event.title}</strong>
-                        <span>{formatCalendarEventTime(segment.event, timeZone)}</span>
+                        <span>{preview ? formatCalendarInteractionTime(preview) : formatCalendarEventTime(segment.event, timeZone)}</span>
+                        <i
+                          className="calendar-week-event__resize calendar-week-event__resize--end"
+                          aria-hidden
+                          onPointerDown={(pointerEvent) => {
+                            pointerEvent.stopPropagation()
+                            eventDrag.onPointerDown(pointerEvent, segment.event, 'resize-end', segment.date)
+                          }}
+                        />
                       </button>
                     )
                   })}

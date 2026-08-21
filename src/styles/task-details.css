@@ -229,6 +229,23 @@
 
 .task-detail-panel__actions > :last-child { color: var(--danger); }
 
+.task-to-event-dialog__backdrop { position: fixed; z-index: 120; inset: 0; display: grid; padding: var(--space-4); overflow-y: auto; background: rgb(0 0 0 / 62%); place-items: center; }
+.task-to-event-dialog { width: min(30rem, 100%); display: grid; gap: var(--space-5); padding: var(--space-5); color: var(--ink); background: var(--canvas-raised); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-float); }
+.task-to-event-dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.task-to-event-dialog > header > span { min-width: 0; display: flex; align-items: center; gap: var(--space-3); }
+.task-to-event-dialog > header > span > svg { width: 1.25rem; flex: 0 0 auto; }
+.task-to-event-dialog > header > span > span { min-width: 0; display: grid; gap: 0.15rem; }
+.task-to-event-dialog > header small { color: var(--ink-faint); font-size: var(--text-xs); font-weight: 720; letter-spacing: 0.08em; text-transform: uppercase; }
+.task-to-event-dialog > header strong { font-size: var(--text-lg); }
+.task-to-event-dialog > header > button { width: var(--touch-target); height: var(--touch-target); display: grid; flex: 0 0 auto; padding: 0; color: var(--ink-soft); background: var(--surface); border: 1px solid var(--border); border-radius: 50%; cursor: pointer; place-items: center; }
+.task-to-event-dialog > p { margin: 0; color: var(--ink-soft); line-height: 1.55; }
+.task-to-event-dialog > label { display: grid; gap: var(--space-2); color: var(--ink-soft); font-size: var(--text-sm); font-weight: 680; }
+.task-to-event-dialog > label > span { display: flex; align-items: center; gap: var(--space-2); }
+.task-to-event-dialog > label svg { width: 1rem; }
+.task-to-event-dialog input { width: 100%; min-width: 0; min-height: 3.25rem; padding: 0 var(--space-4); color: var(--ink); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font: inherit; font-size: var(--text-lg); }
+.task-to-event-dialog footer { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.task-to-event-dialog__error { color: var(--danger) !important; }
+
 @media (max-width: 80rem) {
   .tasks-workspace--detail { grid-template-columns: 1fr; }
   .task-detail-panel { border-top: 1px solid var(--border); border-left: 0; }
@@ -245,4 +262,7 @@
   .project-manager { border-left: 0; }
   .task-checklist > form { grid-template-columns: 1fr; }
   .task-checklist > form button { width: 100%; }
+  .task-to-event-dialog__backdrop { align-items: end; padding: var(--space-3); }
+  .task-to-event-dialog { padding: var(--space-4); border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-sm); }
+  .task-to-event-dialog footer { grid-template-columns: 1fr; }
 }

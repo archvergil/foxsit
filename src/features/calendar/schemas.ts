@@ -8,7 +8,7 @@ const localDateSchema = z.string().refine(isValidLocalDate, 'Enter a valid date.
 const timestampSchema = z.string().datetime({ offset: true })
 
 export const calendarEventInputSchema = z.object({
-  title: z.string().trim().min(1, 'Event title is required.').max(200),
+  title: z.string().trim().min(1, 'Event title is required.').max(500),
   description: z.string().trim().max(10_000).nullable(),
   allDay: z.boolean(),
   startAt: timestampSchema.nullable(),
@@ -38,7 +38,7 @@ const localDateTimeSchema = z.string().regex(
 )
 
 export const calendarEventFormSchema = z.object({
-  title: z.string().trim().min(1, 'Event title is required.').max(200),
+  title: z.string().trim().min(1, 'Event title is required.').max(500),
   description: z.string().max(10_000),
   allDay: z.boolean(),
   startAt: z.union([z.literal(''), localDateTimeSchema]),

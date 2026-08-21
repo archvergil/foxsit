@@ -786,6 +786,10 @@ export type Database = {
     Functions: {
       abandon_focus_run: { Args: { p_run_id: string }; Returns: undefined }
       complete_focus_run_and_award: { Args: { p_run_id: string }; Returns: Json }
+      convert_task_to_calendar_event: {
+        Args: { p_start_time: string; p_task_id: string }
+        Returns: string
+      }
       convert_reward_currency: {
         Args: { p_direction: string; p_request_key: string; p_units: number }
         Returns: Json

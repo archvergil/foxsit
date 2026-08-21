@@ -62,6 +62,7 @@ const tasksRepository: TasksRepository = {
   createTask: () => Promise.reject(new Error('Not used.')),
   updateTask: () => Promise.reject(new Error('Not used.')),
   setTaskStatus: () => Promise.reject(new Error('Not used.')),
+  convertTaskToCalendarEvent: () => Promise.reject(new Error('Not used.')),
   deleteTask: () => Promise.reject(new Error('Not used.')),
   reorderTasks: () => Promise.reject(new Error('Not used.')),
   listChecklistItems: () => Promise.resolve([]),

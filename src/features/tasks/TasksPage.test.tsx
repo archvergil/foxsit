@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Session } from '@supabase/supabase-js'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -56,6 +56,7 @@ class MemoryTasksRepository implements TasksRepository {
   checklist: TaskChecklistItem[] = []
   statusFailure: Promise<never> | null = null
   reorderFailure: Promise<never> | null = null
+  conversions: Array<{ taskId: string; startTime: string }> = []
 
   constructor(tasks: Task[] = [], projects: TaskProject[] = []) {
     this.tasks = tasks
@@ -138,6 +139,11 @@ class MemoryTasksRepository implements TasksRepository {
   deleteTask(_userId: string, taskId: string): Promise<void> {
     this.tasks = this.tasks.filter(({ id }) => id !== taskId)
     return Promise.resolve()
+  }
+  convertTaskToCalendarEvent(_userId: string, taskId: string, startTime: string): Promise<string> {
+    this.conversions.push({ taskId, startTime })
+    this.tasks = this.tasks.filter(({ id }) => id !== taskId)
+    return Promise.resolve(crypto.randomUUID())
   }
   reorderTasks(userId: string, orderedTaskIds: string[]): Promise<Task[]> {
     if (userId !== USER_ID) return Promise.reject(new Error('Wrong user.'))
@@ -338,6 +344,28 @@ describe('TasksPage daily flow', () => {
     await user.click(screen.getByRole('button', { name: 'Complete Run final checks' }))
     await waitFor(() => expect(repository.checklist[0]?.completed).toBe(true))
   }, 15_000)
+
+  it('atomically converts an open task into a calendar event after asking only for its time', async () => {
+    const task = createTask({ title: 'Plan launch', scheduledDate: '2026-08-21', estimateMinutes: 45 })
+    const repository = new MemoryTasksRepository([task])
+    const user = userEvent.setup()
+    renderPage(repository)
+
+    await user.click(await screen.findByRole('button', { name: `Open details for ${task.title}` }))
+    await user.click(screen.getByRole('button', { name: 'Turn into event' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Choose a start time' })
+    expect(dialog).toHaveTextContent('2026-08-21')
+    expect(dialog).toHaveTextContent('45 minutes')
+    const startTime = screen.getByLabelText('Start time')
+    await user.clear(startTime)
+    await user.type(startTime, '14:30')
+    await user.click(within(dialog).getByRole('button', { name: 'Turn into event' }))
+
+    await waitFor(() => expect(repository.conversions).toEqual([{ taskId: task.id, startTime: '14:30' }]))
+    expect(repository.tasks).toHaveLength(0)
+    expect(screen.queryByLabelText(`Details for ${task.title}`)).not.toBeInTheDocument()
+  })
 
   it('creates a project and opens its task view', async () => {
     const repository = new MemoryTasksRepository()

@@ -111,6 +111,26 @@ describe('local account and data API', () => {
     expect(deleteFocusResponse.status).toBe(200)
     const emptyHistoryResponse = await request(server.url, session.accessToken, '/v1/focus-sessions?limit=10')
     expect((await emptyHistoryResponse.json()).data).toEqual([])
+
+    const conversionResponse = await request(server.url, session.accessToken, `/v1/tasks/${task.id}/calendar-event`, {
+      method: 'POST',
+      body: JSON.stringify({ startTime: '09:30' }),
+    })
+    expect(conversionResponse.status).toBe(200)
+    expect((await conversionResponse.json()).data).toMatch(/^[0-9a-f-]{36}$/)
+
+    const emptyTasksResponse = await request(server.url, session.accessToken, '/v1/tasks?status=open')
+    expect((await emptyTasksResponse.json()).data).toEqual([])
+    const calendarResponse = await request(
+      server.url,
+      session.accessToken,
+      '/v1/calendar-events?rangeStart=2026-08-17T03%3A00%3A00.000Z&rangeEnd=2026-08-18T03%3A00%3A00.000Z&localDateStart=2026-08-17&localDateEnd=2026-08-17',
+    )
+    expect((await calendarResponse.json()).data).toMatchObject([{
+      title: 'Persist locally',
+      startAt: '2026-08-17T12:30:00.000Z',
+      endAt: '2026-08-17T13:30:00.000Z',
+    }])
   })
 
   it('isolates local API reads by the authenticated session', async () => {

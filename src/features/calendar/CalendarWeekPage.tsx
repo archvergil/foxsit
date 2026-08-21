@@ -8,7 +8,7 @@ import { useTaskList } from '@/features/tasks/queries'
 import { addLocalDays, localDateKey, localDateTimeToTimestamp } from '@/lib/dates'
 import { CalendarDayAgenda } from './CalendarDayAgenda'
 import { CalendarEventEditor } from './CalendarEventEditor'
-import { moveTimedCalendarEvent, type CalendarEventDrop } from './calendarEventMove'
+import { changeTimedCalendarEvent, type CalendarEventChange } from './calendarEventMove'
 import { CalendarViewSwitch } from './CalendarViewSwitch'
 import { CalendarWeekGrid } from './CalendarWeekGrid'
 import { buildCalendarWeek, shiftCalendarWeek, startOfCalendarWeek } from './calendarWeek'
@@ -70,15 +70,15 @@ export function CalendarWeekPage() {
     setSelectedDate(today)
     setEditorOpen(false)
   }
-  const moveEvent = async (event: CalendarEvent, drop: CalendarEventDrop) => {
-    const input = moveTimedCalendarEvent(event, drop, timeZone)
+  const changeEvent = async (event: CalendarEvent, change: CalendarEventChange) => {
+    const input = changeTimedCalendarEvent(event, change, timeZone)
     if (!input) return
     setMoveError(null)
     try {
       await updateEvent.mutateAsync({ eventId: event.id, input })
-      setSelectedDate(drop.date)
+      setSelectedDate(change.drop.date)
     } catch {
-      setMoveError('The event could not be moved. Its original time was kept.')
+      setMoveError('The event time could not be changed. Its original schedule was kept.')
     }
   }
 
@@ -119,7 +119,7 @@ export function CalendarWeekPage() {
             onSelectDate={(date) => { setSelectedDate(date); setEditorOpen(false) }}
             onCreateAt={openCreate}
             onEditEvent={openEdit}
-            onMoveEvent={(event, drop) => void moveEvent(event, drop)}
+            onChangeEvent={(event, change) => void changeEvent(event, change)}
           />
           {editorOpen ? (
             <CalendarEventEditor

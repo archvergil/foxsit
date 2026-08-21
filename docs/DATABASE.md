@@ -31,6 +31,8 @@ supabase/migrations/202608190005_habit_icon_contract.sql
 supabase/migrations/202608190006_reward_ledger_account_delete.sql
 supabase/migrations/202608200001_focus_history_delete_and_active_exercise_rename.sql
 supabase/migrations/202608210001_atomic_focus_reward_reconciliation.sql
+supabase/migrations/202608210002_reconcile_abandoned_focus_rewards.sql
+supabase/migrations/202608210003_convert_task_to_calendar_event.sql
 ```
 
 It creates `public.profiles`, strict theme/week/timezone checks, automatic `updated_at`, own-row RLS and an `auth.users` trigger. Sign-up metadata supplies `display_name` and the browser's IANA timezone; defaults remain safe if metadata is absent.
@@ -80,6 +82,10 @@ Migration `202608200001` adds narrow owner-only RPCs for deleting a Focus histor
 Durable `focus_runs` link timer phases through `focus_sessions.focus_run_id`. Rewarded phases pass through `record_focus_session`, which validates the owned active run, configured duration, elapsed timestamps and retry idempotency. Completion requires every focus stack and intervening break. Workout routines and sessions snapshot immutable `activity_type` (`strength` or `cardio`); the existing finish transaction invokes the exact-once award. Conversions, redemptions and all Gold caps are enforced by narrow server RPCs using the active rule version.
 
 Migration `202608210001` makes the final rewarded Focus phase atomic: its session insert triggers eligibility verification, run completion, wallet/counter updates and immutable ledger inserts before the same transaction commits. Retrying a session after a lost response returns its existing idempotent row even though the run is already complete. The migration also reconciles every pre-existing eligible run with saved stacks and breaks but no `reward_processed_at`, preserving the original monthly caps and exact-once ledger keys.
+
+Migration `202608210002` recovers complete legacy runs that were marked abandoned only after a lost final-session response. It proves eligibility from the owned durable sessions before clearing the stale abandonment marker and calling the same exact-once award transaction. The abandon RPC now attempts finalization first, so a fully saved run can never lose its earned reward through the recovery controls.
+
+Migration `202608210003` adds the owner-only `convert_task_to_calendar_event` RPC. It locks an open task, resolves its scheduled date (or profile-local creation date), creates a timed event with the task title, notes, project color and estimate-based duration, then deletes the task and cascading checklist in the same transaction. A failed insert therefore leaves the original task untouched. Calendar titles accept the Tasks title limit of 500 characters so the conversion cannot fail solely because of a valid task title.
 
 ## Types
 

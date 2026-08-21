@@ -4,6 +4,7 @@ import { LocalApiError } from './local-auth.mjs'
 
 const uuid = z.string().uuid()
 const localDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+const localTime = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
 const timestamp = z.string().datetime({ offset: true })
 const color = z.enum(['mint', 'coral', 'blue', 'sand', 'slate'])
 const priority = z.enum(['none', 'low', 'medium', 'high'])
@@ -70,7 +71,7 @@ const focusSessionCreate = z.object({
   completed: z.boolean(),
 })
 const calendarEventInput = z.object({
-  title: z.string().trim().min(1).max(200),
+  title: z.string().trim().min(1).max(500),
   description: z.string().trim().max(10_000).nullable(),
   allDay: z.boolean(),
   startAt: timestamp.nullable(),
@@ -538,6 +539,15 @@ export const createLocalDataService = (database, withAuthenticatedUser) => ({
         value.focusedSeconds, value.sessionType, value.completed],
     )
     return mapFocusSession(one(result, 'save the focus session'))
+  }),
+
+  convertTaskToCalendarEvent: (userId, taskId, input) => withAuthenticatedUser(userId, async () => {
+    const startTime = localTime.parse(input.startTime)
+    const result = await database.query(
+      'select public.convert_task_to_calendar_event($1, $2::time) as id',
+      [taskId, startTime],
+    )
+    return one(result, 'convert the task into a calendar event').id
   }),
 
   deleteFocusSession: (userId, sessionId) => withAuthenticatedUser(userId, async () => {

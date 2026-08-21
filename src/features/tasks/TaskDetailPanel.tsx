@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Check, Circle, Plus, TimerReset, Trash2, X } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { CalendarPlus2, Check, Circle, Plus, TimerReset, Trash2, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { z } from 'zod'
@@ -20,6 +20,7 @@ import {
   useUpdateTask,
 } from './queries'
 import { isValidLocalDate, taskPrioritySchema } from './schemas'
+import { TaskToEventDialog } from './TaskToEventDialog'
 import type { Task, TaskProject } from './types'
 
 const taskDetailSchema = z.object({
@@ -59,6 +60,7 @@ export function TaskDetailPanel({
   onDeleted: () => void
 }) {
   const panelRef = useRef<HTMLElement>(null)
+  const [conversionOpen, setConversionOpen] = useState(false)
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
   const statusMutation = useSetTaskStatus()
@@ -239,6 +241,7 @@ export function TaskDetailPanel({
       {error ? <p className="task-detail-panel__error" role="alert">{error.message}</p> : null}
       <footer className="task-detail-panel__actions">
         <Link className="button button--secondary" to={`/focus?taskId=${task.id}`}><TimerReset aria-hidden /><span>Start focus</span></Link>
+        <Button variant="secondary" type="button" onClick={() => setConversionOpen(true)}><CalendarPlus2 aria-hidden />Turn into event</Button>
         <Button variant="quiet" type="button" onClick={() => void changeStatus()}>{task.status === 'completed' ? 'Reopen task' : 'Complete task'}</Button>
         <ConfirmDialog
           actionLabel="Delete task"
@@ -249,6 +252,14 @@ export function TaskDetailPanel({
           trigger={<Button variant="quiet" type="button" disabled={deleteTask.isPending}><Trash2 aria-hidden />Delete</Button>}
         />
       </footer>
+      {conversionOpen ? (
+        <TaskToEventDialog
+          task={task}
+          timeZone={timeZone}
+          onClose={() => setConversionOpen(false)}
+          onConverted={onDeleted}
+        />
+      ) : null}
     </aside>
   )
 }

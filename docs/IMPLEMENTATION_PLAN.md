@@ -1,6 +1,6 @@
 # Implementation plan
 
-Last updated: 2026-08-20
+Last updated: 2026-08-21
 
 Status legend: `[x]` complete, `[~]` in progress, `[ ]` pending, `[!]` blocked by an external input.
 
@@ -58,6 +58,7 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Add ownership-safe nested task projects and customizable faded GIF banners in production.
 - [x] Task CRUD, checklist, optimistic completion/reordering with rollback and durable manual ordering.
 - [x] Default every new task's scheduled date to the user's local today.
+- [x] Add an atomic Task-to-Calendar conversion that asks only for a start time, preserves the scheduled/local-created date and removes the source task only after the event insert succeeds.
 - [x] Persisted timestamp-based Pomodoro store and mini player.
 - [x] Durable focus session history and task integration.
 - [x] Confirmed owner-only Focus history deletion with active rewarded-run protection and bounded history scrolling.
@@ -71,7 +72,8 @@ Exit: local database is reproducible and no exposed table is open across users.
 - [x] Derived task overlays without duplicated calendar rows.
 - [x] Mobile agenda, deterministic week overlap layout and month/week date edge-case tests.
 - [x] Add compact mobile item markers with overflow indication and profile-synced Event, Task and Habit visibility preferences across every Calendar view.
-- [x] Add pointer-based timed-event drag-and-drop across Day and Week grids, with durable date/time updates on drop.
+- [x] Add pointer-based timed-event drag-and-drop across Day and Week grids, with a live snapped preview and durable date/time updates on drop.
+- [x] Add top/bottom event-edge resizing in 15-minute steps, compact readable rendering for short events and touch guards that distinguish quick taps from holds/scroll gestures.
 
 ## Phase 5 — Habits
 
@@ -140,9 +142,25 @@ Exit: all balances are durable and auditable; monthly caps, conversions and dupl
 
 ## Next vertical slice
 
-Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001` and `202608210001`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion and atomic reward recovery, Calendar preferences, profile-photo Storage policies, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` are recorded as applied; the nine listed migrations remain pending production application.
+Apply migrations `202608180012`, `202608190001`, `202608190002`, `202608190003`, `202608190004`, `202608190005`, `202608190006`, `202608200001`, `202608210002` and `202608210003`; verify Habit award/reversal and expanded-icon/GIF creation, Workout history/routine deletion and active exercise renaming, Focus history deletion and atomic/abandoned-run reward recovery, Calendar preferences, profile-photo Storage policies, Task-to-Event conversion, account deletion after Rewards activity, rewarded Focus runs, strength/cardio completion, conversions and credit requests through authenticated deployed E2E, then continue the release audit. Migrations through `202608180011` and migration `202608210001` are recorded as applied; the ten listed migrations remain pending production application.
 
 ## Latest verification
+
+Completed the Calendar direct-manipulation and Task conversion slice on 2026-08-21:
+
+- made short timed events readable with a compact horizontal title/time layout;
+- distinguished quick touch activation from held or scrolling gestures on the Day and Week time grids;
+- added live card movement, snapped target-time feedback and top/bottom edge resizing in 15-minute steps, with optimistic persistence rollback on failure;
+- added migration `202608210003` and repository/UI/local-server parity for atomic Task-to-Event conversion using only a selected start time;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (177/177), `npm run test:db` (44/44), `npm run build` and `git diff --check` passed; interactive browser QA remained unavailable because no in-app browser session was connected.
+
+Completed the abandoned-but-eligible Focus reward recovery repair on 2026-08-21:
+
+- traced the missed production reconciliation to the legacy error controls marking a run abandoned after all five Focus sessions and four breaks had already committed;
+- added migration `202608210002`, which proves the complete sequence from durable owned rows, closes the stale abandoned run and invokes the same exact-once wallet/counter/ledger transaction;
+- changed `abandon_focus_run` to attempt finalization before abandonment, preventing a lost response from stripping a completed run of its reward;
+- added a database regression that recreates a complete 40/5 run with its reward trigger unavailable, marks it abandoned like the legacy flow, then verifies recovery to `6 Silver + 5 Gold` and a durable processed marker;
+- `npm run lint`, `npm run typecheck`, `npm run test -- --run` (167/167), `npm run build`, the focused Rewards database suite (9/9) and `git diff --check` passed locally.
 
 Completed the atomic Focus reward and orphaned-run reconciliation repair on 2026-08-21:
 

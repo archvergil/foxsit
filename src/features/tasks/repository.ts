@@ -21,6 +21,7 @@ export interface TasksRepository {
   createTask(userId: string, input: CreateTaskInput): Promise<Task>
   updateTask(userId: string, taskId: string, input: UpdateTaskInput): Promise<Task>
   setTaskStatus(userId: string, taskId: string, status: TaskStatus, now?: Date): Promise<Task>
+  convertTaskToCalendarEvent(userId: string, taskId: string, startTime: string): Promise<string>
   deleteTask(userId: string, taskId: string): Promise<void>
   reorderTasks(userId: string, orderedTaskIds: string[]): Promise<Task[]>
   listChecklistItems(userId: string, taskId: string): Promise<TaskChecklistItem[]>

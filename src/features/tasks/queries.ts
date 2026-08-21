@@ -163,6 +163,27 @@ export const useDeleteTask = () => {
   })
 }
 
+export const useConvertTaskToCalendarEvent = () => {
+  const repository = useTasksRepository()
+  const queryClient = useQueryClient()
+  const { userId } = useTaskIdentity()
+  return useMutation({
+    mutationKey: ['tasks', 'convert-to-event', userId],
+    mutationFn: ({ taskId, startTime }: { taskId: string; startTime: string }) =>
+      repository.convertTaskToCalendarEvent(userId, taskId, startTime),
+    onSuccess: (_eventId, { taskId }) => {
+      for (const [queryKey, tasks] of queryClient.getQueriesData<Task[]>({ queryKey: taskQueryKeys.lists(userId) })) {
+        queryClient.setQueryData<Task[]>(queryKey, tasks?.filter((task) => task.id !== taskId))
+      }
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: taskQueryKeys.lists(userId) }),
+        queryClient.invalidateQueries({ queryKey: ['calendar'] }),
+        queryClient.invalidateQueries({ queryKey: ['focus'] }),
+      ])
+    },
+  })
+}
+
 interface ReorderTasksVariables {
   orderedTasks: Task[]
 }

@@ -38,6 +38,8 @@ export const createLocalTasksRepository = (client: LocalApiClient): TasksReposit
     client.patch(`/v1/tasks/${taskId}`, updateTaskSchema.parse(input)),
   setTaskStatus: (_userId, taskId, status: TaskStatus) =>
     client.patch(`/v1/tasks/${taskId}/status`, { status }),
+  convertTaskToCalendarEvent: (_userId, taskId, startTime) =>
+    client.post(`/v1/tasks/${taskId}/calendar-event`, { startTime }),
   deleteTask: (_userId, taskId) => client.delete(`/v1/tasks/${taskId}`),
   reorderTasks: (_userId, orderedTaskIds) =>
     client.patch('/v1/tasks/reorder', { orderedTaskIds }),
